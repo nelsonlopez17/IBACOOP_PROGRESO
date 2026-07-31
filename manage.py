@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-"""Django's command-line utility for administrative tasks."""
+"""Archivo principal para ejecutar comandos de administración del proyecto."""
 import os
 import sys
 
 
 def main():
-    """Run administrative tasks."""
+    """Ejecuta las tareas administrativas del sistema."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'IBACOOP_PROGRESO.settings')
     try:
         from django.core.management import execute_from_command_line

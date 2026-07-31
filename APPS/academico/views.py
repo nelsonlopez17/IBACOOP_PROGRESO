@@ -8,8 +8,11 @@ SEGURIDAD:
     Los permisos se gestionan mediante Groups y Permissions nativos de Django.
     El campo 'rol' del Usuario NO se usa para control de acceso, solo para UI.
 """
+import operator
+from functools import reduce
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.db.models import Q
 from django.http import Http404
 from django.urls import reverse_lazy
 from django.views.generic import UpdateView, ListView
@@ -19,6 +22,7 @@ from APPS.academico.models import (
     AsignacionDocente,
     CicloEscolar,
     NotaBloque,
+    NotaFinalCurso,
 )
 
 
@@ -51,58 +55,46 @@ class IngresoNotasUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Update
     form_class = NotaBloqueForm
     template_name = 'academico/ingreso_notas.html'
     permission_required = 'academico.change_notabloque'
-    raise_exception = True   # HTTP 403 en lugar de redirigir al login
+    raise_exception = True   # Muestra una pantalla de acceso denegado si no tiene permiso
 
     # ──────────────────────────────────────────────────────────────────────────
-    # MÉTODO CRÍTICO: get_queryset()
-    # Restringe el queryset para garantizar que el docente SOLO pueda modificar
-    # las notas de sus propios cursos en el ciclo activo.
-    # Django llama a este método automáticamente para obtener el objeto que
-    # será editado — si el pk no existe en este queryset, retorna 404.
+    # Filtrado de seguridad:
+    # Garantiza que el profesor solo pueda ver y modificar las notas de las materias
+    # y secciones que tiene asignadas en el año escolar actual.
     # ──────────────────────────────────────────────────────────────────────────
     def get_queryset(self):
         """
-        Retorna solo las NotaBloque que el docente autenticado tiene autorizado editar.
+        Retorna solo las calificaciones que el profesor tiene autorizado editar.
 
-        Lógica:
-            1. Obtiene el ciclo escolar activo (único con estado_activo=True).
-            2. Busca las AsignacionesDocente del usuario actual en ese ciclo.
-            3. Filtra las NotaBloque solo donde:
-               - El estudiante pertenece a una sección que el docente imparte.
-               - El curso es uno de los cursos que el docente imparte.
-               - La asignación pertenece al ciclo escolar activo.
+        Evita el producto cartesiano filtrando por las combinaciones exactas
+        de (curso_id, seccion_id) que el docente imparte en el ciclo activo.
         """
         usuario = self.request.user
 
-        # 1. Ciclo escolar activo (debe ser exactamente uno)
         try:
             ciclo_activo = CicloEscolar.objects.get(estado_activo=True)
-        except CicloEscolar.DoesNotExist:
-            # No hay ciclo activo — el docente no puede ingresar notas
-            return NotaBloque.objects.none()
-        except CicloEscolar.MultipleObjectsReturned:
-            # Error de configuración: hay más de un ciclo activo
+        except (CicloEscolar.DoesNotExist, CicloEscolar.MultipleObjectsReturned):
             return NotaBloque.objects.none()
 
-        # 2. Asignaciones del docente en el ciclo activo
         asignaciones_docente = AsignacionDocente.objects.filter(
             personal__usuario=usuario,
             ciclo_escolar=ciclo_activo,
-        ).select_related('curso', 'seccion')
+        )
 
         if not asignaciones_docente.exists():
-            # Este usuario no tiene asignaciones docentes en el ciclo activo
             return NotaBloque.objects.none()
 
-        # 3. Extraer los IDs de cursos y secciones autorizados
-        curso_ids = list(asignaciones_docente.values_list('curso_id', flat=True))
-        seccion_ids = list(asignaciones_docente.values_list('seccion_id', flat=True))
+        pares_docente = list(asignaciones_docente.values_list('curso_id', 'seccion_id'))
+        if not pares_docente:
+            return NotaBloque.objects.none()
 
-        # 4. Retornar solo las notas dentro del scope del docente
+        filtro_pares = reduce(
+            operator.or_,
+            [Q(curso_id=c_id, asignacion_estudiante__seccion_id=s_id) for c_id, s_id in pares_docente]
+        )
+
         return NotaBloque.objects.filter(
-            curso_id__in=curso_ids,
-            asignacion_estudiante__ciclo_escolar=ciclo_activo,
-            asignacion_estudiante__seccion_id__in=seccion_ids,
+            Q(asignacion_estudiante__ciclo_escolar=ciclo_activo) & filtro_pares
         ).select_related(
             'asignacion_estudiante__estudiante',
             'asignacion_estudiante__seccion',
@@ -115,12 +107,10 @@ class IngresoNotasUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Update
         context = super().get_context_data(**kwargs)
         nota = self.object
 
-        # Información contextual para el template
         context['estudiante'] = nota.asignacion_estudiante.estudiante
         context['seccion'] = nota.asignacion_estudiante.seccion
         context['ciclo'] = nota.bloque_academico.ciclo_escolar
         context['nota_total_actual'] = nota.nota_total
-        context['estado_aprobacion'] = nota.estado_aprobado_display
         context['titulo_pagina'] = (
             f"Ingreso de Notas — {nota.curso} / {nota.bloque_academico}"
         )
@@ -128,23 +118,28 @@ class IngresoNotasUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Update
 
     def form_valid(self, form):
         """
-        Guarda la nota actualizada registrando el usuario que realizó el cambio.
-
-        El campo usuario_modificacion del ModeloAuditable se actualiza aquí
-        para mantener la auditoría de quién realizó el último cambio.
-        django-simple-history registrará automáticamente el cambio con el usuario
-        del request (via HistoryRequestMiddleware en settings.py).
+        Guarda la nota actualizada registrando el usuario que realizó el cambio
+        y actualiza la NotaFinalCurso del estudiante.
         """
         nota = form.save(commit=False)
         nota.usuario_modificacion = self.request.user
         nota.save()
 
+        # Actualiza o genera dinámicamente la nota final acumulada del curso
+        nota_final, _ = NotaFinalCurso.objects.get_or_create(
+            asignacion_estudiante=nota.asignacion_estudiante,
+            curso=nota.curso,
+            defaults={'usuario_creacion': self.request.user}
+        )
+        promedio_actual, promocionado = nota_final.calcular_nota_final()
+
+        estado_texto = "Promocionado" if promocionado else "En evaluación"
         messages.success(
             self.request,
             f'✓ Nota actualizada: {nota.asignacion_estudiante.estudiante} — '
             f'{nota.curso} / {nota.bloque_academico} → '
             f'Zona: {nota.nota_zona}, Examen: {nota.nota_examen}, '
-            f'Total: {nota.nota_total} pts ({nota.estado_aprobado_display})'
+            f'Total Bloque: {nota.nota_total} pts (Promedio acumulado actual: {promedio_actual} pts - {estado_texto})'
         )
         return super().form_valid(form)
 
@@ -171,7 +166,7 @@ class IngresoNotasUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Update
 class DocenteNotasListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     """
     Vista de lista: muestra todas las notas que el docente puede gestionar
-    en el ciclo escolar activo. Desde aquí navega a IngresoNotasUpdateView.
+    en el ciclo escolar activo.
     """
     model = NotaBloque
     template_name = 'academico/docente_notas_lista.html'
@@ -181,7 +176,7 @@ class DocenteNotasListView(LoginRequiredMixin, PermissionRequiredMixin, ListView
     paginate_by = 30
 
     def get_queryset(self):
-        """Reutiliza la misma lógica de filtrado que IngresoNotasUpdateView."""
+        """Filtra únicamente por las combinaciones exactas (curso, seccion) asignadas al docente."""
         usuario = self.request.user
         try:
             ciclo_activo = CicloEscolar.objects.get(estado_activo=True)
@@ -193,13 +188,17 @@ class DocenteNotasListView(LoginRequiredMixin, PermissionRequiredMixin, ListView
             ciclo_escolar=ciclo_activo,
         )
 
-        curso_ids = list(asignaciones_docente.values_list('curso_id', flat=True))
-        seccion_ids = list(asignaciones_docente.values_list('seccion_id', flat=True))
+        pares_docente = list(asignaciones_docente.values_list('curso_id', 'seccion_id'))
+        if not pares_docente:
+            return NotaBloque.objects.none()
+
+        filtro_pares = reduce(
+            operator.or_,
+            [Q(curso_id=c_id, asignacion_estudiante__seccion_id=s_id) for c_id, s_id in pares_docente]
+        )
 
         return NotaBloque.objects.filter(
-            curso_id__in=curso_ids,
-            asignacion_estudiante__ciclo_escolar=ciclo_activo,
-            asignacion_estudiante__seccion_id__in=seccion_ids,
+            Q(asignacion_estudiante__ciclo_escolar=ciclo_activo) & filtro_pares
         ).select_related(
             'asignacion_estudiante__estudiante',
             'asignacion_estudiante__seccion__grado',

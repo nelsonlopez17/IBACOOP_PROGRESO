@@ -11,10 +11,11 @@ urlpatterns = [
     # Administración de Django
     path('admin/', admin.site.urls),
 
-    # Autenticación nativa de Django (login, logout, password change/reset)
-    path('usuarios/', include('django.contrib.auth.urls')),
+    # Módulos Principales del ERP Escolar
+    path('', include('APPS.core.urls')),
+    path('usuarios/', include('APPS.usuarios.urls')),
 
-    # Apps del Sistema ERP Escolar
+    # Otros Módulos del Sistema ERP
     path('estudiantes/', include('APPS.estudiantes.urls')),
     path('rrhh/', include('APPS.rrhh.urls')),
     path('academico/', include('APPS.academico.urls')),

@@ -4,7 +4,7 @@ from simple_history.admin import SimpleHistoryAdmin
 from APPS.academico.models import (
     CicloEscolar, BloqueAcademico, Grado, Seccion,
     Curso, AsignacionEstudiante, AsignacionDocente,
-    NotaBloque, AsistenciaEstudiantil,
+    NotaBloque, NotaFinalCurso, AsistenciaEstudiantil,
 )
 
 
@@ -82,7 +82,7 @@ class NotaBloqueAdmin(SimpleHistoryAdmin):
     """Usa SimpleHistoryAdmin para ver el historial de cambios de notas desde el admin."""
     list_display = [
         'get_estudiante', 'curso', 'bloque_academico',
-        'nota_zona', 'nota_examen', 'get_nota_total', 'get_estado',
+        'nota_zona', 'nota_examen', 'get_nota_total',
     ]
     list_filter = ['bloque_academico__ciclo_escolar', 'curso', 'bloque_academico']
     search_fields = [
@@ -90,7 +90,7 @@ class NotaBloqueAdmin(SimpleHistoryAdmin):
         'asignacion_estudiante__estudiante__apellidos',
         'asignacion_estudiante__estudiante__codigo_mineduc',
     ]
-    readonly_fields = ['get_nota_total', 'get_estado', 'creado_en', 'actualizado_en']
+    readonly_fields = ['get_nota_total', 'creado_en', 'actualizado_en']
 
     @admin.display(description='Estudiante')
     def get_estudiante(self, obj):
@@ -100,9 +100,21 @@ class NotaBloqueAdmin(SimpleHistoryAdmin):
     def get_nota_total(self, obj):
         return obj.nota_total
 
-    @admin.display(description='Estado')
-    def get_estado(self, obj):
-        return obj.estado_aprobado_display
+
+@admin.register(NotaFinalCurso)
+class NotaFinalCursoAdmin(admin.ModelAdmin):
+    list_display = ['get_estudiante', 'curso', 'nota_promedio', 'esta_promocionado']
+    list_filter = ['esta_promocionado', 'curso', 'asignacion_estudiante__ciclo_escolar']
+    search_fields = [
+        'asignacion_estudiante__estudiante__nombres',
+        'asignacion_estudiante__estudiante__apellidos',
+        'asignacion_estudiante__estudiante__codigo_mineduc',
+    ]
+    readonly_fields = ['creado_en', 'actualizado_en']
+
+    @admin.display(description='Estudiante')
+    def get_estudiante(self, obj):
+        return obj.asignacion_estudiante.estudiante
 
 
 @admin.register(AsistenciaEstudiantil)

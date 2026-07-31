@@ -39,7 +39,7 @@ class AsistenciaPersonalAdmin(admin.ModelAdmin):
 
 @admin.register(Planilla)
 class PlanillaAdmin(admin.ModelAdmin):
-    list_display = ['personal', 'mes_pagado', 'anio_pagado', 'total_pagar', 'pagado', 'fecha_pago']
-    list_filter = ['mes_pagado', 'anio_pagado', 'pagado']
+    list_display = ['personal', 'mes_pagado', 'ciclo_escolar', 'total_pagar', 'pagado', 'fecha_pago']
+    list_filter = ['mes_pagado', 'ciclo_escolar', 'pagado']
     search_fields = ['personal__nombres', 'personal__apellidos']
     readonly_fields = ['creado_en', 'actualizado_en']

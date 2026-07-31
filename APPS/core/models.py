@@ -95,14 +95,49 @@ class ModeloAuditable(models.Model):
         """
         Sobrescribe el método delete() para implementar eliminación lógica.
 
-        En lugar de eliminar el registro de la base de datos, lo marca con:
-            - esta_eliminado = True
-            - eliminado_en  = fecha y hora actuales
+        Valida mediante reflexión y la API de metadatos de Django (_meta.related_objects)
+        si existen objetos relacionados configurados con on_delete=models.RESTRICT que permanezcan
+        activos (esta_eliminado=False). Si se encuentran dependencias activas, se eleva
+        models.deletion.RestrictedError impidiendo el borrado lógico.
 
         Args:
-            usuario: Instancia del Usuario que realiza la eliminación.
-                     Se guarda en 'usuario_modificacion' para auditoría.
+            usuario: Instancia del Usuario que realiza la eliminación para auditoría.
         """
+        elementos_restringidos = []
+
+        for rel in self._meta.related_objects:
+            if rel.on_delete == models.RESTRICT:
+                accessor_name = rel.get_accessor_name()
+                try:
+                    rel_target = getattr(self, accessor_name, None)
+                except Exception:
+                    continue
+
+                if rel_target is None:
+                    continue
+
+                if rel.one_to_one:
+                    esta_activo = True
+                    if hasattr(rel_target, 'esta_eliminado'):
+                        esta_activo = not rel_target.esta_eliminado
+                    if esta_activo:
+                        elementos_restringidos.append(rel_target)
+                else:
+                    # rel_target es un RelatedManager (uno a muchos)
+                    if hasattr(rel.related_model, 'esta_eliminado'):
+                        relacionados_activos = rel_target.filter(esta_eliminado=False)
+                    else:
+                        relacionados_activos = rel_target.all()
+
+                    if relacionados_activos.exists():
+                        elementos_restringidos.append(relacionados_activos.first())
+
+        if elementos_restringidos:
+            raise models.deletion.RestrictedError(
+                f"No se puede eliminar lógicamente el registro '{self}' porque existen elementos relacionados activos que dependen de él.",
+                elementos_restringidos
+            )
+
         self.esta_eliminado = True
         self.eliminado_en = timezone.now()
         if usuario:

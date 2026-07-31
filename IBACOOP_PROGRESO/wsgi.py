@@ -1,10 +1,5 @@
 """
-WSGI config for IBACOOP_PROGRESO project.
-
-It exposes the WSGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/6.0/howto/deployment/wsgi/
+Configuración WSGI para ejecutar el proyecto en el servidor web.
 """
 
 import os

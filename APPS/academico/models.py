@@ -12,6 +12,7 @@ Implementa el sistema académico del MINEDUC:
 django-simple-history se aplica en NotaBloque para auditar todos los cambios
 de calificaciones (quién cambió qué nota y cuándo).
 """
+from decimal import Decimal
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from simple_history.models import HistoricalRecords
@@ -337,21 +338,75 @@ class NotaBloque(ModeloAuditable):
 
     @property
     def nota_total(self):
-        """Calcula el punteo total: Zona + Examen."""
+        """Calcula el punteo total del bloque: Zona + Examen."""
         return self.nota_zona + self.nota_examen
 
-    @property
-    def estado_aprobado(self):
-        """
-        Determina si el estudiante aprueba el bloque.
-        Según el MINEDUC, la nota mínima de aprobación es 60 puntos.
-        """
-        return self.nota_total >= 60
 
-    @property
-    def estado_aprobado_display(self):
-        """Retorna la etiqueta visual del estado de aprobación."""
-        return 'Aprobado' if self.estado_aprobado else 'No Aprobado'
+class NotaFinalCurso(ModeloAuditable):
+    """
+    Representa el resultado final acumulativo de un estudiante en un curso específico
+    durante un Ciclo Escolar para dictaminar su promoción.
+
+    Reglas MINEDUC (Nivel Básico — Guatemala):
+    - La nota final del curso se obtiene promediando las notas totales alcanzadas
+      en cada bloque académico del ciclo escolar.
+    - Se promueve y aprueba el curso si la nota promedio acumulada alcanza o supera los 60 puntos.
+    """
+    asignacion_estudiante = models.ForeignKey(
+        AsignacionEstudiante,
+        on_delete=models.RESTRICT,
+        related_name='notas_finales',
+        verbose_name='Asignación del estudiante',
+    )
+    curso = models.ForeignKey(
+        Curso,
+        on_delete=models.RESTRICT,
+        related_name='notas_finales',
+        verbose_name='Curso',
+    )
+    nota_promedio = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        verbose_name='Nota Promedio Final (0–100 pts)',
+    )
+    esta_promocionado = models.BooleanField(
+        default=False,
+        verbose_name='¿Materia Aprobada / Promocionada?',
+        help_text='Indica si el estudiante alcanzó un promedio final mayor o igual a 60 puntos.',
+    )
+
+    class Meta:
+        verbose_name = 'Nota Final de Curso'
+        verbose_name_plural = 'Notas Finales de Cursos'
+        unique_together = [['asignacion_estudiante', 'curso']]
+        ordering = ['asignacion_estudiante', 'curso']
+
+    def __str__(self):
+        estado = 'Promocionado' if self.esta_promocionado else 'No Promocionado'
+        return f"{self.asignacion_estudiante.estudiante} — {self.curso}: {self.nota_promedio} pts ({estado})"
+
+    def calcular_nota_final(self):
+        """
+        Calcula el promedio acumulado de todos los bloques evaluados para este curso
+        y determina la aprobación / promoción (>= 60 pts).
+        """
+        notas_bloque = NotaBloque.objects.filter(
+            asignacion_estudiante=self.asignacion_estudiante,
+            curso=self.curso,
+            esta_eliminado=False,
+        )
+        if not notas_bloque.exists():
+            self.nota_promedio = Decimal('0.00')
+            self.esta_promocionado = False
+        else:
+            total_puntos = sum([nb.nota_total for nb in notas_bloque])
+            cantidad_bloques = Decimal(str(notas_bloque.count()))
+            self.nota_promedio = round(total_puntos / cantidad_bloques, 2)
+            self.esta_promocionado = self.nota_promedio >= Decimal('60.00')
+
+        self.save(update_fields=['nota_promedio', 'esta_promocionado', 'actualizado_en'])
+        return self.nota_promedio, self.esta_promocionado
 
 
 class AsistenciaEstudiantil(ModeloAuditable):

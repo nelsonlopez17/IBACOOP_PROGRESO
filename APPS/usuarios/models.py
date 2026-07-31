@@ -24,6 +24,7 @@ class RolChoices(models.TextChoices):
     """
     ADMINISTRADOR = 'ADMINISTRADOR', 'Administrador'
     DIRECTOR      = 'DIRECTOR',      'Director'
+    SECRETARIA    = 'SECRETARIA',    'Secretaría'
     CONTADOR      = 'CONTADOR',      'Contador'
     DOCENTE       = 'DOCENTE',       'Docente'
     ESTUDIANTE    = 'ESTUDIANTE',    'Estudiante'

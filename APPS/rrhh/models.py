@@ -158,8 +158,8 @@ class Planilla(ModeloAuditable):
     """
     Registro de pago mensual (planilla) de un miembro del personal.
 
-    La unicidad por (personal, mes_pagado, anio_pagado) garantiza que no se
-    genere doble pago para el mismo mes.
+    La unicidad por (personal, mes_pagado, ciclo_escolar) garantiza que no se
+    genere doble pago para el mismo mes dentro de un ciclo escolar.
     El campo comprobante_pdf almacena el archivo del recibo generado.
     """
     MESES = [
@@ -179,7 +179,14 @@ class Planilla(ModeloAuditable):
         choices=MESES,
         verbose_name='Mes pagado',
     )
-    anio_pagado = models.PositiveIntegerField(verbose_name='Año pagado')
+    ciclo_escolar = models.ForeignKey(
+        'academico.CicloEscolar',
+        on_delete=models.RESTRICT,
+        related_name='planillas',
+        verbose_name='Ciclo Escolar',
+        null=True,
+        blank=True,
+    )
     bonificaciones = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -216,12 +223,12 @@ class Planilla(ModeloAuditable):
     class Meta:
         verbose_name = 'Planilla'
         verbose_name_plural = 'Planillas'
-        unique_together = [['personal', 'mes_pagado', 'anio_pagado']]
-        ordering = ['-anio_pagado', '-mes_pagado']
+        unique_together = [['personal', 'mes_pagado', 'ciclo_escolar']]
+        ordering = ['-ciclo_escolar__anio', '-mes_pagado']
 
     def __str__(self):
         return (
             f"Planilla — {self.personal} — "
-            f"{self.get_mes_pagado_display()} {self.anio_pagado} "
+            f"{self.get_mes_pagado_display()} {self.ciclo_escolar.anio} "
             f"(Q{self.total_pagar})"
         )

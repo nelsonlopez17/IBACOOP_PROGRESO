@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo_pagina }} | IBACOOP EL PROGRESO{% endblock %}
+{% block page_title %}{{ titulo_pagina }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+    
+    <!-- Tarjeta de encabezado del formulario -->
+    <div class="flex items-center justify-between bg-white border border-slate-200 p-6 rounded-3xl shadow-sm">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-[#1E6532]/10 border border-[#1E6532]/20 rounded-2xl flex items-center justify-center text-[#1E6532]">
+                <i data-lucide="user-cog" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h2 class="text-xl font-extrabold text-slate-900">{{ titulo_pagina }}</h2>
+                <p class="text-xs text-slate-500 mt-0.5 font-medium">
+                    Complete la información de la cuenta en el sistema de IBACOOP EL PROGRESO.
+                </p>
+            </div>
+        </div>
+
+        <a href="{% url 'usuarios:usuario_list' %}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold border border-slate-200 transition-colors">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            <span>Volver a la Lista</span>
+        </a>
+    </div>
+
+    <!-- Contenedor del formulario -->
+    <div class="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+        
+        <!-- Errores generales del formulario -->
+        {% if form.non_field_errors %}
+        <div class="mb-6 p-4 rounded-xl bg-[#7A1C21]/10 border border-[#7A1C21]/30 text-[#7A1C21] text-sm">
+            <div class="flex items-center gap-2 font-bold mb-1">
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-[#7A1C21]"></i>
+                <span>Errores en el formulario:</span>
+            </div>
+            <ul class="list-disc list-inside text-xs space-y-1 text-[#7A1C21]/90 font-medium">
+                {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Recorrido de los campos del formulario -->
+                {% for field in form %}
+                    <div class="{% if field.name == 'groups' or field.name == 'password1' or field.name == 'password2' %}md:col-span-2{% endif %}">
+                        
+                        <label for="{{ field.id_for_label }}" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                            {{ field.label }}
+                            {% if field.field.required %}<span class="text-[#7A1C21]">*</span>{% endif %}
+                        </label>
+
+                        <!-- Cuadro de texto o opción de selección -->
+                        <div class="relative">
+                            {% if field.field.widget.input_type == 'checkbox' %}
+                                <div class="flex items-center gap-3 p-3.5 bg-slate-50 border border-slate-300 rounded-xl">
+                                    {{ field }}
+                                    <span class="text-xs text-slate-700 font-bold">Habilitar/Deshabilitar acceso al usuario</span>
+                                </div>
+                            {% else %}
+                                {{ field }}
+                            {% endif %}
+                        </div>
+
+                        <!-- Texto de ayuda del campo -->
+                        {% if field.help_text %}
+                            <p class="text-[11px] text-slate-500 mt-1.5 leading-normal font-medium">
+                                {{ field.help_text }}
+                            </p>
+                        {% endif %}
+
+                        <!-- Mensajes de error específicos del campo -->
+                        {% if field.errors %}
+                            <div class="mt-1.5 space-y-1">
+                                {% for error in field.errors %}
+                                    <p class="text-xs text-[#7A1C21] font-bold flex items-center gap-1">
+                                        <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                                        <span>{{ error }}</span>
+                                    </p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+
+            </div>
+
+            <!-- Botones de guardar y cancelar -->
+            <div class="pt-6 border-t border-slate-100 flex items-center justify-end gap-3">
+                <a href="{% url 'usuarios:usuario_list' %}" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold border border-slate-200 transition-colors cursor-pointer">
+                    Cancelar
+                </a>
+                <button type="submit" class="px-6 py-2.5 bg-[#1E6532] hover:bg-[#154623] text-white font-bold text-xs rounded-xl shadow-md shadow-[#1E6532]/20 transition-all cursor-pointer flex items-center gap-2">
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                    <span>{{ accion|default:"Guardar" }}</span>
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+{% endblock %}
