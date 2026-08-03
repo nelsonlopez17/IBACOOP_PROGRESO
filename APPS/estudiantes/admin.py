@@ -10,37 +10,30 @@ class EstudianteEncargadoInline(admin.TabularInline):
 
 @admin.register(Estudiante)
 class EstudianteAdmin(admin.ModelAdmin):
-    list_display = ['codigo_mineduc', 'apellidos', 'nombres', 'estado_activo', 'creado_en']
+    list_display = ['codigo_mineduc', 'get_nombre_completo', 'genero', 'estado_activo', 'creado_en']
     list_filter = ['estado_activo', 'genero']
-    search_fields = ['codigo_mineduc', 'nombres', 'apellidos', 'usuario__username']
+    search_fields = ['codigo_mineduc', 'persona__nombres', 'persona__apellidos', 'persona__cui']
     readonly_fields = ['creado_en', 'actualizado_en']
     inlines = [EstudianteEncargadoInline]
-    fieldsets = (
-        ('Información Personal', {
-            'fields': ('usuario', 'codigo_mineduc', 'nombres', 'apellidos', 'fecha_nacimiento', 'genero')
-        }),
-        ('Contacto', {
-            'fields': ('direccion',)
-        }),
-        ('Estado', {
-            'fields': ('estado_activo',)
-        }),
-        ('Auditoría', {
-            'fields': ('creado_en', 'actualizado_en', 'usuario_creacion', 'usuario_modificacion'),
-            'classes': ('collapse',),
-        }),
-    )
+
+    @admin.display(description='Nombre Completo')
+    def get_nombre_completo(self, obj):
+        return obj.persona.nombre_completo
 
 
 @admin.register(Encargado)
 class EncargadoAdmin(admin.ModelAdmin):
-    list_display = ['apellidos', 'nombres', 'dpi', 'telefono_contacto', 'creado_en']
-    search_fields = ['nombres', 'apellidos', 'dpi']
+    list_display = ['get_nombre_completo', 'ocupacion', 'creado_en']
+    search_fields = ['persona__nombres', 'persona__apellidos', 'persona__cui', 'ocupacion']
     readonly_fields = ['creado_en', 'actualizado_en']
+
+    @admin.display(description='Nombre Completo')
+    def get_nombre_completo(self, obj):
+        return obj.persona.nombre_completo
 
 
 @admin.register(EstudianteEncargado)
 class EstudianteEncargadoAdmin(admin.ModelAdmin):
     list_display = ['estudiante', 'encargado', 'parentesco', 'es_contacto_principal']
     list_filter = ['parentesco', 'es_contacto_principal']
-    search_fields = ['estudiante__nombres', 'estudiante__apellidos', 'encargado__nombres']
+    search_fields = ['estudiante__persona__nombres', 'estudiante__persona__apellidos', 'encargado__persona__nombres', 'encargado__persona__apellidos']

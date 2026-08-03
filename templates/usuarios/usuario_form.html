@@ -53,40 +53,115 @@
                 {% for field in form %}
                     <div class="{% if field.name == 'groups' or field.name == 'password1' or field.name == 'password2' %}md:col-span-2{% endif %}">
                         
-                        <label for="{{ field.id_for_label }}" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                            {{ field.label }}
-                            {% if field.field.required %}<span class="text-[#7A1C21]">*</span>{% endif %}
-                        </label>
-
-                        <!-- Cuadro de texto o opción de selección -->
-                        <div class="relative">
-                            {% if field.field.widget.input_type == 'checkbox' %}
-                                <div class="flex items-center gap-3 p-3.5 bg-slate-50 border border-slate-300 rounded-xl">
-                                    {{ field }}
-                                    <span class="text-xs text-slate-700 font-bold">Habilitar/Deshabilitar acceso al usuario</span>
+                        {% if field.name == 'groups' %}
+                            <!-- Campo especial de Grupos de Permisos (CheckboxSelectMultiple) -->
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                                        {{ field.label }}
+                                        {% if field.field.required %}<span class="text-[#7A1C21]">*</span>{% endif %}
+                                    </label>
+                                    
+                                    {% if field.field.queryset.exists %}
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" id="btn-select-all-groups" class="text-[11px] font-bold text-[#1E6532] hover:underline cursor-pointer flex items-center gap-1">
+                                            <i data-lucide="check-square" class="w-3 h-3"></i>
+                                            <span>Marcar todos</span>
+                                        </button>
+                                        <span class="text-slate-300 text-xs">|</span>
+                                        <button type="button" id="btn-deselect-all-groups" class="text-[11px] font-bold text-slate-500 hover:text-[#7A1C21] hover:underline cursor-pointer flex items-center gap-1">
+                                            <i data-lucide="square" class="w-3 h-3"></i>
+                                            <span>Desmarcar todos (Remover)</span>
+                                        </button>
+                                    </div>
+                                    {% endif %}
                                 </div>
-                            {% else %}
-                                {{ field }}
-                            {% endif %}
-                        </div>
 
-                        <!-- Texto de ayuda del campo -->
-                        {% if field.help_text %}
-                            <p class="text-[11px] text-slate-500 mt-1.5 leading-normal font-medium">
-                                {{ field.help_text }}
-                            </p>
-                        {% endif %}
+                                {% if field.field.queryset.exists %}
+                                    <div id="groups-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                                        {% for widget in field %}
+                                            <label class="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl hover:border-[#1E6532]/50 hover:shadow-xs transition-all cursor-pointer group">
+                                                <span class="flex items-center justify-center">
+                                                    {{ widget.tag }}
+                                                </span>
+                                                <div class="flex items-center gap-2 min-w-0">
+                                                    <i data-lucide="shield-check" class="w-4 h-4 text-[#1E6532] group-hover:scale-110 transition-transform flex-shrink-0"></i>
+                                                    <span class="text-xs font-bold text-slate-800 truncate">{{ widget.choice_label }}</span>
+                                                </div>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <div class="p-4 rounded-2xl bg-amber-50/70 border border-amber-200 text-amber-900 text-xs flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 flex-shrink-0">
+                                            <i data-lucide="shield-alert" class="w-4.5 h-4.5"></i>
+                                        </div>
+                                        <div>
+                                            <p class="font-bold">No hay grupos de permisos registrados en la base de datos.</p>
+                                            <p class="text-[11px] text-amber-800/80 mt-0.5 font-medium">
+                                                Puede registrar grupos de seguridad mediante la consola o la interfaz de administración.
+                                            </p>
+                                        </div>
+                                    </div>
+                                {% endif %}
 
-                        <!-- Mensajes de error específicos del campo -->
-                        {% if field.errors %}
-                            <div class="mt-1.5 space-y-1">
-                                {% for error in field.errors %}
-                                    <p class="text-xs text-[#7A1C21] font-bold flex items-center gap-1">
-                                        <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
-                                        <span>{{ error }}</span>
+                                <!-- Texto de ayuda del campo -->
+                                {% if field.help_text %}
+                                    <p class="text-[11px] text-slate-500 mt-1.5 leading-normal font-medium">
+                                        {{ field.help_text }}
                                     </p>
-                                {% endfor %}
+                                {% endif %}
+
+                                <!-- Mensajes de error específicos del campo -->
+                                {% if field.errors %}
+                                    <div class="mt-1.5 space-y-1">
+                                        {% for error in field.errors %}
+                                            <p class="text-xs text-[#7A1C21] font-bold flex items-center gap-1">
+                                                <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                                                <span>{{ error }}</span>
+                                            </p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
                             </div>
+
+                        {% else %}
+                            <!-- Resto de campos del formulario -->
+                            <label for="{{ field.id_for_label }}" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                                {{ field.label }}
+                                {% if field.field.required %}<span class="text-[#7A1C21]">*</span>{% endif %}
+                            </label>
+
+                            <!-- Cuadro de texto u opción de selección -->
+                            <div class="relative">
+                                {% if field.field.widget.input_type == 'checkbox' %}
+                                    <div class="flex items-center gap-3 p-3.5 bg-slate-50 border border-slate-300 rounded-xl">
+                                        {{ field }}
+                                        <span class="text-xs text-slate-700 font-bold">Habilitar/Deshabilitar acceso al usuario</span>
+                                    </div>
+                                {% else %}
+                                    {{ field }}
+                                {% endif %}
+                            </div>
+
+                            <!-- Texto de ayuda del campo -->
+                            {% if field.help_text %}
+                                <p class="text-[11px] text-slate-500 mt-1.5 leading-normal font-medium">
+                                    {{ field.help_text }}
+                                </p>
+                            {% endif %}
+
+                            <!-- Mensajes de error específicos del campo -->
+                            {% if field.errors %}
+                                <div class="mt-1.5 space-y-1">
+                                    {% for error in field.errors %}
+                                        <p class="text-xs text-[#7A1C21] font-bold flex items-center gap-1">
+                                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                                            <span>{{ error }}</span>
+                                        </p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         {% endif %}
                     </div>
                 {% endfor %}
@@ -107,4 +182,30 @@
 
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectAllBtn = document.getElementById('btn-select-all-groups');
+        const deselectAllBtn = document.getElementById('btn-deselect-all-groups');
+        const groupsContainer = document.getElementById('groups-container');
+
+        if (groupsContainer) {
+            const checkboxes = groupsContainer.querySelectorAll('input[type="checkbox"]');
+
+            if (selectAllBtn) {
+                selectAllBtn.addEventListener('click', function() {
+                    checkboxes.forEach(cb => cb.checked = true);
+                });
+            }
+
+            if (deselectAllBtn) {
+                deselectAllBtn.addEventListener('click', function() {
+                    checkboxes.forEach(cb => cb.checked = false);
+                });
+            }
+        }
+    });
+</script>
 {% endblock %}

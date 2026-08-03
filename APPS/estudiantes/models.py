@@ -1,167 +1,115 @@
 """
 estudiantes/models.py
 
-Gestión de Estudiantes y sus Encargados.
-Todos los modelos heredan de ModeloAuditable para garantizar
-auditoría y eliminación lógica (soft delete).
+Gestión de Estudiantes, Encargados y sus relaciones de parentesco.
+Implementa el patrón Subtipo en Estudiante y Encargado con OneToOneField hacia Persona (primary_key=True).
 """
 from django.db import models
-from APPS.core.models import ModeloAuditable
+from APPS.core.models import ModeloAuditable, Persona
+
+
+class GeneroChoices(models.TextChoices):
+    MASCULINO = 'M', 'Masculino'
+    FEMENINO  = 'F', 'Femenino'
+
+
+class ParentescoChoices(models.TextChoices):
+    PADRE   = 'PADRE',   'Padre'
+    MADRE   = 'MADRE',   'Madre'
+    ABUELO  = 'ABUELO',  'Abuelo/a'
+    TIO     = 'TIO',     'Tío/a'
+    HERMANO = 'HERMANO', 'Hermano/a'
+    TUTOR   = 'TUTOR',   'Tutor Legal'
+    OTRO    = 'OTRO',    'Otro'
 
 
 class Estudiante(ModeloAuditable):
     """
-    Representa a un estudiante inscrito en el instituto.
-
-    Cada estudiante tiene un Usuario del sistema asociado (OneToOne)
-    para poder acceder al portal con credenciales propias.
-    El código MINEDUC es el identificador oficial emitido por el Ministerio
-    de Educación de Guatemala.
+    Subtipo de Persona para representar a los estudiantes matriculados.
+    La relación persona (OneToOneField) actúa como llave primaria.
     """
-    usuario = models.OneToOneField(
-        'usuarios.Usuario',
+    persona = models.OneToOneField(
+        Persona,
         on_delete=models.RESTRICT,
+        primary_key=True,
         related_name='estudiante',
-        verbose_name='Usuario del sistema',
-        help_text='Cuenta de acceso al sistema para el estudiante.',
+        verbose_name='Persona'
     )
     codigo_mineduc = models.CharField(
         max_length=20,
         unique=True,
         verbose_name='Código MINEDUC',
-        help_text='Código único asignado por el MINEDUC.',
-    )
-    nombres = models.CharField(max_length=100, verbose_name='Nombres')
-    apellidos = models.CharField(max_length=100, verbose_name='Apellidos')
-    fecha_nacimiento = models.DateField(
-        null=True,
-        blank=True,
-        verbose_name='Fecha de nacimiento',
+        help_text='Código único otorgado por el MINEDUC.'
     )
     genero = models.CharField(
         max_length=1,
-        choices=[('M', 'Masculino'), ('F', 'Femenino')],
-        blank=True,
-        verbose_name='Género',
+        choices=GeneroChoices.choices,
+        verbose_name='Género'
     )
-    direccion = models.TextField(blank=True, verbose_name='Dirección')
     estado_activo = models.BooleanField(
         default=True,
         verbose_name='Estudiante activo',
-        help_text='Desactivar si el estudiante se retiró del instituto.',
+        help_text='Indica si el estudiante se encuentra activo en el instituto.'
     )
 
     class Meta:
         verbose_name = 'Estudiante'
         verbose_name_plural = 'Estudiantes'
-        ordering = ['apellidos', 'nombres']
 
     def __str__(self):
-        return f"{self.apellidos}, {self.nombres} ({self.codigo_mineduc})"
-
-    @property
-    def nombre_completo(self):
-        return f"{self.nombres} {self.apellidos}"
+        return f"{self.persona.nombre_completo} (MINEDUC: {self.codigo_mineduc})"
 
 
 class Encargado(ModeloAuditable):
     """
-    Representa al padre, madre o tutor legal de un estudiante.
-
-    El campo `usuario` es opcional (null=True) ya que no todos los encargados
-    tendrán acceso al portal web del sistema.
-    El DPI (Documento Personal de Identificación) es el documento de identidad
-    oficial en Guatemala.
+    Subtipo de Persona para representar a los padres o tutores legales.
+    La relación persona (OneToOneField) actúa como llave primaria.
     """
-    usuario = models.OneToOneField(
-        'usuarios.Usuario',
+    persona = models.OneToOneField(
+        Persona,
         on_delete=models.RESTRICT,
-        null=True,
-        blank=True,
+        primary_key=True,
         related_name='encargado',
-        verbose_name='Usuario del sistema',
-        help_text='Cuenta de acceso al portal para el encargado (opcional).',
-    )
-    nombres = models.CharField(max_length=100, verbose_name='Nombres')
-    apellidos = models.CharField(max_length=100, verbose_name='Apellidos')
-    dpi = models.CharField(
-        max_length=20,
-        unique=True,
-        verbose_name='DPI',
-        help_text='Documento Personal de Identificación (13 dígitos).',
-    )
-    telefono_contacto = models.CharField(
-        max_length=15,
-        verbose_name='Teléfono de contacto',
-    )
-    telefono_secundario = models.CharField(
-        max_length=15,
-        blank=True,
-        verbose_name='Teléfono secundario',
-    )
-    correo = models.EmailField(
-        blank=True,
-        verbose_name='Correo electrónico',
+        verbose_name='Persona'
     )
     ocupacion = models.CharField(
         max_length=100,
         blank=True,
-        verbose_name='Ocupación',
+        verbose_name='Ocupación'
     )
 
     class Meta:
         verbose_name = 'Encargado'
         verbose_name_plural = 'Encargados'
-        ordering = ['apellidos', 'nombres']
 
     def __str__(self):
-        return f"{self.apellidos}, {self.nombres} (DPI: {self.dpi})"
-
-    @property
-    def nombre_completo(self):
-        return f"{self.nombres} {self.apellidos}"
+        return f"{self.persona.nombre_completo} (Ocupación: {self.ocupacion or 'N/A'})"
 
 
 class EstudianteEncargado(ModeloAuditable):
     """
-    Tabla pivote que relaciona Estudiantes con sus Encargados.
-
-    Permite que un estudiante tenga múltiples encargados (ej. padre y madre)
-    y que un encargado pueda estar a cargo de múltiples estudiantes (hermanos).
-    El campo `es_contacto_principal` marca al encargado prioritario para
-    comunicaciones y citaciones.
+    Tabla pivote N:M entre Estudiantes y Encargados especificando parentesco y contacto principal.
     """
-    PARENTESCO_CHOICES = [
-        ('PADRE',   'Padre'),
-        ('MADRE',   'Madre'),
-        ('ABUELO',  'Abuelo/a'),
-        ('TIO',     'Tío/a'),
-        ('HERMANO', 'Hermano/a'),
-        ('TUTOR',   'Tutor Legal'),
-        ('OTRO',    'Otro'),
-    ]
-
     estudiante = models.ForeignKey(
         Estudiante,
         on_delete=models.RESTRICT,
         related_name='encargados',
-        verbose_name='Estudiante',
+        verbose_name='Estudiante'
     )
     encargado = models.ForeignKey(
         Encargado,
         on_delete=models.RESTRICT,
         related_name='estudiantes',
-        verbose_name='Encargado',
+        verbose_name='Encargado'
     )
     parentesco = models.CharField(
         max_length=20,
-        choices=PARENTESCO_CHOICES,
-        verbose_name='Parentesco',
+        choices=ParentescoChoices.choices,
+        verbose_name='Parentesco'
     )
     es_contacto_principal = models.BooleanField(
         default=False,
-        verbose_name='¿Es contacto principal?',
-        help_text='Solo un encargado puede ser el contacto principal.',
+        verbose_name='¿Es contacto principal?'
     )
 
     class Meta:
@@ -170,7 +118,4 @@ class EstudianteEncargado(ModeloAuditable):
         unique_together = [['estudiante', 'encargado']]
 
     def __str__(self):
-        return (
-            f"{self.estudiante} — {self.encargado} "
-            f"({self.get_parentesco_display()})"
-        )
+        return f"{self.estudiante.persona.nombre_completo} - {self.encargado.persona.nombre_completo} ({self.get_parentesco_display()})"

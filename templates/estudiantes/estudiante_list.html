@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Nómina de Estudiantes{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Encabezado de la Sección -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+            <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+                <i data-lucide="graduation-cap" class="w-7 h-7 text-[#1E6532]"></i>
+                Control de Estudiantes Inscritos
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">Expedientes estudiantiles y credenciales del Ministerio de Educación.</p>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <a href="{% url 'estudiantes:encargado_create' %}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
+                <i data-lucide="user-check" class="w-4 h-4 text-[#3C7DA8]"></i>
+                Nuevo Encargado
+            </a>
+            <a href="{% url 'estudiantes:estudiante_create' %}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
+                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                Inscribir Estudiante
+            </a>
+        </div>
+    </div>
+
+    <!-- Mensajes -->
+    {% if messages %}
+        <div class="space-y-3">
+            {% for message in messages %}
+                <div class="p-4 rounded-xl flex items-start gap-3 border shadow-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-900 border-emerald-200{% else %}bg-rose-50 text-rose-900 border-rose-200{% endif %}">
+                    <i data-lucide="{% if message.tags == 'success' %}check-circle-2{% else %}alert-triangle{% endif %}" class="w-5 h-5 flex-shrink-0 mt-0.5 {% if message.tags == 'success' %}text-emerald-600{% else %}text-rose-600{% endif %}"></i>
+                    <div class="text-sm font-medium leading-relaxed">
+                        {{ message }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Tabla de Estudiantes -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
+                        <th class="py-3.5 px-6">Código MINEDUC</th>
+                        <th class="py-3.5 px-6">Nombre Completo</th>
+                        <th class="py-3.5 px-6">CUI / DPI</th>
+                        <th class="py-3.5 px-6">Usuario Acceso</th>
+                        <th class="py-3.5 px-6">Género</th>
+                        <th class="py-3.5 px-6">Estado</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                    {% for estudiante in estudiantes %}
+                        <tr class="hover:bg-slate-50/60 transition-colors">
+                            <td class="py-4 px-6 font-mono font-bold text-[#1E6532]">{{ estudiante.codigo_mineduc }}</td>
+                            <td class="py-4 px-6 font-bold text-slate-900">{{ estudiante.persona.nombre_completo }}</td>
+                            <td class="py-4 px-6 font-mono text-slate-600">{{ estudiante.persona.cui }}</td>
+                            <td class="py-4 px-6">
+                                {% if estudiante.persona.usuario %}
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
+                                        <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                                        {{ estudiante.persona.usuario.username }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-slate-400">Sin cuenta</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-4 px-6">{{ estudiante.get_genero_display }}</td>
+                            <td class="py-4 px-6">
+                                {% if estudiante.estado_activo %}
+                                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">Activo</span>
+                                {% else %}
+                                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800">Inactivo</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="py-12 text-center text-slate-400">
+                                <i data-lucide="users" class="w-10 h-10 mx-auto mb-2 text-slate-300"></i>
+                                <p class="text-sm font-semibold">No hay estudiantes inscritos aún.</p>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

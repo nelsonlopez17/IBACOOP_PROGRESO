@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+
+{% block title %}Inscripción de Estudiante{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+
+    <!-- Encabezado de Página & Breadcrumb -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+                <a href="{% url 'core:home' %}" class="hover:underline">Dashboard</a>
+                <span>/</span>
+                <span>Módulo Estudiantes</span>
+                <span>/</span>
+                <span class="text-slate-500">Inscripción</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+                <i data-lucide="user-plus" class="w-7 h-7 text-[#1E6532]"></i>
+                Inscripción de Nuevo Estudiante
+            </h1>
+        </div>
+        <a href="{% url 'estudiantes:estudiante_list' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm self-start sm:self-auto">
+            <i data-lucide="arrow-left" class="w-4 h-4 text-slate-500"></i>
+            Volver a Estudiantes
+        </a>
+    </div>
+
+    <!-- Mensajes y Alertas del Sistema -->
+    {% if messages %}
+        <div class="space-y-3">
+            {% for message in messages %}
+                <div class="p-4 rounded-xl flex items-start gap-3 border shadow-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-900 border-emerald-200{% else %}bg-rose-50 text-rose-900 border-rose-200{% endif %}">
+                    <i data-lucide="{% if message.tags == 'success' %}check-circle-2{% else %}alert-triangle{% endif %}" class="w-5 h-5 flex-shrink-0 mt-0.5 {% if message.tags == 'success' %}text-emerald-600{% else %}text-rose-600{% endif %}"></i>
+                    <div class="text-sm font-medium leading-relaxed">
+                        {{ message }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Banner Informativo de Autogeneración de Credenciales -->
+    <div class="bg-gradient-to-r from-[#1E6532]/10 via-[#3C7DA8]/10 to-slate-50 border border-[#1E6532]/20 rounded-2xl p-4 sm:p-5 flex items-start gap-4 shadow-sm">
+        <div class="w-10 h-10 rounded-xl bg-[#1E6532] text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-[#1E6532]/20">
+            <i data-lucide="key-round" class="w-5 h-5"></i>
+        </div>
+        <div class="space-y-1">
+            <h3 class="text-sm font-bold text-[#1E6532]">Generación Automática de Credencial de Acceso</h3>
+            <p class="text-xs text-slate-600 leading-relaxed">
+                Al completar este formulario se creará de forma atómica la cuenta de usuario. El <strong>Nombre de Usuario</strong> asignado será el <strong>Código MINEDUC</strong> del alumno y la contraseña inicial será <code>Estudiante.2026!</code>.
+            </p>
+        </div>
+    </div>
+
+    <!-- Formulario Unificado -->
+    <form method="post" novalidate class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Sección 1: Datos Personales (Persona) -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
+            <div class="flex items-center gap-3 border-b border-slate-100 pb-3">
+                <div class="w-8 h-8 rounded-lg bg-[#3C7DA8]/10 text-[#3C7DA8] flex items-center justify-center font-bold text-sm">1</div>
+                <div>
+                    <h2 class="text-base font-bold text-slate-900">Información Personal del Estudiante</h2>
+                    <p class="text-xs text-slate-500">Datos generales asentados en el certificado de nacimiento o DPI.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                <!-- CUI -->
+                <div class="space-y-1 sm:col-span-2">
+                    <label for="{{ persona_form.cui.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ persona_form.cui.label }} <span class="text-[#7A1C21]">*</span>
+                    </label>
+                    {{ persona_form.cui }}
+                    {% if persona_form.cui.errors %}
+                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ persona_form.cui.errors.0 }}</p>
+                    {% endif %}
+                    <p class="text-[11px] text-slate-400">13 dígitos sin espacios ni guiones (DPI o CUI de certificación).</p>
+                </div>
+
+                <!-- Nombres -->
+                <div class="space-y-1">
+                    <label for="{{ persona_form.nombres.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ persona_form.nombres.label }} <span class="text-[#7A1C21]">*</span>
+                    </label>
+                    {{ persona_form.nombres }}
+                    {% if persona_form.nombres.errors %}
+                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ persona_form.nombres.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Apellidos -->
+                <div class="space-y-1">
+                    <label for="{{ persona_form.apellidos.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ persona_form.apellidos.label }} <span class="text-[#7A1C21]">*</span>
+                    </label>
+                    {{ persona_form.apellidos }}
+                    {% if persona_form.apellidos.errors %}
+                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ persona_form.apellidos.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Fecha de Nacimiento -->
+                <div class="space-y-1">
+                    <label for="{{ persona_form.fecha_nacimiento.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ persona_form.fecha_nacimiento.label }}
+                    </label>
+                    {{ persona_form.fecha_nacimiento }}
+                    {% if persona_form.fecha_nacimiento.errors %}
+                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ persona_form.fecha_nacimiento.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Correo -->
+                <div class="space-y-1">
+                    <label for="{{ persona_form.correo.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ persona_form.correo.label }}
+                    </label>
+                    {{ persona_form.correo }}
+                    {% if persona_form.correo.errors %}
+                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ persona_form.correo.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Teléfonos -->
+                <div class="space-y-1">
+                    <label for="{{ persona_form.telefono_principal.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ persona_form.telefono_principal.label }}
+                    </label>
+                    {{ persona_form.telefono_principal }}
+                </div>
+
+                <div class="space-y-1">
+                    <label for="{{ persona_form.telefono_secundario.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ persona_form.telefono_secundario.label }}
+                    </label>
+                    {{ persona_form.telefono_secundario }}
+                </div>
+
+                <!-- Dirección -->
+                <div class="space-y-1 sm:col-span-2">
+                    <label for="{{ persona_form.direccion.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ persona_form.direccion.label }}
+                    </label>
+                    {{ persona_form.direccion }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección 2: Expediente Académico MINEDUC (Estudiante) -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
+            <div class="flex items-center gap-3 border-b border-slate-100 pb-3">
+                <div class="w-8 h-8 rounded-lg bg-[#1E6532]/10 text-[#1E6532] flex items-center justify-center font-bold text-sm">2</div>
+                <div>
+                    <h2 class="text-base font-bold text-slate-900">Datos Académicos del MINEDUC</h2>
+                    <p class="text-xs text-slate-500">Información oficial para registros y boletines del Ministerio de Educación.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                <!-- Código MINEDUC -->
+                <div class="space-y-1 sm:col-span-2">
+                    <label for="{{ form.codigo_mineduc.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ form.codigo_mineduc.label }} <span class="text-[#7A1C21]">*</span>
+                    </label>
+                    {{ form.codigo_mineduc }}
+                    {% if form.codigo_mineduc.errors %}
+                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.codigo_mineduc.errors.0 }}</p>
+                    {% endif %}
+                    <p class="text-[11px] text-slate-400">Código único otorgado por el MINEDUC (Servirá como Usuario de acceso).</p>
+                </div>
+
+                <!-- Género -->
+                <div class="space-y-1">
+                    <label for="{{ form.genero.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ form.genero.label }} <span class="text-[#7A1C21]">*</span>
+                    </label>
+                    {{ form.genero }}
+                    {% if form.genero.errors %}
+                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.genero.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Estado Activo -->
+                <div class="sm:col-span-3 pt-2">
+                    <label class="inline-flex items-center gap-3 cursor-pointer">
+                        {{ form.estado_activo }}
+                        <span class="text-sm font-semibold text-slate-800">{{ form.estado_activo.label }}</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="flex items-center justify-end gap-3 pt-2">
+            <a href="{% url 'estudiantes:estudiante_list' %}" class="px-6 py-3 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
+                Cancelar
+            </a>
+            <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
+                <i data-lucide="check-circle" class="w-4 h-4"></i>
+                Completar Inscripción
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

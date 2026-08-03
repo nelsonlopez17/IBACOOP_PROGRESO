@@ -18,6 +18,9 @@ class TailwindFormMixin:
                     'h-5 w-5 rounded border-slate-300 bg-white text-[#1E6532] '
                     'focus:ring-[#1E6532] focus:ring-offset-white cursor-pointer transition'
                 )
+            elif widget_type == 'CheckboxSelectMultiple':
+                # El renderizado detallado se maneja en la plantilla HTML con Tailwind
+                pass
             elif widget_type in ['Select', 'SelectMultiple']:
                 field.widget.attrs['class'] = (
                     'w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg '
@@ -46,6 +49,9 @@ class CustomUserCreationForm(TailwindFormMixin, UserCreationForm):
             'is_active',
             'groups',
         )
+        widgets = {
+            'groups': forms.CheckboxSelectMultiple,
+        }
         labels = {
             'username': 'Nombre de Usuario',
             'first_name': 'Nombres',
@@ -57,7 +63,7 @@ class CustomUserCreationForm(TailwindFormMixin, UserCreationForm):
         }
         help_texts = {
             'rol': 'Permite mostrar la etiqueta y color según la función en la institución.',
-            'groups': 'Mantenga presionada la tecla Ctrl/Cmd para seleccionar múltiples grupos de permisos.',
+            'groups': 'Marque las casillas para agregar grupos de permisos al usuario, o desmárquelas para eliminarlos.',
         }
 
     def __init__(self, *args, **kwargs):
@@ -81,18 +87,21 @@ class CustomUserChangeForm(TailwindFormMixin, UserChangeForm):
             'is_active',
             'groups',
         )
+        widgets = {
+            'groups': forms.CheckboxSelectMultiple,
+        }
         labels = {
             'username': 'Nombre de Usuario',
             'first_name': 'Nombres',
             'last_name': 'Apellidos',
             'email': 'Correo Electrónico',
-            'rol': 'Tipo de perfil visual',
+            'rol': 'Rol',
             'is_active': '¿Usuario Activo?',
             'groups': 'Grupos de Permisos (Seguridad)',
         }
         help_texts = {
             'rol': 'Permite mostrar la etiqueta y color según la función en la institución.',
-            'groups': 'Mantenga presionada la tecla Ctrl/Cmd para seleccionar múltiples grupos de permisos.',
+            'groups': 'Marque las casillas para agregar grupos de permisos al usuario, o desmárquelas para eliminarlos.',
         }
 
     def __init__(self, *args, **kwargs):

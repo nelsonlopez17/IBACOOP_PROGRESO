@@ -1,0 +1,31 @@
+# ==============================================================================
+# DEPENDENCIAS DEL PROYECTO ERP ESCOLAR — INSTITUTO "EL PROGRESO"
+# ==============================================================================
+
+# Core Framework
+Django==6.0.7
+asgiref==3.12.1
+sqlparse==0.5.5
+tzdata==2026.3
+
+# Base de datos PostgreSQL (Driver psycopg3)
+psycopg==3.3.4
+psycopg-binary==3.3.4
+psycopg2-binary==2.9.12
+
+# Servidor WSGI / Producción
+gunicorn==23.0.0
+whitenoise==6.9.0
+
+# Variables de entorno y utilidades
+django-environ==0.14.0
+python-dateutil==2.9.0.post0
+requests==2.34.2
+pillow==12.3.0
+
+# Auditoría e Historial de Cambios
+django-simple-history==3.13.0
+
+# Estilos CSS y Tailwind
+django-tailwind==4.5.0
+pytailwindcss==0.3.1

@@ -1,11 +1,8 @@
 """
 financiero/models.py
 
-Gestión financiera del Instituto El Progreso.
-Cubre el cobro de mensualidades (colegiaturas) y el registro de pagos.
-
-django-simple-history en PagoColegiatura: audita cada registro de pago
-para garantizar trazabilidad completa en operaciones financieras.
+Gestión financiera del Instituto El Progreso basada en el sistema de Cuenta Corriente:
+ConceptoPago (Catálogo), CuentaPorCobrar (Deuda) y Abono (Pagos auditados con simple-history).
 """
 from django.db import models
 from simple_history.models import HistoricalRecords
@@ -13,121 +10,147 @@ from simple_history.models import HistoricalRecords
 from APPS.core.models import ModeloAuditable
 
 
-class MensualidadCobro(ModeloAuditable):
-    """
-    Representa la cuota mensual (colegiatura) que debe pagar un estudiante.
+class EstadoPagoChoices(models.TextChoices):
+    PENDIENTE = 'PENDIENTE', 'Pendiente'
+    PARCIAL   = 'PARCIAL',   'Pago Parcial'
+    PAGADO    = 'PAGADO',    'Pagado / Solvente'
 
-    Se genera un registro por estudiante por mes del ciclo escolar.
-    La unicidad (estudiante, ciclo_escolar, mes_cobro) evita duplicados.
-    RESTRICT en FK: protege la integridad financiera — no se puede eliminar
-    un estudiante o ciclo que tenga mensualidades registradas.
-    """
-    MESES = [
-        (1, 'Enero'),    (2, 'Febrero'),   (3, 'Marzo'),
-        (4, 'Abril'),    (5, 'Mayo'),       (6, 'Junio'),
-        (7, 'Julio'),    (8, 'Agosto'),     (9, 'Septiembre'),
-        (10, 'Octubre'), (11, 'Noviembre'), (12, 'Diciembre'),
-    ]
 
+class ConceptoPago(ModeloAuditable):
+    """Catálogo de conceptos de cobro (Colegiatura, Inscripción, Materiales, etc.)."""
+    nombre = models.CharField(
+        max_length=100,
+        unique=True,
+        verbose_name='Nombre del concepto'
+    )
+    monto_estandar = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name='Monto estándar (Q)'
+    )
+
+    class Meta:
+        verbose_name = 'Concepto de Pago'
+        verbose_name_plural = 'Conceptos de Pago'
+        ordering = ['nombre']
+
+    def __str__(self):
+        return f"{self.nombre} (Q{self.monto_estandar})"
+
+
+class CuentaPorCobrar(ModeloAuditable):
+    """Registro de la obligación financiera (deuda) de un estudiante."""
     estudiante = models.ForeignKey(
         'estudiantes.Estudiante',
         on_delete=models.RESTRICT,
-        related_name='mensualidades',
-        verbose_name='Estudiante',
+        related_name='cuentas_por_cobrar',
+        verbose_name='Estudiante'
+    )
+    concepto = models.ForeignKey(
+        ConceptoPago,
+        on_delete=models.RESTRICT,
+        related_name='cuentas_por_cobrar',
+        verbose_name='Concepto de Pago'
     )
     ciclo_escolar = models.ForeignKey(
         'academico.CicloEscolar',
         on_delete=models.RESTRICT,
-        related_name='mensualidades',
-        verbose_name='Ciclo Escolar',
+        related_name='cuentas_por_cobrar',
+        verbose_name='Ciclo Escolar'
     )
-    mes_cobro = models.PositiveSmallIntegerField(
-        choices=MESES,
-        verbose_name='Mes de cobro',
-    )
-    monto_esperado = models.DecimalField(
+    monto_total = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        verbose_name='Monto esperado (Q)',
+        verbose_name='Monto total (Q)'
     )
-    estado_pagado = models.BooleanField(
-        default=False,
-        verbose_name='¿Pagado?',
+    saldo_pendiente = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name='Saldo pendiente (Q)'
     )
     fecha_limite_pago = models.DateField(
         null=True,
         blank=True,
-        verbose_name='Fecha límite de pago',
+        verbose_name='Fecha límite de pago'
+    )
+    estado_pago = models.CharField(
+        max_length=20,
+        choices=EstadoPagoChoices.choices,
+        default=EstadoPagoChoices.PENDIENTE,
+        verbose_name='Estado del pago'
     )
 
     class Meta:
-        verbose_name = 'Mensualidad de Cobro'
-        verbose_name_plural = 'Mensualidades de Cobro'
-        unique_together = [['estudiante', 'ciclo_escolar', 'mes_cobro']]
-        ordering = ['ciclo_escolar', 'mes_cobro', 'estudiante']
+        verbose_name = 'Cuenta por Cobrar'
+        verbose_name_plural = 'Cuentas por Cobrar'
+        ordering = ['ciclo_escolar', 'fecha_limite_pago']
 
     def __str__(self):
-        return (
-            f"{self.estudiante} — "
-            f"{self.get_mes_cobro_display()} {self.ciclo_escolar.anio} "
-            f"(Q{self.monto_esperado})"
+        return f"Deuda: {self.estudiante.persona.nombre_completo} — {self.concepto.nombre} (Saldo: Q{self.saldo_pendiente})"
+
+    def actualizar_saldo(self):
+        """Actualiza el saldo pendiente y el estado del pago basado en los abonos activos."""
+        total_abonado = sum(
+            abono.monto_pagado for abono in self.abonos.filter(esta_eliminado=False)
         )
+        self.saldo_pendiente = max(self.monto_total - total_abonado, 0)
+        
+        if self.saldo_pendiente == 0:
+            self.estado_pago = EstadoPagoChoices.PAGADO
+        elif total_abonado > 0:
+            self.estado_pago = EstadoPagoChoices.PARCIAL
+        else:
+            self.estado_pago = EstadoPagoChoices.PENDIENTE
+
+        self.save(update_fields=['saldo_pendiente', 'estado_pago', 'actualizado_en'])
 
 
-class PagoColegiatura(ModeloAuditable):
+class Abono(ModeloAuditable):
     """
-    Registro de un pago realizado contra una mensualidad.
-
-    Se permite pago parcial (monto_pagado puede ser menor a monto_esperado).
-    El número de boleta es único a nivel del sistema.
-    django-simple-history: cada modificación al registro de pago queda auditada
-    (quién cambió el monto, cuándo se marcó como pagado, etc.).
-    RESTRICT en MensualidadCobro: no se puede eliminar una mensualidad que
-    ya tenga pagos registrados.
+    Registro de cada pago parcial o total recibido contra una CuentaPorCobrar.
+    Auditado con django-simple-history para trazabilidad contable inmutable.
     """
-    mensualidad = models.ForeignKey(
-        MensualidadCobro,
+    cuenta_por_cobrar = models.ForeignKey(
+        CuentaPorCobrar,
         on_delete=models.RESTRICT,
-        related_name='pagos',
-        verbose_name='Mensualidad',
+        related_name='abonos',
+        verbose_name='Cuenta por cobrar'
     )
     monto_pagado = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        verbose_name='Monto pagado (Q)',
+        verbose_name='Monto pagado (Q)'
     )
-    fecha_pago = models.DateField(verbose_name='Fecha de pago')
+    fecha_pago = models.DateField(
+        verbose_name='Fecha de pago'
+    )
     numero_boleta = models.CharField(
         max_length=30,
         unique=True,
-        verbose_name='Número de boleta',
-    )
-    recibo_generado = models.BooleanField(
-        default=False,
-        verbose_name='¿Recibo generado?',
+        verbose_name='Número de boleta'
     )
     recibo_pdf = models.FileField(
         upload_to='recibos/%Y/%m/',
         null=True,
         blank=True,
-        verbose_name='Archivo de recibo (PDF)',
+        verbose_name='Recibo en PDF'
     )
     observaciones = models.TextField(
         blank=True,
-        verbose_name='Observaciones',
+        verbose_name='Observaciones'
     )
-    # --- Auditoría de pagos (django-simple-history) ---
     history = HistoricalRecords(
-        verbose_name='Historial de cambios del pago',
+        verbose_name='Historial de cambios de abonos'
     )
 
     class Meta:
-        verbose_name = 'Pago de Colegiatura'
-        verbose_name_plural = 'Pagos de Colegiatura'
+        verbose_name = 'Abono'
+        verbose_name_plural = 'Abonos'
         ordering = ['-fecha_pago']
 
     def __str__(self):
-        return (
-            f"Boleta {self.numero_boleta} — "
-            f"{self.mensualidad} (Q{self.monto_pagado})"
-        )
+        return f"Boleta {self.numero_boleta} — {self.cuenta_por_cobrar.estudiante.persona.nombre_completo} (Q{self.monto_pagado})"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.cuenta_por_cobrar.actualizar_saldo()

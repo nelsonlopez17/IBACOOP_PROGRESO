@@ -1,27 +1,53 @@
 """
 rrhh/models.py
 
-Recursos Humanos y Nómina del Instituto El Progreso.
-Cubre la gestión de puestos, personal, control de asistencia y generación de planillas.
-Todos los modelos heredan de ModeloAuditable para auditoría y soft delete.
+Recursos Humanos y Planilla/Nómina del Instituto El Progreso.
+Implementa el subtipo Personal (Persona FK primary_key=True), Puesto, AsistenciaPersonal y Planilla.
 """
 from django.db import models
-from APPS.core.models import ModeloAuditable
+from APPS.core.models import ModeloAuditable, Persona
+
+
+class EstadoLaboralChoices(models.TextChoices):
+    ACTIVO     = 'ACTIVO',     'Activo'
+    BAJA       = 'BAJA',       'Baja temporal'
+    RETIRADO   = 'RETIRADO',   'Retirado'
+    SUSPENDIDO = 'SUSPENDIDO', 'Suspendido'
+
+
+class EstadoAsistenciaChoices(models.TextChoices):
+    PRESENTE   = 'PRESENTE',   'Presente'
+    AUSENTE    = 'AUSENTE',    'Ausente'
+    TARDANZA   = 'TARDANZA',   'Tardanza'
+    PERMISO    = 'PERMISO',    'Con permiso'
+    VACACIONES = 'VACACIONES', 'En vacaciones'
+
+
+class MesChoices(models.IntegerChoices):
+    ENERO      = 1,  'Enero'
+    FEBRERO    = 2,  'Febrero'
+    MARZO      = 3,  'Marzo'
+    ABRIL      = 4,  'Abril'
+    MAYO       = 5,  'Mayo'
+    JUNIO      = 6,  'Junio'
+    JULIO      = 7,  'Julio'
+    AGOSTO     = 8,  'Agosto'
+    SEPTIEMBRE = 9,  'Septiembre'
+    OCTUBRE    = 10, 'Octubre'
+    NOVIEMBRE  = 11, 'Noviembre'
+    DICIEMBRE  = 12, 'Diciembre'
 
 
 class Puesto(ModeloAuditable):
-    """
-    Representa un puesto o cargo dentro de la institución.
-    Ejemplos: Docente de Matemáticas, Director, Contador, Conserje.
-    """
+    """Representa un cargo o puesto laboral en la institución."""
     nombre_puesto = models.CharField(
         max_length=100,
         unique=True,
-        verbose_name='Nombre del puesto',
+        verbose_name='Nombre del puesto'
     )
     descripcion = models.TextField(
         blank=True,
-        verbose_name='Descripción',
+        verbose_name='Descripción'
     )
 
     class Meta:
@@ -35,110 +61,81 @@ class Puesto(ModeloAuditable):
 
 class Personal(ModeloAuditable):
     """
-    Representa a un miembro del personal del instituto (docente, administrativo, etc.).
-
-    Cada miembro del personal tiene un Usuario del sistema asociado para acceso.
-    RESTRICT en FK Usuario y Puesto: no se puede desactivar un puesto si tiene
-    personal activo, y no se puede eliminar un usuario si tiene registro de personal.
+    Subtipo de Persona para colaboradores (docentes, administrativos, conserjes).
+    La relación persona (OneToOneField) actúa como llave primaria.
     """
-    ESTADO_LABORAL_CHOICES = [
-        ('ACTIVO',    'Activo'),
-        ('BAJA',      'Baja temporal'),
-        ('RETIRADO',  'Retirado'),
-        ('SUSPENDIDO','Suspendido'),
-    ]
-
-    usuario = models.OneToOneField(
-        'usuarios.Usuario',
+    persona = models.OneToOneField(
+        Persona,
         on_delete=models.RESTRICT,
+        primary_key=True,
         related_name='personal',
-        verbose_name='Usuario del sistema',
+        verbose_name='Persona'
     )
     puesto = models.ForeignKey(
         Puesto,
         on_delete=models.RESTRICT,
         related_name='empleados',
-        verbose_name='Puesto',
-    )
-    nombres = models.CharField(max_length=100, verbose_name='Nombres')
-    apellidos = models.CharField(max_length=100, verbose_name='Apellidos')
-    dpi = models.CharField(
-        max_length=20,
-        unique=True,
-        verbose_name='DPI',
+        verbose_name='Puesto'
     )
     nit = models.CharField(
         max_length=15,
         blank=True,
-        verbose_name='NIT',
+        verbose_name='NIT'
     )
-    fecha_contratacion = models.DateField(verbose_name='Fecha de contratación')
+    fecha_contratacion = models.DateField(
+        verbose_name='Fecha de contratación'
+    )
     estado_laboral = models.CharField(
         max_length=20,
-        choices=ESTADO_LABORAL_CHOICES,
-        default='ACTIVO',
-        verbose_name='Estado laboral',
+        choices=EstadoLaboralChoices.choices,
+        default=EstadoLaboralChoices.ACTIVO,
+        verbose_name='Estado laboral'
     )
     salario_base_asignado = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        verbose_name='Salario base asignado (Q)',
+        verbose_name='Salario base asignado (Q)'
     )
 
     class Meta:
         verbose_name = 'Personal'
         verbose_name_plural = 'Personal'
-        ordering = ['apellidos', 'nombres']
+        ordering = ['persona__apellidos', 'persona__nombres']
 
     def __str__(self):
-        return f"{self.apellidos}, {self.nombres} — {self.puesto}"
-
-    @property
-    def nombre_completo(self):
-        return f"{self.nombres} {self.apellidos}"
+        return f"{self.persona.nombre_completo} - {self.puesto.nombre_puesto}"
 
 
 class AsistenciaPersonal(ModeloAuditable):
-    """
-    Registro diario de asistencia del personal.
-
-    La restricción unique_together garantiza un único registro por persona por día.
-    RESTRICT en FK Personal: no se puede eliminar personal con registros de asistencia.
-    """
-    ESTADO_CHOICES = [
-        ('PRESENTE',  'Presente'),
-        ('AUSENTE',   'Ausente'),
-        ('TARDANZA',  'Tardanza'),
-        ('PERMISO',   'Con permiso'),
-        ('VACACIONES','En vacaciones'),
-    ]
-
+    """Registro diario de asistencia del personal."""
     personal = models.ForeignKey(
         Personal,
         on_delete=models.RESTRICT,
         related_name='asistencias',
-        verbose_name='Personal',
+        verbose_name='Personal'
     )
-    fecha = models.DateField(verbose_name='Fecha')
+    fecha = models.DateField(
+        verbose_name='Fecha'
+    )
     hora_entrada = models.TimeField(
         null=True,
         blank=True,
-        verbose_name='Hora de entrada',
+        verbose_name='Hora de entrada'
     )
     hora_salida = models.TimeField(
         null=True,
         blank=True,
-        verbose_name='Hora de salida',
+        verbose_name='Hora de salida'
     )
     estado_asistencia = models.CharField(
         max_length=20,
-        choices=ESTADO_CHOICES,
-        default='PRESENTE',
-        verbose_name='Estado de asistencia',
+        choices=EstadoAsistenciaChoices.choices,
+        default=EstadoAsistenciaChoices.PRESENTE,
+        verbose_name='Estado de asistencia'
     )
     observaciones = models.TextField(
         blank=True,
-        verbose_name='Observaciones',
+        verbose_name='Observaciones'
     )
 
     class Meta:
@@ -148,87 +145,67 @@ class AsistenciaPersonal(ModeloAuditable):
         ordering = ['-fecha', 'personal']
 
     def __str__(self):
-        return (
-            f"{self.personal} — {self.fecha} "
-            f"({self.get_estado_asistencia_display()})"
-        )
+        return f"{self.personal.persona.nombre_completo} - {self.fecha} ({self.get_estado_asistencia_display()})"
 
 
 class Planilla(ModeloAuditable):
-    """
-    Registro de pago mensual (planilla) de un miembro del personal.
-
-    La unicidad por (personal, mes_pagado, ciclo_escolar) garantiza que no se
-    genere doble pago para el mismo mes dentro de un ciclo escolar.
-    El campo comprobante_pdf almacena el archivo del recibo generado.
-    """
-    MESES = [
-        (1, 'Enero'),    (2, 'Febrero'),   (3, 'Marzo'),
-        (4, 'Abril'),    (5, 'Mayo'),       (6, 'Junio'),
-        (7, 'Julio'),    (8, 'Agosto'),     (9, 'Septiembre'),
-        (10, 'Octubre'), (11, 'Noviembre'), (12, 'Diciembre'),
-    ]
-
+    """Registro de pago de planilla mensual de personal."""
     personal = models.ForeignKey(
         Personal,
         on_delete=models.RESTRICT,
         related_name='planillas',
-        verbose_name='Personal',
-    )
-    mes_pagado = models.PositiveSmallIntegerField(
-        choices=MESES,
-        verbose_name='Mes pagado',
+        verbose_name='Personal'
     )
     ciclo_escolar = models.ForeignKey(
         'academico.CicloEscolar',
         on_delete=models.RESTRICT,
-        related_name='planillas',
-        verbose_name='Ciclo Escolar',
         null=True,
         blank=True,
+        related_name='planillas',
+        verbose_name='Ciclo Escolar'
+    )
+    mes_pagado = models.IntegerField(
+        choices=MesChoices.choices,
+        verbose_name='Mes pagado'
     )
     bonificaciones = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         default=0,
-        verbose_name='Bonificaciones (Q)',
+        verbose_name='Bonificaciones (Q)'
     )
     descuentos = models.DecimalField(
         max_digits=10,
         decimal_places=2,
         default=0,
-        verbose_name='Descuentos (Q)',
+        verbose_name='Descuentos (Q)'
     )
     total_pagar = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        verbose_name='Total a pagar (Q)',
+        verbose_name='Total a pagar (Q)'
     )
     comprobante_pdf = models.FileField(
         upload_to='planillas/%Y/%m/',
         null=True,
         blank=True,
-        verbose_name='Comprobante PDF',
+        verbose_name='Comprobante PDF'
     )
     fecha_pago = models.DateField(
         null=True,
         blank=True,
-        verbose_name='Fecha de pago',
+        verbose_name='Fecha de pago'
     )
     pagado = models.BooleanField(
         default=False,
-        verbose_name='¿Pagado?',
+        verbose_name='¿Pagado?'
     )
 
     class Meta:
         verbose_name = 'Planilla'
         verbose_name_plural = 'Planillas'
         unique_together = [['personal', 'mes_pagado', 'ciclo_escolar']]
-        ordering = ['-ciclo_escolar__anio', '-mes_pagado']
+        ordering = ['-mes_pagado']
 
     def __str__(self):
-        return (
-            f"Planilla — {self.personal} — "
-            f"{self.get_mes_pagado_display()} {self.ciclo_escolar.anio} "
-            f"(Q{self.total_pagar})"
-        )
+        return f"Planilla {self.get_mes_pagado_display()} - {self.personal.persona.nombre_completo} (Q{self.total_pagar})"

@@ -1,16 +1,8 @@
 """
 academico/models.py
 
-Núcleo del sistema educativo del Instituto El Progreso (Nivel Básico — Guatemala).
-
-Implementa el sistema académico del MINEDUC:
-  - Solo existen 3 Grados: Primero, Segundo y Tercero Básico.
-  - El punteo se divide en Zona (máx. 60 pts) + Examen (máx. 40 pts) = 100 pts.
-  - Nota mínima de aprobación: 60 puntos.
-  - Los bloques académicos (Bimestres/Trimestres) pertenecen a un CicloEscolar.
-
-django-simple-history se aplica en NotaBloque para auditar todos los cambios
-de calificaciones (quién cambió qué nota y cuándo).
+Núcleo del sistema académico del Instituto El Progreso (Nivel Básico — Guatemala).
+Incluye Ciclos, Bloques, Grados, Secciones, Cursos, Asignaciones, Notas con Recuperaciones y Asistencia.
 """
 from decimal import Decimal
 from django.db import models
@@ -21,31 +13,25 @@ from APPS.core.models import ModeloAuditable
 
 
 class CicloEscolar(ModeloAuditable):
-    """
-    Representa el año lectivo (ciclo escolar) del instituto.
-
-    Solo debe haber UN ciclo con estado_activo=True a la vez.
-    Este ciclo activo es el punto de referencia de todas las operaciones
-    académicas y financieras en curso.
-    """
+    """Año lectivo del instituto."""
     anio = models.PositiveIntegerField(
         unique=True,
-        verbose_name='Año lectivo',
+        verbose_name='Año lectivo'
     )
     estado_activo = models.BooleanField(
         default=False,
         verbose_name='Ciclo activo',
-        help_text='Solo debe existir un ciclo activo a la vez.',
+        help_text='Único ciclo activo en el sistema.'
     )
     fecha_inicio = models.DateField(
         null=True,
         blank=True,
-        verbose_name='Fecha de inicio',
+        verbose_name='Fecha de inicio'
     )
     fecha_fin = models.DateField(
         null=True,
         blank=True,
-        verbose_name='Fecha de finalización',
+        verbose_name='Fecha de finalización'
     )
 
     class Meta:
@@ -59,28 +45,30 @@ class CicloEscolar(ModeloAuditable):
 
 
 class BloqueAcademico(ModeloAuditable):
-    """
-    Representa un período de evaluación dentro de un ciclo escolar.
-    Ejemplos: Primer Bimestre, Segundo Bimestre, Primer Trimestre.
-
-    RESTRICT en CicloEscolar: no se puede eliminar un ciclo que tenga bloques.
-    """
+    """Período de evaluación dentro del ciclo escolar (ej. Primer Bimestre)."""
     ciclo_escolar = models.ForeignKey(
         CicloEscolar,
         on_delete=models.RESTRICT,
         related_name='bloques',
-        verbose_name='Ciclo Escolar',
+        verbose_name='Ciclo Escolar'
     )
     nombre_bloque = models.CharField(
         max_length=50,
-        verbose_name='Nombre del bloque',
-        help_text='Ej: Primer Bimestre, Segundo Trimestre.',
+        verbose_name='Nombre del bloque'
     )
     orden = models.PositiveSmallIntegerField(
-        verbose_name='Orden de evaluación',
+        verbose_name='Orden de evaluación'
     )
-    fecha_inicio = models.DateField(null=True, blank=True, verbose_name='Fecha de inicio')
-    fecha_fin = models.DateField(null=True, blank=True, verbose_name='Fecha de fin')
+    fecha_inicio = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name='Fecha de inicio'
+    )
+    fecha_fin = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name='Fecha de fin'
+    )
 
     class Meta:
         verbose_name = 'Bloque Académico'
@@ -93,21 +81,14 @@ class BloqueAcademico(ModeloAuditable):
 
 
 class Grado(ModeloAuditable):
-    """
-    Representa un grado del Nivel Básico en Guatemala.
-    Solo existen 3 grados: Primero Básico, Segundo Básico, Tercero Básico.
-
-    RESTRICT implícito: no se puede eliminar un grado si tiene secciones o cursos.
-    """
+    """Grado escolar del Nivel Básico (Primero, Segundo, Tercero Básico)."""
     nombre = models.CharField(
         max_length=50,
         unique=True,
-        verbose_name='Nombre del grado',
-        help_text='Ej: Primero Básico, Segundo Básico, Tercero Básico.',
+        verbose_name='Nombre del grado'
     )
     orden = models.PositiveSmallIntegerField(
-        verbose_name='Orden de visualización',
-        help_text='1=Primero, 2=Segundo, 3=Tercero.',
+        verbose_name='Orden'
     )
 
     class Meta:
@@ -120,26 +101,20 @@ class Grado(ModeloAuditable):
 
 
 class Seccion(ModeloAuditable):
-    """
-    Representa una sección dentro de un grado (ej. Primero Básico — Sección A).
-
-    cupo_maximo controla la cantidad máxima de estudiantes asignables.
-    RESTRICT en Grado: no se puede eliminar un grado que tenga secciones.
-    """
+    """Sección dentro de un grado (A, B, C...)."""
     grado = models.ForeignKey(
         Grado,
         on_delete=models.RESTRICT,
         related_name='secciones',
-        verbose_name='Grado',
+        verbose_name='Grado'
     )
     letra = models.CharField(
         max_length=1,
-        verbose_name='Letra de sección',
-        help_text='Una sola letra mayúscula. Ej: A, B, C.',
+        verbose_name='Letra de sección'
     )
     cupo_maximo = models.PositiveSmallIntegerField(
         default=35,
-        verbose_name='Cupo máximo de estudiantes',
+        verbose_name='Cupo máximo de estudiantes'
     )
 
     class Meta:
@@ -149,32 +124,25 @@ class Seccion(ModeloAuditable):
         ordering = ['grado__orden', 'letra']
 
     def __str__(self):
-        return f"{self.grado} — Sección {self.letra}"
+        return f"{self.grado.nombre} — Sección {self.letra}"
 
 
 class Curso(ModeloAuditable):
-    """
-    Representa una materia o asignatura impartida en un grado específico.
-
-    Vinculado a un Grado específico porque los cursos del Nivel Básico
-    pueden variar por grado según el pensum del MINEDUC.
-    RESTRICT en Grado: no se puede eliminar un grado si tiene cursos asignados.
-    """
+    """Asignatura impartida según el pensum del MINEDUC."""
     grado = models.ForeignKey(
         Grado,
         on_delete=models.RESTRICT,
         related_name='cursos',
-        verbose_name='Grado',
+        verbose_name='Grado'
     )
     nombre_curso = models.CharField(
         max_length=100,
-        verbose_name='Nombre del curso',
+        verbose_name='Nombre del curso'
     )
     codigo_curso = models.CharField(
         max_length=10,
         unique=True,
-        verbose_name='Código del curso',
-        help_text='Código único para identificar el curso. Ej: MAT-1B.',
+        verbose_name='Código del curso'
     )
 
     class Meta:
@@ -183,80 +151,64 @@ class Curso(ModeloAuditable):
         ordering = ['grado__orden', 'nombre_curso']
 
     def __str__(self):
-        return f"{self.nombre_curso} ({self.grado})"
+        return f"{self.nombre_curso} ({self.grado.nombre})"
 
 
 class AsignacionEstudiante(ModeloAuditable):
-    """
-    Inscripción formal de un estudiante en una sección para un ciclo escolar.
-
-    La unicidad (estudiante, ciclo_escolar) garantiza que un estudiante no pueda
-    estar inscrito en más de una sección en el mismo ciclo.
-    RESTRICT en todas las FK: protege la integridad de la inscripción.
-    """
+    """Inscripción formal de un estudiante en una sección para un ciclo escolar."""
     estudiante = models.ForeignKey(
         'estudiantes.Estudiante',
         on_delete=models.RESTRICT,
         related_name='asignaciones',
-        verbose_name='Estudiante',
+        verbose_name='Estudiante'
     )
     seccion = models.ForeignKey(
         Seccion,
         on_delete=models.RESTRICT,
         related_name='asignaciones',
-        verbose_name='Sección',
+        verbose_name='Sección'
     )
     ciclo_escolar = models.ForeignKey(
         CicloEscolar,
         on_delete=models.RESTRICT,
         related_name='asignaciones_estudiantes',
-        verbose_name='Ciclo Escolar',
+        verbose_name='Ciclo Escolar'
     )
 
     class Meta:
         verbose_name = 'Asignación de Estudiante'
         verbose_name_plural = 'Asignaciones de Estudiantes'
-        # Un estudiante solo puede estar en una sección por ciclo
         unique_together = [['estudiante', 'ciclo_escolar']]
 
     def __str__(self):
-        return (
-            f"{self.estudiante} → {self.seccion} "
-            f"({self.ciclo_escolar.anio})"
-        )
+        return f"{self.estudiante.persona.nombre_completo} → {self.seccion} ({self.ciclo_escolar.anio})"
 
 
 class AsignacionDocente(ModeloAuditable):
-    """
-    Asignación de un docente a un curso específico en una sección y ciclo escolar.
-
-    La unicidad (personal, curso, seccion, ciclo_escolar) evita asignaciones duplicadas.
-    RESTRICT en todas las FK: un docente con asignaciones activas no puede ser
-    eliminado ni puede eliminarse el curso o sección que imparte.
-    """
+    """Asignación de un docente a un curso en una sección y ciclo lectivo."""
     personal = models.ForeignKey(
         'rrhh.Personal',
         on_delete=models.RESTRICT,
         related_name='asignaciones_docente',
-        verbose_name='Docente',
+        verbose_name='Docente'
     )
     curso = models.ForeignKey(
         Curso,
         on_delete=models.RESTRICT,
         related_name='asignaciones_docente',
-        verbose_name='Curso',
+        verbose_name='Curso'
     )
     seccion = models.ForeignKey(
         Seccion,
         on_delete=models.RESTRICT,
         related_name='asignaciones_docente',
-        verbose_name='Sección',
+        verbose_name='Sección'
     )
     ciclo_escolar = models.ForeignKey(
         CicloEscolar,
         on_delete=models.RESTRICT,
         related_name='asignaciones_docentes',
-        verbose_name='Ciclo Escolar',
+        verbose_name='Ciclo Escolar'
     )
 
     class Meta:
@@ -265,115 +217,112 @@ class AsignacionDocente(ModeloAuditable):
         unique_together = [['personal', 'curso', 'seccion', 'ciclo_escolar']]
 
     def __str__(self):
-        return (
-            f"{self.personal} → {self.curso} / {self.seccion} "
-            f"({self.ciclo_escolar.anio})"
-        )
+        return f"{self.personal.persona.nombre_completo} → {self.curso.nombre_curso} / {self.seccion} ({self.ciclo_escolar.anio})"
 
 
 class NotaBloque(ModeloAuditable):
-    """
-    Calificación de un estudiante en un curso para un bloque académico específico.
-
-    Sistema de punteo MINEDUC (Nivel Básico):
-        - Zona:   0 a 60 puntos (actividades, tareas, parciales)
-        - Examen: 0 a 40 puntos (examen de fin de bloque)
-        - Total:  nota_zona + nota_examen (máx. 100)
-        - Mínimo para aprobar: 60 puntos
-
-    django-simple-history: registra automáticamente cada cambio de nota
-    (quién la cambió, cuándo, y cuáles fueron los valores anterior y nuevo).
-
-    RESTRICT en todas las FK: garantiza que no se puedan eliminar registros
-    académicos mientras existan calificaciones asociadas.
-    """
+    """Calificación de un estudiante en un bloque académico (Zona + Examen = 100 pts)."""
     asignacion_estudiante = models.ForeignKey(
         AsignacionEstudiante,
         on_delete=models.RESTRICT,
         related_name='notas',
-        verbose_name='Asignación del estudiante',
+        verbose_name='Asignación del estudiante'
     )
     curso = models.ForeignKey(
         Curso,
         on_delete=models.RESTRICT,
         related_name='notas',
-        verbose_name='Curso',
+        verbose_name='Curso'
     )
     bloque_academico = models.ForeignKey(
         BloqueAcademico,
         on_delete=models.RESTRICT,
         related_name='notas',
-        verbose_name='Bloque académico',
+        verbose_name='Bloque académico'
     )
-    # --- Punteo MINEDUC ---
     nota_zona = models.DecimalField(
         max_digits=5,
         decimal_places=2,
         validators=[MinValueValidator(0), MaxValueValidator(60)],
-        verbose_name='Nota de Zona (0–60 pts)',
+        verbose_name='Nota de Zona (0-60 pts)'
     )
     nota_examen = models.DecimalField(
         max_digits=5,
         decimal_places=2,
         validators=[MinValueValidator(0), MaxValueValidator(40)],
-        verbose_name='Nota de Examen (0–40 pts)',
+        verbose_name='Nota de Examen (0-40 pts)'
     )
-    # --- Auditoría de cambios (django-simple-history) ---
     history = HistoricalRecords(
-        verbose_name='Historial de cambios de nota',
+        verbose_name='Historial de cambios de nota'
     )
 
     class Meta:
         verbose_name = 'Nota de Bloque'
         verbose_name_plural = 'Notas de Bloque'
-        # Un estudiante tiene una sola nota por curso por bloque
         unique_together = [['asignacion_estudiante', 'curso', 'bloque_academico']]
 
     def __str__(self):
-        return (
-            f"{self.asignacion_estudiante.estudiante} — "
-            f"{self.curso} / {self.bloque_academico} → "
-            f"{self.nota_total} pts"
-        )
+        return f"{self.asignacion_estudiante.estudiante.persona.nombre_completo} — {self.curso.nombre_curso}: {self.nota_total} pts"
 
     @property
-    def nota_total(self):
-        """Calcula el punteo total del bloque: Zona + Examen."""
+    def nota_total(self) -> Decimal:
         return self.nota_zona + self.nota_examen
 
 
 class NotaFinalCurso(ModeloAuditable):
     """
-    Representa el resultado final acumulativo de un estudiante en un curso específico
-    durante un Ciclo Escolar para dictaminar su promoción.
-
-    Reglas MINEDUC (Nivel Básico — Guatemala):
-    - La nota final del curso se obtiene promediando las notas totales alcanzadas
-      en cada bloque académico del ciclo escolar.
-    - Se promueve y aprueba el curso si la nota promedio acumulada alcanza o supera los 60 puntos.
+    Promedio final acumulado del curso y gestión de pruebas de recuperación.
+    Maneja los campos de recuperación requeridos en la especificación del sistema.
     """
     asignacion_estudiante = models.ForeignKey(
         AsignacionEstudiante,
         on_delete=models.RESTRICT,
         related_name='notas_finales',
-        verbose_name='Asignación del estudiante',
+        verbose_name='Asignación del estudiante'
     )
     curso = models.ForeignKey(
         Curso,
         on_delete=models.RESTRICT,
         related_name='notas_finales',
-        verbose_name='Curso',
+        verbose_name='Curso'
     )
     nota_promedio = models.DecimalField(
         max_digits=5,
         decimal_places=2,
         default=Decimal('0.00'),
-        verbose_name='Nota Promedio Final (0–100 pts)',
+        verbose_name='Nota Promedio (0-100 pts)'
+    )
+    aplica_recuperacion = models.BooleanField(
+        default=False,
+        verbose_name='¿Aplica a recuperación?',
+        help_text='Se activa si el promedio ordinario es menor a 60 puntos.'
+    )
+    nota_recuperacion_1 = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        verbose_name='Nota Recuperación 1'
+    )
+    nota_recuperacion_2 = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        verbose_name='Nota Recuperación 2'
+    )
+    nota_definitiva = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Nota Definitiva'
     )
     esta_promocionado = models.BooleanField(
         default=False,
-        verbose_name='¿Materia Aprobada / Promocionada?',
-        help_text='Indica si el estudiante alcanzó un promedio final mayor o igual a 60 puntos.',
+        verbose_name='¿Materia Aprobada / Promocionada?'
     )
 
     class Meta:
@@ -384,63 +333,78 @@ class NotaFinalCurso(ModeloAuditable):
 
     def __str__(self):
         estado = 'Promocionado' if self.esta_promocionado else 'No Promocionado'
-        return f"{self.asignacion_estudiante.estudiante} — {self.curso}: {self.nota_promedio} pts ({estado})"
+        return f"{self.asignacion_estudiante.estudiante.persona.nombre_completo} — {self.curso.nombre_curso}: {self.nota_definitiva or self.nota_promedio} pts ({estado})"
 
     def calcular_nota_final(self):
         """
-        Calcula el promedio acumulado de todos los bloques evaluados para este curso
-        y determina la aprobación / promoción (>= 60 pts).
+        Calcula la nota promedio ordinaria y evalúa recuperaciones para determinar la nota definitiva.
         """
         notas_bloque = NotaBloque.objects.filter(
             asignacion_estudiante=self.asignacion_estudiante,
             curso=self.curso,
-            esta_eliminado=False,
+            esta_eliminado=False
         )
+
         if not notas_bloque.exists():
             self.nota_promedio = Decimal('0.00')
+            self.aplica_recuperacion = False
+            self.nota_definitiva = Decimal('0.00')
             self.esta_promocionado = False
         else:
-            total_puntos = sum([nb.nota_total for nb in notas_bloque])
-            cantidad_bloques = Decimal(str(notas_bloque.count()))
-            self.nota_promedio = round(total_puntos / cantidad_bloques, 2)
-            self.esta_promocionado = self.nota_promedio >= Decimal('60.00')
+            total = sum([nb.nota_total for nb in notas_bloque])
+            self.nota_promedio = round(total / Decimal(str(notas_bloque.count())), 2)
+            
+            # Evaluación de recuperaciones
+            if self.nota_promedio >= Decimal('60.00'):
+                self.aplica_recuperacion = False
+                self.nota_definitiva = self.nota_promedio
+                self.esta_promocionado = True
+            else:
+                self.aplica_recuperacion = True
+                mejores_notas = [self.nota_promedio]
+                if self.nota_recuperacion_1 is not None:
+                    mejores_notas.append(self.nota_recuperacion_1)
+                if self.nota_recuperacion_2 is not None:
+                    mejores_notas.append(self.nota_recuperacion_2)
+                
+                self.nota_definitiva = max(mejores_notas)
+                self.esta_promocionado = self.nota_definitiva >= Decimal('60.00')
 
-        self.save(update_fields=['nota_promedio', 'esta_promocionado', 'actualizado_en'])
-        return self.nota_promedio, self.esta_promocionado
+        self.save(update_fields=[
+            'nota_promedio', 'aplica_recuperacion', 'nota_recuperacion_1',
+            'nota_recuperacion_2', 'nota_definitiva', 'esta_promocionado', 'actualizado_en'
+        ])
+        return self.nota_definitiva, self.esta_promocionado
 
 
 class AsistenciaEstudiantil(ModeloAuditable):
-    """
-    Registro diario de asistencia de un estudiante a un curso específico.
-
-    La unicidad (asignacion_estudiante, curso, fecha) garantiza un solo registro
-    por estudiante por curso por día.
-    """
+    """Control diario de asistencia por estudiante y curso."""
     asignacion_estudiante = models.ForeignKey(
         AsignacionEstudiante,
         on_delete=models.RESTRICT,
         related_name='asistencias',
-        verbose_name='Asignación del estudiante',
+        verbose_name='Asignación del estudiante'
     )
     curso = models.ForeignKey(
         Curso,
         on_delete=models.RESTRICT,
         related_name='asistencias',
-        verbose_name='Curso',
+        verbose_name='Curso'
     )
-    fecha = models.DateField(verbose_name='Fecha')
+    fecha = models.DateField(
+        verbose_name='Fecha'
+    )
     presente = models.BooleanField(
         default=True,
-        verbose_name='¿Presente?',
+        verbose_name='¿Presente?'
     )
     justificado = models.BooleanField(
         default=False,
-        verbose_name='¿Ausencia justificada?',
-        help_text='Aplica solo si presente=False.',
+        verbose_name='¿Ausencia justificada?'
     )
     observaciones = models.TextField(
         blank=True,
-        verbose_name='Observaciones',
+        verbose_name='Observaciones'
     )
 
     class Meta:
@@ -451,7 +415,4 @@ class AsistenciaEstudiantil(ModeloAuditable):
 
     def __str__(self):
         estado = 'Presente' if self.presente else 'Ausente'
-        return (
-            f"{self.asignacion_estudiante.estudiante} — "
-            f"{self.curso} — {self.fecha}: {estado}"
-        )
+        return f"{self.asignacion_estudiante.estudiante.persona.nombre_completo} — {self.curso.nombre_curso} ({self.fecha}): {estado}"

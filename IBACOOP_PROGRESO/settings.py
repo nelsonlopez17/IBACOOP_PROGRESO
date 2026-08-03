@@ -1,27 +1,14 @@
-"""
-Configuración del proyecto IBACOOP_PROGRESO.
-
-Sistema de Gestión Escolar — Instituto "El Progreso"
-Nivel Básico — Guatemala
-"""
-
+import os
 from pathlib import Path
 
-# Rutas principales del proyecto
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-^59f-cp@#)$ez20opmvdr@rk%3sr-*az6(9s+a@(3o#$h*8*#)')
 
-# ==============================================================================
-# SEGURIDAD
-# ==============================================================================
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 't')
 
-# ADVERTENCIA DE SEGURIDAD: guardar la clave secreta en un lugar seguro al publicar
-SECRET_KEY = 'django-insecure-^59f-cp@#)$ez20opmvdr@rk%3sr-*az6(9s+a@(3o#$h*8*#)'
-
-# ADVERTENCIA DE SEGURIDAD: desactivar el modo de prueba (DEBUG) en producción
-DEBUG = True
-
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,web,0.0.0.0').split(',')
 
 
 # ==============================================================================
@@ -45,12 +32,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # Librerías de terceros
-    'tailwind',
-    'theme',
-    'simple_history',          # Auditoría de cambios (Notas, Pagos, Inventario)
-
-    # Apps del Sistema ERP Escolar — Instituto El Progreso
+    # Apps del Sistema ERP Escolar (Prioridad de plantillas e interfaces)
     'APPS.core',               # ModeloAuditable, ActivosManager (base del sistema)
     'APPS.usuarios',           # Usuario personalizado con campo 'rol'
     'APPS.estudiantes',        # Estudiante, Encargado, EstudianteEncargado
@@ -59,6 +41,11 @@ INSTALLED_APPS = [
     'APPS.financiero',         # MensualidadCobro, PagoColegiatura
     'APPS.inventario',         # ArticuloInventario, MovimientoInventario
     'APPS.portal',             # ContenidoWeb (portal institucional)
+
+    # Librerías de terceros
+    'tailwind',
+    'theme',
+    'simple_history',          # Auditoría de cambios (Notas, Pagos, Inventario)
 ]
 
 
@@ -68,13 +55,14 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'simple_history.middleware.HistoryRequestMiddleware',  # Registra el usuario en el historial
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'simple_history.middleware.HistoryRequestMiddleware',
 ]
 
 ROOT_URLCONF = 'IBACOOP_PROGRESO.urls'
@@ -104,12 +92,12 @@ WSGI_APPLICATION = 'IBACOOP_PROGRESO.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'IBACOOP_PROGRESO',
-        'USER': 'postgres',
-        'PASSWORD': 'admin',
-        'HOST': '127.0.0.1',
-        'PORT': '5432',
+        'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.postgresql'),
+        'NAME': os.environ.get('DB_NAME', 'IBACOOP_PROGRESO'),
+        'USER': os.environ.get('DB_USER', 'postgres'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
 
@@ -135,7 +123,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # ==============================================================================
-# INTERNACIONALIZACIÓN — Guatemala
+# INTERNACIONALIZACIÓN
 # ==============================================================================
 
 LANGUAGE_CODE = 'es-gt'
@@ -145,51 +133,32 @@ USE_TZ = True
 
 
 # ==============================================================================
-# ARCHIVOS ESTÁTICOS
+# ARCHIVOS ESTÁTICOS — WhiteNoise
 # ==============================================================================
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+WHITENOISE_MANIFEST_STRICT = False
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # Tailwind CSS
 TAILWIND_APP_NAME = 'theme'
 INTERNAL_IPS = ['127.0.0.1']
-# IMPORTANTE para Windows (la "r" antes de las comillas es obligatoria)
-NPM_BIN_PATH = r"C:\Program Files\nodejs\npm.cmd"
+if os.name == 'nt':
+    NPM_BIN_PATH = os.environ.get('NPM_BIN_PATH', r"C:\Program Files\nodejs\npm.cmd")
+else:
+    NPM_BIN_PATH = os.environ.get('NPM_BIN_PATH', '/usr/bin/npm')
 
-
-# ==============================================================================
-# ARCHIVOS MEDIA (uploads: PDFs, imágenes, recibos, comprobantes)
-# ==============================================================================
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
-
-# ==============================================================================
-# CAMPO POR DEFECTO PARA CLAVES PRIMARIAS
-# ==============================================================================
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-# ==============================================================================
-# CONFIGURACIÓN DE DJANGO-SIMPLE-HISTORY
-# Referencia: https://django-simple-history.readthedocs.io/
-# ==============================================================================
-
-# Almacena el motivo del cambio como TextField (más flexible que CharField)
-SIMPLE_HISTORY_HISTORY_CHANGE_REASON_USE_TEXT_FIELD = True
-
-# Registra automáticamente el usuario del request en el historial
-# (Requiere simple_history.middleware.HistoryRequestMiddleware en MIDDLEWARE)
-SIMPLE_HISTORY_ASSERT_FETCHING_USER = True
-
-
-# ==============================================================================
-# AUTENTICACIÓN — URLs de redirección
-# ==============================================================================
-
+# Redirecciones de Autenticación
 LOGIN_URL = 'usuarios:login'
 LOGIN_REDIRECT_URL = 'core:home'
 LOGOUT_REDIRECT_URL = 'usuarios:login'
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

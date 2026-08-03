@@ -1,0 +1,66 @@
+# ==============================================================================
+# DOCKER COMPOSE — ERP ESCOLAR INSTITUTO "EL PROGRESO"
+# Orquestación de servicios: Django Web App + PostgreSQL Database
+# ==============================================================================
+
+services:
+  # ────────────────────────────────────────────────────────────────────────────
+  # Servicio 1: Base de datos relacional PostgreSQL 16
+  # ────────────────────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: ibacoop_db
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_NAME:-ibacoop_db}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres_password_2026}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-ibacoop_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ────────────────────────────────────────────────────────────────────────────
+  # Servicio 2: Aplicación Web Django (Python 3.12 + Gunicorn)
+  # ────────────────────────────────────────────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ibacoop_web
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=${DEBUG:-True}
+      - SECRET_KEY=${SECRET_KEY:-django-insecure-ibacoop-progreso-erp-key-desarrollo-2026}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-*}
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_HOST=db
+      - DB_NAME=${DB_NAME:-ibacoop_db}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres_password_2026}
+      - DB_PORT=5432
+    volumes:
+      - .:/app
+      - static_data:/app/static
+      - media_data:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Volúmenes Persistentes
+# ──────────────────────────────────────────────────────────────────────────────
+volumes:
+  postgres_data:
+    driver: local
+  static_data:
+    driver: local
+  media_data:
+    driver: local
