@@ -1,9 +1,10 @@
 """
-Formularios para la creación y edición de usuarios en el sistema escolar.
+Formularios para la creación, edición, autoservicio de perfil y seguridad de usuarios.
 """
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm, PasswordChangeForm
 from APPS.usuarios.models import Usuario
+from APPS.core.models import Persona
 
 
 class TailwindFormMixin:
@@ -19,7 +20,6 @@ class TailwindFormMixin:
                     'focus:ring-[#1E6532] focus:ring-offset-white cursor-pointer transition'
                 )
             elif widget_type == 'CheckboxSelectMultiple':
-                # El renderizado detallado se maneja en la plantilla HTML con Tailwind
                 pass
             elif widget_type in ['Select', 'SelectMultiple']:
                 field.widget.attrs['class'] = (
@@ -47,6 +47,7 @@ class CustomUserCreationForm(TailwindFormMixin, UserCreationForm):
             'email',
             'rol',
             'is_active',
+            'debe_cambiar_password',
             'groups',
         )
         widgets = {
@@ -59,11 +60,12 @@ class CustomUserCreationForm(TailwindFormMixin, UserCreationForm):
             'email': 'Correo Electrónico',
             'rol': 'Tipo de perfil visual',
             'is_active': '¿Usuario Activo?',
+            'debe_cambiar_password': 'Obligar cambio de contraseña al ingresar',
             'groups': 'Grupos de Permisos (Seguridad)',
         }
         help_texts = {
             'rol': 'Permite mostrar la etiqueta y color según la función en la institución.',
-            'groups': 'Marque las casillas para agregar grupos de permisos al usuario, o desmárquelas para eliminarlos.',
+            'groups': 'Marque las casillas para agregar grupos de permisos al usuario.',
         }
 
     def __init__(self, *args, **kwargs):
@@ -72,7 +74,7 @@ class CustomUserCreationForm(TailwindFormMixin, UserCreationForm):
 
 
 class CustomUserChangeForm(TailwindFormMixin, UserChangeForm):
-    """Formulario para editar la información de un usuario registrado."""
+    """Formulario para editar la información de un usuario por parte de un Administrador."""
 
     password = None  # No se modifica la contraseña directamente en este formulario
 
@@ -85,6 +87,7 @@ class CustomUserChangeForm(TailwindFormMixin, UserChangeForm):
             'email',
             'rol',
             'is_active',
+            'debe_cambiar_password',
             'groups',
         )
         widgets = {
@@ -97,12 +100,47 @@ class CustomUserChangeForm(TailwindFormMixin, UserChangeForm):
             'email': 'Correo Electrónico',
             'rol': 'Rol',
             'is_active': '¿Usuario Activo?',
+            'debe_cambiar_password': 'Obligar cambio de contraseña al ingresar',
             'groups': 'Grupos de Permisos (Seguridad)',
         }
         help_texts = {
             'rol': 'Permite mostrar la etiqueta y color según la función en la institución.',
-            'groups': 'Marque las casillas para agregar grupos de permisos al usuario, o desmárquelas para eliminarlos.',
+            'groups': 'Marque las casillas para agregar grupos de permisos al usuario.',
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._aplicar_estilos_tailwind()
+
+
+class MiPerfilContactoForm(TailwindFormMixin, forms.ModelForm):
+    """Formulario de autoservicio para que el usuario edite sus datos de contacto."""
+
+    class Meta:
+        model = Persona
+        fields = [
+            'telefono_principal',
+            'telefono_secundario',
+            'correo',
+            'direccion',
+        ]
+        labels = {
+            'telefono_principal': 'Teléfono Principal',
+            'telefono_secundario': 'Teléfono Secundario (Emergencia)',
+            'correo': 'Correo Electrónico de Contacto',
+            'direccion': 'Dirección Domiciliar',
+        }
+        widgets = {
+            'direccion': forms.Textarea(attrs={'rows': 2}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._aplicar_estilos_tailwind()
+
+
+class MiPasswordChangeForm(TailwindFormMixin, PasswordChangeForm):
+    """Formulario con estilos Tailwind para que el usuario actualice su clave de acceso."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

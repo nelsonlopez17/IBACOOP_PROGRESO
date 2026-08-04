@@ -60,6 +60,11 @@ class Usuario(AbstractUser):
             'use Groups y Permissions para eso.'
         ),
     )
+    debe_cambiar_password = models.BooleanField(
+        default=True,
+        verbose_name='Debe cambiar contraseña',
+        help_text='Obliga al usuario a cambiar su contraseña en su próximo inicio de sesión.'
+    )
 
     class Meta:
         verbose_name = 'Usuario'

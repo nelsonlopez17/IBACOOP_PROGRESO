@@ -22,6 +22,7 @@ django-environ==0.14.0
 python-dateutil==2.9.0.post0
 requests==2.34.2
 pillow==12.3.0
+reportlab==5.0.0
 
 # Auditoría e Historial de Cambios
 django-simple-history==3.13.0

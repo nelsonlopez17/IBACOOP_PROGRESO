@@ -8,11 +8,6 @@ from django.db import models
 from APPS.core.models import ModeloAuditable, Persona
 
 
-class GeneroChoices(models.TextChoices):
-    MASCULINO = 'M', 'Masculino'
-    FEMENINO  = 'F', 'Femenino'
-
-
 class ParentescoChoices(models.TextChoices):
     PADRE   = 'PADRE',   'Padre'
     MADRE   = 'MADRE',   'Madre'
@@ -41,10 +36,10 @@ class Estudiante(ModeloAuditable):
         verbose_name='Código MINEDUC',
         help_text='Código único otorgado por el MINEDUC.'
     )
-    genero = models.CharField(
-        max_length=1,
-        choices=GeneroChoices.choices,
-        verbose_name='Género'
+    historial_medico = models.TextField(
+        blank=True,
+        verbose_name='Historial médico',
+        help_text='Información médica relevante, alergias, afecciones, etc.'
     )
     estado_activo = models.BooleanField(
         default=True,
@@ -72,10 +67,10 @@ class Encargado(ModeloAuditable):
         related_name='encargado',
         verbose_name='Persona'
     )
-    ocupacion = models.CharField(
-        max_length=100,
+    lugar_de_trabajo = models.CharField(
+        max_length=150,
         blank=True,
-        verbose_name='Ocupación'
+        verbose_name='Lugar de trabajo'
     )
 
     class Meta:
@@ -83,7 +78,7 @@ class Encargado(ModeloAuditable):
         verbose_name_plural = 'Encargados'
 
     def __str__(self):
-        return f"{self.persona.nombre_completo} (Ocupación: {self.ocupacion or 'N/A'})"
+        return f"{self.persona.nombre_completo} (Lugar de trabajo: {self.lugar_de_trabajo or 'N/A'})"
 
 
 class EstudianteEncargado(ModeloAuditable):

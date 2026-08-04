@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi Perfil de Usuario | IBACOOP EL PROGRESO{% endblock %}
+{% block page_title %}Mi Perfil de Usuario{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+
+    <!-- Tarjeta de Encabezado de Usuario -->
+    <div class="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        <div class="flex items-center gap-4">
+            <div class="w-16 h-16 rounded-2xl bg-[#1E6532]/10 border-2 border-[#1E6532]/20 flex items-center justify-center font-black text-xl text-[#1E6532]">
+                {{ user.username|slice:":2"|upper }}
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl font-black text-slate-900">
+                        {% if persona %}
+                            {{ persona.nombre_completo }}
+                        {% else %}
+                            {{ user.get_full_name|default:user.username }}
+                        {% endif %}
+                    </h2>
+                    {% if user.is_superuser %}
+                        <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-black">ADMINISTRADOR TI</span>
+                    {% endif %}
+                </div>
+                <p class="text-xs text-slate-500 font-medium mt-0.5 flex items-center gap-2">
+                    <span class="font-mono text-slate-700">@{{ user.username }}</span>
+                    <span>•</span>
+                    <span class="text-[#1E6532] font-bold">{{ user.get_rol_display|default:"Usuario Institucional" }}</span>
+                </p>
+            </div>
+        </div>
+
+        <a href="{% url 'usuarios:cambiar_mi_password' %}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-xs rounded-xl transition-all shadow-sm">
+            <i data-lucide="key-round" class="w-4 h-4 text-amber-600"></i>
+            <span>Cambiar Mi Contraseña</span>
+        </a>
+    </div>
+
+    <!-- Contenido Principal: Datos Protegidos y Formulario de Contacto -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Columna 1: Información Legal Protegida (Solo Lectura) -->
+        <div class="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-5 h-fit">
+            <div class="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+                <i data-lucide="shield-check" class="w-5 h-5 text-[#1E6532]"></i>
+                <h3 class="font-bold text-slate-900 text-sm">Datos Institucionales Protegidos</h3>
+            </div>
+            <p class="text-[11px] text-slate-500 leading-relaxed">
+                Esta información está vinculada a su expediente oficial y solo puede ser modificada por la Dirección o Secretaría del instituto.
+            </p>
+
+            <div class="space-y-3 pt-1">
+                <!-- CUI -->
+                <div>
+                    <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">CUI / DPI:</span>
+                    <span class="font-mono font-bold text-slate-800 text-xs">{{ persona.cui|default:"No registrado" }}</span>
+                </div>
+
+                <!-- Fecha de Nacimiento -->
+                <div>
+                    <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Fecha de Nacimiento:</span>
+                    <span class="font-bold text-slate-800 text-xs">{{ persona.fecha_nacimiento|date:"d/m/Y"|default:"No registrada" }}</span>
+                </div>
+
+                <!-- Género -->
+                <div>
+                    <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Género:</span>
+                    <span class="font-bold text-slate-800 text-xs">{{ persona.get_genero_display|default:"No especificado" }}</span>
+                </div>
+
+                <!-- Estado de Cuenta -->
+                <div class="pt-2 border-t border-slate-100">
+                    <span class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Estado de Sesión:</span>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                        Cuenta Activa y Verificada
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna 2: Actualización de Contacto (Editable) -->
+        <div class="lg:col-span-2 bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
+            <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
+                <div class="w-10 h-10 rounded-xl bg-[#1E6532]/10 text-[#1E6532] flex items-center justify-center font-bold">
+                    <i data-lucide="phone-call" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-900 text-base">Datos de Contacto Domiciliar y Emergencia</h3>
+                    <p class="text-xs text-slate-500">Mantenga sus números telefónicos y correo actualizados para avisos institucionales.</p>
+                </div>
+            </div>
+
+            {% if persona %}
+                <form method="post" class="space-y-5">
+                    {% csrf_token %}
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- Teléfono Principal -->
+                        <div class="space-y-1">
+                            <label for="{{ contacto_form.telefono_principal.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                {{ contacto_form.telefono_principal.label }}
+                            </label>
+                            {{ contacto_form.telefono_principal }}
+                            {% if contacto_form.telefono_principal.errors %}
+                                <p class="text-xs text-rose-600 font-semibold mt-1">{{ contacto_form.telefono_principal.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Teléfono Secundario -->
+                        <div class="space-y-1">
+                            <label for="{{ contacto_form.telefono_secundario.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                {{ contacto_form.telefono_secundario.label }}
+                            </label>
+                            {{ contacto_form.telefono_secundario }}
+                            {% if contacto_form.telefono_secundario.errors %}
+                                <p class="text-xs text-rose-600 font-semibold mt-1">{{ contacto_form.telefono_secundario.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Correo de Contacto -->
+                    <div class="space-y-1">
+                        <label for="{{ contacto_form.correo.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                            {{ contacto_form.correo.label }}
+                        </label>
+                        {{ contacto_form.correo }}
+                        {% if contacto_form.correo.errors %}
+                            <p class="text-xs text-rose-600 font-semibold mt-1">{{ contacto_form.correo.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Dirección Domiciliar -->
+                    <div class="space-y-1">
+                        <label for="{{ contacto_form.direccion.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                            {{ contacto_form.direccion.label }}
+                        </label>
+                        {{ contacto_form.direccion }}
+                        {% if contacto_form.direccion.errors %}
+                            <p class="text-xs text-rose-600 font-semibold mt-1">{{ contacto_form.direccion.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex items-center justify-end pt-3">
+                        <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            Guardar Cambios en Mi Perfil
+                        </button>
+                    </div>
+                </form>
+            {% else %}
+                <div class="p-6 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-2">
+                    <i data-lucide="info" class="w-8 h-8 mx-auto text-slate-400"></i>
+                    <p class="text-xs font-bold text-slate-700">Esta cuenta no tiene un perfil de información personal asociado.</p>
+                    <p class="text-[11px] text-slate-500">Es una cuenta técnica de administración o soporte.</p>
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

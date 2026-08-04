@@ -78,6 +78,7 @@ erDiagram
         string nombres
         string apellidos
         date fecha_nacimiento
+        string genero
         text direccion
         string telefono_principal
         string telefono_secundario
@@ -87,13 +88,13 @@ erDiagram
     Estudiante {
         bigint persona_id PK,FK
         string codigo_mineduc UK
-        string genero
+        text historial_medico
         boolean estado_activo
     }
 
     Encargado {
         bigint persona_id PK,FK
-        string ocupacion
+        string lugar_de_trabajo
     }
 
     EstudianteEncargado {

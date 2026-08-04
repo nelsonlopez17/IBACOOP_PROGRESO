@@ -16,13 +16,16 @@ class EstudianteForm(TailwindFormMixin, forms.ModelForm):
         model = Estudiante
         fields = [
             'codigo_mineduc',
-            'genero',
+            'historial_medico',
             'estado_activo',
         ]
         labels = {
             'codigo_mineduc': 'Código Oficial MINEDUC',
-            'genero': 'Género',
+            'historial_medico': 'Historial Médico / Padecimientos',
             'estado_activo': '¿Estudiante Activo en el Instituto?',
+        }
+        widgets = {
+            'historial_medico': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Alergias, medicamentos, antecedentes u observaciones médicas...'}),
         }
 
     def clean_codigo_mineduc(self):
@@ -38,8 +41,8 @@ class EncargadoForm(TailwindFormMixin, forms.ModelForm):
     class Meta:
         model = Encargado
         fields = [
-            'ocupacion',
+            'lugar_de_trabajo',
         ]
         labels = {
-            'ocupacion': 'Ocupación o Profesión',
+            'lugar_de_trabajo': 'Lugar de trabajo / Empresa',
         }

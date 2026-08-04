@@ -10,8 +10,8 @@ class EstudianteEncargadoInline(admin.TabularInline):
 
 @admin.register(Estudiante)
 class EstudianteAdmin(admin.ModelAdmin):
-    list_display = ['codigo_mineduc', 'get_nombre_completo', 'genero', 'estado_activo', 'creado_en']
-    list_filter = ['estado_activo', 'genero']
+    list_display = ['codigo_mineduc', 'get_nombre_completo', 'estado_activo', 'creado_en']
+    list_filter = ['estado_activo', 'persona__genero']
     search_fields = ['codigo_mineduc', 'persona__nombres', 'persona__apellidos', 'persona__cui']
     readonly_fields = ['creado_en', 'actualizado_en']
     inlines = [EstudianteEncargadoInline]
@@ -23,8 +23,8 @@ class EstudianteAdmin(admin.ModelAdmin):
 
 @admin.register(Encargado)
 class EncargadoAdmin(admin.ModelAdmin):
-    list_display = ['get_nombre_completo', 'ocupacion', 'creado_en']
-    search_fields = ['persona__nombres', 'persona__apellidos', 'persona__cui', 'ocupacion']
+    list_display = ['get_nombre_completo', 'lugar_de_trabajo', 'creado_en']
+    search_fields = ['persona__nombres', 'persona__apellidos', 'persona__cui', 'lugar_de_trabajo']
     readonly_fields = ['creado_en', 'actualizado_en']
 
     @admin.display(description='Nombre Completo')

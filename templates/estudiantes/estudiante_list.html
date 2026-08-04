@@ -71,7 +71,7 @@
                                     <span class="text-slate-400">Sin cuenta</span>
                                 {% endif %}
                             </td>
-                            <td class="py-4 px-6">{{ estudiante.get_genero_display }}</td>
+                            <td class="py-4 px-6">{{ estudiante.persona.get_genero_display|default:"N/A" }}</td>
                             <td class="py-4 px-6">
                                 {% if estudiante.estado_activo %}
                                     <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">Activo</span>

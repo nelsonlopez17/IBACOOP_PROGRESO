@@ -113,6 +113,17 @@
                     {% endif %}
                 </div>
 
+                <!-- Género -->
+                <div class="space-y-1">
+                    <label for="{{ persona_form.genero.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ persona_form.genero.label }}
+                    </label>
+                    {{ persona_form.genero }}
+                    {% if persona_form.genero.errors %}
+                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ persona_form.genero.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
                 <!-- Correo -->
                 <div class="space-y-1">
                     <label for="{{ persona_form.correo.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
@@ -149,19 +160,19 @@
             </div>
         </div>
 
-        <!-- Sección 2: Expediente Académico MINEDUC (Estudiante) -->
+        <!-- Sección 2: Expediente Académico y Médico (Estudiante) -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
             <div class="flex items-center gap-3 border-b border-slate-100 pb-3">
                 <div class="w-8 h-8 rounded-lg bg-[#1E6532]/10 text-[#1E6532] flex items-center justify-center font-bold text-sm">2</div>
                 <div>
-                    <h2 class="text-base font-bold text-slate-900">Datos Académicos del MINEDUC</h2>
-                    <p class="text-xs text-slate-500">Información oficial para registros y boletines del Ministerio de Educación.</p>
+                    <h2 class="text-base font-bold text-slate-900">Datos Académicos y de Salud</h2>
+                    <p class="text-xs text-slate-500">Información del expediente estudiantil e historial médico.</p>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
                 <!-- Código MINEDUC -->
-                <div class="space-y-1 sm:col-span-2">
+                <div class="space-y-1 sm:col-span-3">
                     <label for="{{ form.codigo_mineduc.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                         {{ form.codigo_mineduc.label }} <span class="text-[#7A1C21]">*</span>
                     </label>
@@ -172,14 +183,14 @@
                     <p class="text-[11px] text-slate-400">Código único otorgado por el MINEDUC (Servirá como Usuario de acceso).</p>
                 </div>
 
-                <!-- Género -->
-                <div class="space-y-1">
-                    <label for="{{ form.genero.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                        {{ form.genero.label }} <span class="text-[#7A1C21]">*</span>
+                <!-- Historial Médico -->
+                <div class="space-y-1 sm:col-span-3">
+                    <label for="{{ form.historial_medico.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ form.historial_medico.label }}
                     </label>
-                    {{ form.genero }}
-                    {% if form.genero.errors %}
-                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.genero.errors.0 }}</p>
+                    {{ form.historial_medico }}
+                    {% if form.historial_medico.errors %}
+                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.historial_medico.errors.0 }}</p>
                     {% endif %}
                 </div>
 

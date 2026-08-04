@@ -63,13 +63,13 @@ El sistema centraliza los datos personales comunes de todos los individuos en la
 - **Modelo `Persona` (`APPS/core/models.py`)**:
   - `usuario` (`OneToOneField` a `Usuario`, opcional, `on_delete=models.RESTRICT`).
   - `cui` (`CharField`, Unique, 13 dígitos DPI o CUI MINEDUC).
-  - `nombres`, `apellidos`, `fecha_nacimiento`, `direccion`.
+  - `nombres`, `apellidos`, `fecha_nacimiento`, `genero` (`M`/`F`, opcional), `direccion`.
   - `telefono_principal`, `telefono_secundario`.
   - `correo` (email comercial/contacto, independiente de las credenciales de acceso).
 
 - **Modelos Subtipo**:
-  - **`Estudiante` (`APPS/estudiantes/models.py`)**: `persona = OneToOneField(Persona, primary_key=True, on_delete=models.RESTRICT)`, `codigo_mineduc`, `genero` (`M`/`F`), `estado_activo`.
-  - **`Encargado` (`APPS/estudiantes/models.py`)**: `persona = OneToOneField(Persona, primary_key=True, on_delete=models.RESTRICT)`, `ocupacion`.
+  - **`Estudiante` (`APPS/estudiantes/models.py`)**: `persona = OneToOneField(Persona, primary_key=True, on_delete=models.RESTRICT)`, `codigo_mineduc`, `historial_medico`, `estado_activo`.
+  - **`Encargado` (`APPS/estudiantes/models.py`)**: `persona = OneToOneField(Persona, primary_key=True, on_delete=models.RESTRICT)`, `lugar_de_trabajo`.
   - **`Personal` (`APPS/rrhh/models.py`)**: `persona = OneToOneField(Persona, primary_key=True, on_delete=models.RESTRICT)`, `puesto` (FK a `Puesto`), `nit`, `fecha_contratacion`, `estado_laboral`, `salario_base_asignado`.
 
 ---
@@ -126,24 +126,17 @@ IBACOOP_PROGRESO/
 
 ## 6. Diccionario de Datos y Modelos Refactorizados
 
-### 6.1 App `core` (`APPS/core/models.py`)
 - **`ModeloAuditable` (Abstract Base Model)**: `creado_en`, `actualizado_en`, `esta_eliminado`. Managers: `objects` (ActivosManager) y `todos`.
-- **`Persona`**: `usuario` (O2O a Usuario opcional), `cui` (UK 13 dgs), `nombres`, `apellidos`, `fecha_nacimiento`, `direccion`, `telefono_principal`, `telefono_secundario`, `correo`.
+- **`Persona`**: `usuario` (O2O a Usuario opcional), `cui` (UK 13 dgs), `nombres`, `apellidos`, `fecha_nacimiento`, `genero` (`M`/`F` opcional), `direccion`, `telefono_principal`, `telefono_secundario`, `correo`.
 
 ### 6.2 App `estudiantes` (`APPS/estudiantes/models.py`)
-- **`Estudiante`**: `persona` (O2O Persona, PK), `codigo_mineduc` (UK), `genero` (`M`/`F`), `estado_activo`.
-- **`Encargado`**: `persona` (O2O Persona, PK), `ocupacion`.
+- **`Estudiante`**: `persona` (O2O Persona, PK), `codigo_mineduc` (UK), `historial_medico`, `estado_activo`.
+- **`Encargado`**: `persona` (O2O Persona, PK), `lugar_de_trabajo`.
 - **`EstudianteEncargado`**: `estudiante` (FK Estudiante), `encargado` (FK Encargado), `parentesco` (`ParentescoChoices`), `es_contacto_principal`. Restricción: `unique_together = [['estudiante', 'encargado']]`.
 
 ### 6.3 App `rrhh` (`APPS/rrhh/models.py`)
 - **`Puesto`**: `nombre_puesto` (UK), `descripcion`.
 - **`Personal`**: `persona` (O2O Persona, PK), `puesto` (FK Puesto), `nit`, `fecha_contratacion`, `estado_laboral` (`EstadoLaboralChoices`), `salario_base_asignado`.
-- **`AsistenciaPersonal`**: `personal` (FK Personal), `fecha`, `hora_entrada`, `hora_salida`, `estado_asistencia` (`EstadoAsistenciaChoices`), `observaciones`.
-- **`Planilla`**: `personal` (FK Personal), `ciclo_escolar` (FK CicloEscolar opcional), `mes_pagado` (`MesChoices` 1-12), `bonificaciones`, `descuentos`, `total_pagar`, `comprobante_pdf`, `fecha_pago`, `pagado`.
-
----
-
-## 7. Subsistemas Específicos (Académico, Financiero, Inventarios)
 
 ### 7.1 Subsistema Académico y Recuperaciones (`APPS/academico/models.py`)
 - **`CicloEscolar`**: `anio` (UK), `estado_activo` (único activo), `fecha_inicio`, `fecha_fin`.

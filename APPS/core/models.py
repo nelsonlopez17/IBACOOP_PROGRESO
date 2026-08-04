@@ -92,6 +92,11 @@ class ModeloAuditable(models.Model):
         self.save(update_fields=['esta_eliminado', 'actualizado_en'])
 
 
+class GeneroChoices(models.TextChoices):
+    MASCULINO = 'M', 'Masculino'
+    FEMENINO  = 'F', 'Femenino'
+
+
 class Persona(ModeloAuditable):
     """
     Modelo Supertipo que concentra la información personal común de todos
@@ -124,6 +129,12 @@ class Persona(ModeloAuditable):
         null=True,
         blank=True,
         verbose_name='Fecha de nacimiento'
+    )
+    genero = models.CharField(
+        max_length=1,
+        choices=GeneroChoices.choices,
+        blank=True,
+        verbose_name='Género'
     )
     direccion = models.TextField(
         blank=True,
