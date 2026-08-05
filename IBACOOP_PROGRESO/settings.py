@@ -18,6 +18,11 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,web,0.0.0.0
 
 AUTH_USER_MODEL = 'usuarios.Usuario'
 
+AUTHENTICATION_BACKENDS = [
+    'APPS.usuarios.backends.CUIOrEmailModelBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 
 # ==============================================================================
 # APLICACIONES INSTALADAS

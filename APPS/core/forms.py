@@ -86,3 +86,32 @@ class PersonaForm(TailwindFormMixin, forms.ModelForm):
             if len(cui) != 13 or not cui.isdigit():
                 raise forms.ValidationError('El CUI/DPI debe contener exactamente 13 dígitos numéricos.')
         return cui
+
+    def clean_correo(self):
+        correo = self.cleaned_data.get('correo')
+        if correo:
+            correo = correo.strip().lower()
+            qs = Persona.objects.filter(correo__iexact=correo, esta_eliminado=False)
+            if self.instance and self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise forms.ValidationError('Este correo electrónico ya está registrado en el sistema para otra persona.')
+        return correo
+
+    def clean_fecha_nacimiento(self):
+        from datetime import date
+        fecha = self.cleaned_data.get('fecha_nacimiento')
+        if fecha:
+            if fecha > date.today():
+                raise forms.ValidationError('La fecha de nacimiento no puede ser una fecha futura.')
+        return fecha
+
+    def clean_telefono_principal(self):
+        tel = self.cleaned_data.get('telefono_principal')
+        if tel:
+            digits = ''.join(c for c in tel if c.isdigit())
+            if len(digits) != 8:
+                raise forms.ValidationError('El número de teléfono en Guatemala debe contener exactamente 8 dígitos numéricos.')
+            return digits
+        return tel
+

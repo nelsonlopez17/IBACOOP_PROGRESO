@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+
+{% block title %}Expediente del Alumno - {{ estudiante.persona.nombre_completo }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+
+    <!-- Encabezado & Navegación -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+                <a href="{% url 'core:home' %}" class="hover:underline">Dashboard</a>
+                <span>/</span>
+                <a href="{% url 'estudiantes:estudiante_list' %}" class="hover:underline">Registro de Alumnos</a>
+                <span>/</span>
+                <span class="text-slate-500">Expediente 360°</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+                <i data-lucide="folder-user" class="w-7 h-7 text-[#1E6532]"></i>
+                Expediente Digital del Alumno
+            </h1>
+        </div>
+        
+        <div class="flex items-center gap-3 flex-wrap">
+            <a href="{% url 'estudiantes:estudiante_list' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
+                <i data-lucide="arrow-left" class="w-4 h-4 text-slate-500"></i>
+                Volver
+            </a>
+            <a href="{% url 'estudiantes:estudiante_pdf_expediente' estudiante.pk %}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-700 text-white rounded-xl text-xs font-bold hover:bg-emerald-800 transition-all shadow-md shadow-emerald-700/20">
+                <i data-lucide="file-text" class="w-4 h-4"></i>
+                Ficha Expediente (PDF)
+            </a>
+            <a href="{% url 'estudiantes:estudiante_pdf_credenciales' estudiante.pk %}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-[#3C7DA8] text-white rounded-xl text-xs font-bold hover:bg-[#3C7DA8]/90 transition-all shadow-md shadow-[#3C7DA8]/20">
+                <i data-lucide="key" class="w-4 h-4"></i>
+                Credenciales Acceso (PDF)
+            </a>
+            <a href="{% url 'estudiantes:estudiante_update' estudiante.pk %}" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-900 transition-all shadow-sm">
+                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                Editar
+            </a>
+        </div>
+    </div>
+
+    <!-- Banner de Registro Exitoso y Recordatorio de Descarga de PDF Credenciales -->
+    {% if messages %}
+        <div class="space-y-3">
+            {% for message in messages %}
+                <div class="p-5 rounded-2xl bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-700 text-white shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-emerald-500/30">
+                    <div class="flex items-start gap-3.5">
+                        <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center flex-shrink-0 text-white font-bold shadow-sm">
+                            <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                        </div>
+                        <div class="space-y-1">
+                            <h3 class="text-sm font-extrabold tracking-wide">¡Alumno Registrado Exitosamente!</h3>
+                            <p class="text-xs text-emerald-100 leading-relaxed font-medium">
+                                {{ message }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2.5 self-stretch sm:self-auto flex-shrink-0 pt-2 sm:pt-0">
+                        <a href="{% url 'estudiantes:estudiante_pdf_credenciales' estudiante.pk %}" target="_blank" class="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black transition-all shadow-md flex items-center gap-2">
+                            <i data-lucide="key-round" class="w-4 h-4"></i>
+                            <span>Descargar Credenciales (PDF)</span>
+                        </a>
+                        <a href="{% url 'estudiantes:estudiante_pdf_expediente' estudiante.pk %}" target="_blank" class="px-4 py-2.5 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2">
+                            <i data-lucide="file-text" class="w-4 h-4"></i>
+                            <span>Ficha (PDF)</span>
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Tarjeta Principal de Identificación -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div class="flex items-center gap-5">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#1E6532] to-[#3C7DA8] text-white flex items-center justify-center font-extrabold text-xl shadow-lg shadow-[#1E6532]/20">
+                {{ estudiante.persona.nombres|slice:":1" }}{{ estudiante.persona.apellidos|slice:":1" }}
+            </div>
+            <div class="space-y-1">
+                <div class="flex items-center gap-3">
+                    <h2 class="text-xl font-extrabold text-slate-900">{{ estudiante.persona.nombre_completo }}</h2>
+                    {% if estudiante.estado_estudiante == 'ACTIVO' %}
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">Activo</span>
+                    {% elif estudiante.estado_estudiante == 'RETIRADO' %}
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">Retirado</span>
+                    {% else %}
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">{{ estudiante.get_estado_estudiante_display }}</span>
+                    {% endif %}
+                </div>
+                <p class="text-xs text-slate-500 font-mono">CUI: {{ estudiante.persona.cui }} | Código MINEDUC: <span class="font-bold text-[#1E6532]">{{ estudiante.codigo_mineduc }}</span></p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6 w-full md:w-auto justify-between md:justify-start">
+            <div class="text-left md:text-right">
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Estado de Papelería</span>
+                {% if estudiante.expediente_completo %}
+                    <span class="inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-600 mt-0.5">
+                        <i data-lucide="check-check" class="w-4 h-4"></i>
+                        Expediente Completo (5/5)
+                    </span>
+                {% else %}
+                    <span class="inline-flex items-center gap-1.5 text-xs font-extrabold text-amber-600 mt-0.5">
+                        <i data-lucide="alert-circle" class="w-4 h-4"></i>
+                        Incompleto ({{ estudiante.documentos_entregados_count }}/5)
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid de Secciones -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- Ficha 1: Información Personal -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+            <h3 class="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+                <i data-lucide="user" class="w-4 h-4 text-[#1E6532]"></i>
+                Datos Personales del Alumno
+            </h3>
+
+            <dl class="grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
+                <div>
+                    <dt class="text-slate-400 font-medium">Nombres:</dt>
+                    <dd class="font-bold text-slate-800 mt-0.5">{{ estudiante.persona.nombres }}</dd>
+                </div>
+                <div>
+                    <dt class="text-slate-400 font-medium">Apellidos:</dt>
+                    <dd class="font-bold text-slate-800 mt-0.5">{{ estudiante.persona.apellidos }}</dd>
+                </div>
+                <div>
+                    <dt class="text-slate-400 font-medium">CUI / DPI:</dt>
+                    <dd class="font-mono font-semibold text-slate-800 mt-0.5">{{ estudiante.persona.cui }}</dd>
+                </div>
+                <div>
+                    <dt class="text-slate-400 font-medium">Código MINEDUC:</dt>
+                    <dd class="font-mono font-bold text-[#1E6532] mt-0.5">{{ estudiante.codigo_mineduc }}</dd>
+                </div>
+                <div>
+                    <dt class="text-slate-400 font-medium">Fecha de Nacimiento:</dt>
+                    <dd class="font-semibold text-slate-800 mt-0.5">{{ estudiante.persona.fecha_nacimiento|date:"d/m/Y"|default:"No registrada" }}</dd>
+                </div>
+                <div>
+                    <dt class="text-slate-400 font-medium">Género:</dt>
+                    <dd class="font-semibold text-slate-800 mt-0.5">{{ estudiante.persona.get_genero_display|default:"N/A" }}</dd>
+                </div>
+                <div>
+                    <dt class="text-slate-400 font-medium">Correo Electrónico:</dt>
+                    <dd class="font-semibold text-slate-800 mt-0.5 truncate">{{ estudiante.persona.correo|default:"Sin correo" }}</dd>
+                </div>
+                <div>
+                    <dt class="text-slate-400 font-medium">Teléfono Principal:</dt>
+                    <dd class="font-semibold text-slate-800 mt-0.5">{{ estudiante.persona.telefono_principal|default:"N/A" }}</dd>
+                </div>
+                <div class="col-span-2">
+                    <dt class="text-slate-400 font-medium">Dirección Domiciliar:</dt>
+                    <dd class="font-semibold text-slate-800 mt-0.5">{{ estudiante.persona.direccion|default:"No registrada" }}</dd>
+                </div>
+            </dl>
+        </div>
+
+        <!-- Ficha 2: Tutor Legal y Datos de Padres -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+            <h3 class="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+                <i data-lucide="shield-check" class="w-4 h-4 text-[#3C7DA8]"></i>
+                Tutor Legal y Núcleo Familiar (SIRE)
+            </h3>
+
+            <!-- Encargado Principal -->
+            <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                <span class="text-[11px] font-bold text-[#3C7DA8] uppercase tracking-wider block">Tutor Legal Principal (Encargado)</span>
+                {% if estudiante.encargado %}
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-900">{{ estudiante.encargado.persona.nombre_completo }}</p>
+                            <p class="text-[11px] text-slate-500">CUI: {{ estudiante.encargado.persona.cui }} | Tel: {{ estudiante.encargado.persona.telefono_principal|default:"N/A" }}</p>
+                        </div>
+                        <span class="px-2 py-1 bg-sky-100 text-sky-800 rounded-md text-[10px] font-bold">Tutor Registrado</span>
+                    </div>
+                {% else %}
+                    <p class="text-xs text-amber-700 italic">No se ha asignado un encargado legal registrado.</p>
+                {% endif %}
+            </div>
+
+            <!-- Datos Informativos del Padre y Madre -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
+                <div class="p-3 bg-slate-50/60 rounded-xl border border-slate-100">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Padre</span>
+                    <p class="font-bold text-slate-800 mt-1">{{ estudiante.nombre_padre|default:"No registrado" }}</p>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Tel: {{ estudiante.telefono_padre|default:"N/A" }}</p>
+                </div>
+                <div class="p-3 bg-slate-50/60 rounded-xl border border-slate-100">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Madre</span>
+                    <p class="font-bold text-slate-800 mt-1">{{ estudiante.nombre_madre|default:"No registrada" }}</p>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Tel: {{ estudiante.telefono_madre|default:"N/A" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ficha 3: Checklist de Papelería Oficial MINEDUC -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4 md:col-span-2">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="file-check-2" class="w-4 h-4 text-emerald-600"></i>
+                    Checklist de Expediente Físico en Secretaría (Obligatorios MINEDUC)
+                </h3>
+                <span class="text-xs font-bold text-slate-600">{{ estudiante.documentos_entregados_count }} de 5 documentos entregados</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <!-- Doc 1 -->
+                <div class="p-3.5 rounded-xl border flex items-center gap-3 {% if estudiante.doc_cert_nacimiento_renap %}bg-emerald-50/60 border-emerald-200 text-emerald-900{% else %}bg-rose-50/60 border-rose-200 text-rose-900{% endif %}">
+                    <i data-lucide="{% if estudiante.doc_cert_nacimiento_renap %}check-circle-2{% else %}x-circle{% endif %}" class="w-5 h-5 flex-shrink-0 {% if estudiante.doc_cert_nacimiento_renap %}text-emerald-600{% else %}text-rose-500{% endif %}"></i>
+                    <div>
+                        <p class="text-xs font-bold">1. Certificado RENAP</p>
+                        <p class="text-[11px] opacity-80">Nacimiento original / copia con CUI</p>
+                    </div>
+                </div>
+
+                <!-- Doc 2 -->
+                <div class="p-3.5 rounded-xl border flex items-center gap-3 {% if estudiante.doc_dpi_encargado %}bg-emerald-50/60 border-emerald-200 text-emerald-900{% else %}bg-rose-50/60 border-rose-200 text-rose-900{% endif %}">
+                    <i data-lucide="{% if estudiante.doc_dpi_encargado %}check-circle-2{% else %}x-circle{% endif %}" class="w-5 h-5 flex-shrink-0 {% if estudiante.doc_dpi_encargado %}text-emerald-600{% else %}text-rose-500{% endif %}"></i>
+                    <div>
+                        <p class="text-xs font-bold">2. Fotocopia DPI Encargado</p>
+                        <p class="text-[11px] opacity-80">Copia legible de DPI del tutor</p>
+                    </div>
+                </div>
+
+                <!-- Doc 3 -->
+                <div class="p-3.5 rounded-xl border flex items-center gap-3 {% if estudiante.doc_certificado_grado_anterior %}bg-emerald-50/60 border-emerald-200 text-emerald-900{% else %}bg-rose-50/60 border-rose-200 text-rose-900{% endif %}">
+                    <i data-lucide="{% if estudiante.doc_certificado_grado_anterior %}check-circle-2{% else %}x-circle{% endif %}" class="w-5 h-5 flex-shrink-0 {% if estudiante.doc_certificado_grado_anterior %}text-emerald-600{% else %}text-rose-500{% endif %}"></i>
+                    <div>
+                        <p class="text-xs font-bold">3. Certificado Grado Anterior</p>
+                        <p class="text-[11px] opacity-80">Estudios oficiales del año previo</p>
+                    </div>
+                </div>
+
+                <!-- Doc 4 -->
+                <div class="p-3.5 rounded-xl border flex items-center gap-3 {% if estudiante.doc_diploma_primaria %}bg-emerald-50/60 border-emerald-200 text-emerald-900{% else %}bg-rose-50/60 border-rose-200 text-rose-900{% endif %}">
+                    <i data-lucide="{% if estudiante.doc_diploma_primaria %}check-circle-2{% else %}x-circle{% endif %}" class="w-5 h-5 flex-shrink-0 {% if estudiante.doc_diploma_primaria %}text-emerald-600{% else %}text-rose-500{% endif %}"></i>
+                    <div>
+                        <p class="text-xs font-bold">4. Diploma de Primaria</p>
+                        <p class="text-[11px] opacity-80">Requerido para 1ro Básico</p>
+                    </div>
+                </div>
+
+                <!-- Doc 5 -->
+                <div class="p-3.5 rounded-xl border flex items-center gap-3 {% if estudiante.doc_codigo_mineduc %}bg-emerald-50/60 border-emerald-200 text-emerald-900{% else %}bg-rose-50/60 border-rose-200 text-rose-900{% endif %}">
+                    <i data-lucide="{% if estudiante.doc_codigo_mineduc %}check-circle-2{% else %}x-circle{% endif %}" class="w-5 h-5 flex-shrink-0 {% if estudiante.doc_codigo_mineduc %}text-emerald-600{% else %}text-rose-500{% endif %}"></i>
+                    <div>
+                        <p class="text-xs font-bold">5. Código MINEDUC</p>
+                        <p class="text-[11px] opacity-80">Constancia de asignación SIRE</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ficha 4: Historial Médico / Salud -->
+        {% if estudiante.historial_medico %}
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-3 md:col-span-2">
+            <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="heart-pulse" class="w-4 h-4 text-rose-600"></i>
+                Historial Médico y Salud
+            </h3>
+            <p class="text-xs text-slate-700 bg-rose-50/50 p-4 rounded-xl border border-rose-100 leading-relaxed font-medium">
+                {{ estudiante.historial_medico }}
+            </p>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

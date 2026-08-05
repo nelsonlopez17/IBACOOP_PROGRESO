@@ -1,0 +1,25 @@
+{% if encargados %}
+    <div class="bg-white border border-slate-200 rounded-xl shadow-lg divide-y divide-slate-100 max-h-56 overflow-y-auto z-50">
+        {% for enc in encargados %}
+            <button type="button" 
+                    onclick="seleccionarEncargado('{{ enc.pk }}', '{{ enc.persona.nombre_completo|escapejs }}', '{{ enc.persona.cui|escapejs }}', '{{ enc.persona.telefono_principal|default:"N/A"|escapejs }}')"
+                    class="w-full text-left p-3 hover:bg-slate-50 transition-colors flex items-center justify-between group">
+                <div>
+                    <p class="text-xs font-bold text-slate-900 group-hover:text-[#1E6532]">{{ enc.persona.nombre_completo }}</p>
+                    <p class="text-[11px] text-slate-500 font-mono">CUI / DPI: {{ enc.persona.cui }} | Tel: {{ enc.persona.telefono_principal|default:"N/A" }}</p>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-1 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-200">
+                    Seleccionar
+                </span>
+            </button>
+        {% endfor %}
+    </div>
+{% elif request.GET.q %}
+    <div class="p-4 bg-amber-50 border border-amber-200 rounded-xl text-center space-y-2">
+        <p class="text-xs text-amber-800 font-medium">No se encontró ningún encargado con "<strong>{{ request.GET.q }}</strong>".</p>
+        <a href="{% url 'estudiantes:encargado_create' %}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-amber-300 rounded-lg text-xs font-bold text-amber-900 hover:bg-amber-100 transition-colors">
+            <i data-lucide="user-plus" class="w-3.5 h-3.5 text-amber-600"></i>
+            Registrar Nuevo Encargado
+        </a>
+    </div>
+{% endif %}

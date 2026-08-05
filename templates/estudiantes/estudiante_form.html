@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Inscripción de Estudiante{% endblock %}
+{% block title %}{% if es_edicion %}Editar Expediente del Alumno{% else %}Nuevo Registro de Alumno{% endif %}{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto space-y-6">
@@ -11,18 +11,18 @@
             <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
                 <a href="{% url 'core:home' %}" class="hover:underline">Dashboard</a>
                 <span>/</span>
-                <span>Módulo Estudiantes</span>
+                <a href="{% url 'estudiantes:estudiante_list' %}" class="hover:underline">Registro de Alumnos</a>
                 <span>/</span>
-                <span class="text-slate-500">Inscripción</span>
+                <span class="text-slate-500">{% if es_edicion %}Edición{% else %}Nuevo Registro{% endif %}</span>
             </div>
             <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
-                <i data-lucide="user-plus" class="w-7 h-7 text-[#1E6532]"></i>
-                Inscripción de Nuevo Estudiante
+                <i data-lucide="{% if es_edicion %}edit-3{% else %}user-plus{% endif %}" class="w-7 h-7 text-[#1E6532]"></i>
+                {% if es_edicion %}Editar Expediente del Alumno{% else %}Nuevo Registro de Alumno{% endif %}
             </h1>
         </div>
         <a href="{% url 'estudiantes:estudiante_list' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm self-start sm:self-auto">
             <i data-lucide="arrow-left" class="w-4 h-4 text-slate-500"></i>
-            Volver a Estudiantes
+            Volver al Padrón
         </a>
     </div>
 
@@ -40,6 +40,7 @@
         </div>
     {% endif %}
 
+    {% if not es_edicion %}
     <!-- Banner Informativo de Autogeneración de Credenciales -->
     <div class="bg-gradient-to-r from-[#1E6532]/10 via-[#3C7DA8]/10 to-slate-50 border border-[#1E6532]/20 rounded-2xl p-4 sm:p-5 flex items-start gap-4 shadow-sm">
         <div class="w-10 h-10 rounded-xl bg-[#1E6532] text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-[#1E6532]/20">
@@ -48,10 +49,11 @@
         <div class="space-y-1">
             <h3 class="text-sm font-bold text-[#1E6532]">Generación Automática de Credencial de Acceso</h3>
             <p class="text-xs text-slate-600 leading-relaxed">
-                Al completar este formulario se creará de forma atómica la cuenta de usuario. El <strong>Nombre de Usuario</strong> asignado será el <strong>Código MINEDUC</strong> del alumno y la contraseña inicial será <code>Estudiante.2026!</code>.
+                Al registrar al estudiante se creará automáticamente su usuario de acceso. El <strong>Nombre de Usuario</strong> será su <strong>Código MINEDUC</strong> y la contraseña inicial será <code>Estudiante.2026!</code>.
             </p>
         </div>
     </div>
+    {% endif %}
 
     <!-- Formulario Unificado -->
     <form method="post" novalidate class="space-y-6">
@@ -63,7 +65,7 @@
                 <div class="w-8 h-8 rounded-lg bg-[#3C7DA8]/10 text-[#3C7DA8] flex items-center justify-center font-bold text-sm">1</div>
                 <div>
                     <h2 class="text-base font-bold text-slate-900">Información Personal del Estudiante</h2>
-                    <p class="text-xs text-slate-500">Datos generales asentados en el certificado de nacimiento o DPI.</p>
+                    <p class="text-xs text-slate-500">Datos asentados en el Certificado de Nacimiento RENAP o DPI.</p>
                 </div>
             </div>
 
@@ -77,7 +79,7 @@
                     {% if persona_form.cui.errors %}
                         <p class="text-xs text-rose-600 font-semibold mt-1">{{ persona_form.cui.errors.0 }}</p>
                     {% endif %}
-                    <p class="text-[11px] text-slate-400">13 dígitos sin espacios ni guiones (DPI o CUI de certificación).</p>
+                    <p class="text-[11px] text-slate-400">13 dígitos sin espacios ni guiones (Código Único de Identificación).</p>
                 </div>
 
                 <!-- Nombres -->
@@ -108,9 +110,6 @@
                         {{ persona_form.fecha_nacimiento.label }}
                     </label>
                     {{ persona_form.fecha_nacimiento }}
-                    {% if persona_form.fecha_nacimiento.errors %}
-                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ persona_form.fecha_nacimiento.errors.0 }}</p>
-                    {% endif %}
                 </div>
 
                 <!-- Género -->
@@ -119,12 +118,9 @@
                         {{ persona_form.genero.label }}
                     </label>
                     {{ persona_form.genero }}
-                    {% if persona_form.genero.errors %}
-                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ persona_form.genero.errors.0 }}</p>
-                    {% endif %}
                 </div>
 
-                <!-- Correo -->
+                <!-- Correo Comercial/Familiar -->
                 <div class="space-y-1">
                     <label for="{{ persona_form.correo.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                         {{ persona_form.correo.label }}
@@ -135,19 +131,15 @@
                     {% endif %}
                 </div>
 
-                <!-- Teléfonos -->
+                <!-- Teléfono Principal -->
                 <div class="space-y-1">
                     <label for="{{ persona_form.telefono_principal.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                         {{ persona_form.telefono_principal.label }}
                     </label>
                     {{ persona_form.telefono_principal }}
-                </div>
-
-                <div class="space-y-1">
-                    <label for="{{ persona_form.telefono_secundario.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                        {{ persona_form.telefono_secundario.label }}
-                    </label>
-                    {{ persona_form.telefono_secundario }}
+                    {% if persona_form.telefono_principal.errors %}
+                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ persona_form.telefono_principal.errors.0 }}</p>
+                    {% endif %}
                 </div>
 
                 <!-- Dirección -->
@@ -156,23 +148,26 @@
                         {{ persona_form.direccion.label }}
                     </label>
                     {{ persona_form.direccion }}
+                    {% if persona_form.direccion.errors %}
+                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ persona_form.direccion.errors.0 }}</p>
+                    {% endif %}
                 </div>
             </div>
         </div>
 
-        <!-- Sección 2: Expediente Académico y Médico (Estudiante) -->
+        <!-- Sección 2: Datos Académicos y Tutor Legal -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
             <div class="flex items-center gap-3 border-b border-slate-100 pb-3">
                 <div class="w-8 h-8 rounded-lg bg-[#1E6532]/10 text-[#1E6532] flex items-center justify-center font-bold text-sm">2</div>
                 <div>
-                    <h2 class="text-base font-bold text-slate-900">Datos Académicos y de Salud</h2>
-                    <p class="text-xs text-slate-500">Información del expediente estudiantil e historial médico.</p>
+                    <h2 class="text-base font-bold text-slate-900">Datos Académicos y Tutor Legal</h2>
+                    <p class="text-xs text-slate-500">Asignación del código oficial del MINEDUC y asignación de encargado.</p>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <!-- Código MINEDUC -->
-                <div class="space-y-1 sm:col-span-3">
+                <div class="space-y-1">
                     <label for="{{ form.codigo_mineduc.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                         {{ form.codigo_mineduc.label }} <span class="text-[#7A1C21]">*</span>
                     </label>
@@ -180,27 +175,203 @@
                     {% if form.codigo_mineduc.errors %}
                         <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.codigo_mineduc.errors.0 }}</p>
                     {% endif %}
-                    <p class="text-[11px] text-slate-400">Código único otorgado por el MINEDUC (Servirá como Usuario de acceso).</p>
                 </div>
 
+                <!-- Estado del Estudiante -->
+                <div class="space-y-1">
+                    <label for="{{ form.estado_estudiante.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ form.estado_estudiante.label }}
+                    </label>
+                    {{ form.estado_estudiante }}
+                </div>
+
+                <!-- Encargado Principal con Búsqueda Dinámica HTMX -->
+                <div class="space-y-2 sm:col-span-2">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Encargado / Tutor Legal Principal
+                    </label>
+                    
+                    <!-- Campo Oculto para la FK -->
+                    <input type="hidden" name="encargado" id="id_encargado_hidden" value="{{ form.encargado.value|default:'' }}">
+
+                    <!-- Tarjeta de Encargado Seleccionado -->
+                    <div id="encargado-selected-card" class="{% if form.instance.encargado %}flex{% else %}hidden{% endif %} items-center justify-between p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl shadow-xs">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">
+                                <i data-lucide="user-check" class="w-4 h-4"></i>
+                            </div>
+                            <div>
+                                <p id="encargado-selected-name" class="text-xs font-bold text-emerald-950">
+                                    {{ form.instance.encargado.persona.nombre_completo|default:"" }}
+                                </p>
+                                <p id="encargado-selected-info" class="text-[11px] text-emerald-700 font-mono">
+                                    {% if form.instance.encargado %}CUI: {{ form.instance.encargado.persona.cui }}{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="limpiarEncargado()" class="px-3 py-1 bg-white text-rose-600 border border-rose-200 rounded-lg text-xs font-bold hover:bg-rose-50 transition-colors">
+                            Cambiar / Quitar
+                        </button>
+                    </div>
+
+                    <!-- Buscador HTMX (Si no hay encargado seleccionado) -->
+                    <div id="encargado-search-box" class="{% if form.instance.encargado %}hidden{% endif %} relative space-y-2">
+                        <div class="relative">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                            <input type="text" 
+                                   id="input-buscar-encargado"
+                                   placeholder="Escriba el CUI o Nombre del Encargado para buscar..." 
+                                   hx-get="{% url 'estudiantes:buscar_encargado_api' %}"
+                                   hx-trigger="keyup changed delay:300ms, search"
+                                   hx-target="#encargado-results"
+                                   name="q"
+                                   autocomplete="off"
+                                   class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1E6532] focus:bg-white transition-all">
+                        </div>
+
+                        <!-- Contenedor de Resultados HTMX -->
+                        <div id="encargado-results" class="relative"></div>
+
+                        <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+                            <span>Escriba al menos 2 caracteres para buscar en el sistema.</span>
+                            <a href="{% url 'estudiantes:encargado_create' %}" target="_blank" class="text-[#3C7DA8] font-bold hover:underline flex items-center gap-1">
+                                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                                ¿No existe? Registrar Nuevo Encargado
+                            </a>
+                        </div>
+                    </div>
+
+                    {% if form.encargado.errors %}
+                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.encargado.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <script>
+                    function seleccionarEncargado(id, nombre, cui, telefono) {
+                        document.getElementById('id_encargado_hidden').value = id;
+                        document.getElementById('encargado-selected-name').textContent = nombre;
+                        document.getElementById('encargado-selected-info').textContent = 'CUI: ' + cui + ' | Tel: ' + telefono;
+                        document.getElementById('encargado-selected-card').classList.remove('hidden');
+                        document.getElementById('encargado-selected-card').classList.add('flex');
+                        document.getElementById('encargado-search-box').classList.add('hidden');
+                        document.getElementById('encargado-results').innerHTML = '';
+                    }
+
+                    function limpiarEncargado() {
+                        document.getElementById('id_encargado_hidden').value = '';
+                        document.getElementById('encargado-selected-card').classList.add('hidden');
+                        document.getElementById('encargado-selected-card').classList.remove('flex');
+                        document.getElementById('encargado-search-box').classList.remove('hidden');
+                        document.getElementById('input-buscar-encargado').value = '';
+                        document.getElementById('input-buscar-encargado').focus();
+                    }
+                </script>
+
                 <!-- Historial Médico -->
-                <div class="space-y-1 sm:col-span-3">
+                <div class="space-y-1 sm:col-span-2">
                     <label for="{{ form.historial_medico.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                         {{ form.historial_medico.label }}
                     </label>
                     {{ form.historial_medico }}
-                    {% if form.historial_medico.errors %}
-                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.historial_medico.errors.0 }}</p>
-                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección 3: Datos Informativos de los Padres (Estándar SIRE) -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
+            <div class="flex items-center gap-3 border-b border-slate-100 pb-3">
+                <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold text-sm">3</div>
+                <div>
+                    <h2 class="text-base font-bold text-slate-900">Información de los Padres de Familia (SIRE)</h2>
+                    <p class="text-xs text-slate-500">Registro de contactos del Padre y de la Madre para la ficha del alumno.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                <!-- Nombre Padre -->
+                <div class="space-y-1">
+                    <label for="{{ form.nombre_padre.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ form.nombre_padre.label }}
+                    </label>
+                    {{ form.nombre_padre }}
                 </div>
 
-                <!-- Estado Activo -->
-                <div class="sm:col-span-3 pt-2">
-                    <label class="inline-flex items-center gap-3 cursor-pointer">
-                        {{ form.estado_activo }}
-                        <span class="text-sm font-semibold text-slate-800">{{ form.estado_activo.label }}</span>
+                <!-- Teléfono Padre -->
+                <div class="space-y-1">
+                    <label for="{{ form.telefono_padre.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ form.telefono_padre.label }}
                     </label>
+                    {{ form.telefono_padre }}
                 </div>
+
+                <!-- Nombre Madre -->
+                <div class="space-y-1">
+                    <label for="{{ form.nombre_madre.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ form.nombre_madre.label }}
+                    </label>
+                    {{ form.nombre_madre }}
+                </div>
+
+                <!-- Teléfono Madre -->
+                <div class="space-y-1">
+                    <label for="{{ form.telefono_madre.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ form.telefono_madre.label }}
+                    </label>
+                    {{ form.telefono_madre }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección 4: Verificación de Papelería Obligatoria MINEDUC -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
+            <div class="flex items-center gap-3 border-b border-slate-100 pb-3">
+                <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold text-sm">4</div>
+                <div>
+                    <h2 class="text-base font-bold text-slate-900">Checklist de Expediente Físico en Secretaría (Obligatorios MINEDUC)</h2>
+                    <p class="text-xs text-slate-500">Marque únicamente los documentos físicos presentados y verificados.</p>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <label class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer">
+                    {{ form.doc_cert_nacimiento_renap }}
+                    <div>
+                        <span class="text-xs font-bold text-slate-800 block">1. Certificado de Nacimiento RENAP</span>
+                        <span class="text-[11px] text-slate-500">Documento original o copia extendida por el RENAP con CUI visible.</span>
+                    </div>
+                </label>
+
+                <label class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer">
+                    {{ form.doc_dpi_encargado }}
+                    <div>
+                        <span class="text-xs font-bold text-slate-800 block">2. Fotocopia de DPI de Encargado / Padre</span>
+                        <span class="text-[11px] text-slate-500">Copia clara del Documento Personal de Identificación del tutor legal.</span>
+                    </div>
+                </label>
+
+                <label class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer">
+                    {{ form.doc_certificado_grado_anterior }}
+                    <div>
+                        <span class="text-xs font-bold text-slate-800 block">3. Certificado de Estudios de Grado Anterior</span>
+                        <span class="text-[11px] text-slate-500">Certificado oficial de aprobación del grado inmediato anterior (6to Primaria o grado previo de Básico).</span>
+                    </div>
+                </label>
+
+                <label class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer">
+                    {{ form.doc_diploma_primaria }}
+                    <div>
+                        <span class="text-xs font-bold text-slate-800 block">4. Diploma de Educación Primaria</span>
+                        <span class="text-[11px] text-slate-500">Título / Diploma oficial de acreditación de nivel primario (requerido para 1ro Básico).</span>
+                    </div>
+                </label>
+
+                <label class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer">
+                    {{ form.doc_codigo_mineduc }}
+                    <div>
+                        <span class="text-xs font-bold text-slate-800 block">5. Constancia de Código Personal MINEDUC</span>
+                        <span class="text-[11px] text-slate-500">Ficha o constancia de asignación del código del estudiante emitido por el SIRE.</span>
+                    </div>
+                </label>
             </div>
         </div>
 
@@ -211,7 +382,7 @@
             </a>
             <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
                 <i data-lucide="check-circle" class="w-4 h-4"></i>
-                Completar Inscripción
+                {% if es_edicion %}Guardar Cambios de Expediente{% else %}Registrar Alumno{% endif %}
             </button>
         </div>
     </form>
