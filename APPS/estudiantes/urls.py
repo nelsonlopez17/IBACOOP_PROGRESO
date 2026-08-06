@@ -7,7 +7,8 @@ from APPS.estudiantes.views import (
     EncargadoCreateView,
     buscar_encargado_api,
     descargar_expediente_pdf,
-    descargar_credenciales_pdf
+    descargar_credenciales_pdf,
+    descargar_credenciales_encargado_pdf
 )
 
 app_name = 'estudiantes'
@@ -21,4 +22,5 @@ urlpatterns = [
     path('<pk>/pdf/expediente/', descargar_expediente_pdf, name='estudiante_pdf_expediente'),
     path('<pk>/pdf/credenciales/', descargar_credenciales_pdf, name='estudiante_pdf_credenciales'),
     path('encargado/crear/', EncargadoCreateView.as_view(), name='encargado_create'),
+    path('encargado/<pk>/pdf/credenciales/', descargar_credenciales_encargado_pdf, name='encargado_pdf_credenciales'),
 ]

@@ -139,6 +139,12 @@ class Estudiante(ModeloAuditable):
         ]
         return sum(1 for d in docs if d)
 
+    @property
+    def porcentaje_expediente(self):
+        """Retorna el porcentaje de papelería física completada (0 a 100)."""
+        return int((self.documentos_entregados_count / 5) * 100)
+
+
 
 class Encargado(ModeloAuditable):
     """

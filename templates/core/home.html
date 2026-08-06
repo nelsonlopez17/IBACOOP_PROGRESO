@@ -6,6 +6,20 @@
 {% block content %}
 <div class="space-y-8">
 
+    <!-- Alertas y Mensajes del Sistema -->
+    {% if messages %}
+        <div class="space-y-3">
+            {% for message in messages %}
+                <div class="p-4 rounded-xl flex items-start gap-3 border shadow-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-900 border-emerald-200{% else %}bg-rose-50 text-rose-900 border-rose-200{% endif %}">
+                    <i data-lucide="{% if message.tags == 'success' %}check-circle-2{% else %}alert-triangle{% endif %}" class="w-5 h-5 flex-shrink-0 mt-0.5 {% if message.tags == 'success' %}text-emerald-600{% else %}text-rose-600{% endif %}"></i>
+                    <div class="text-sm font-medium leading-relaxed">
+                        {{ message }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     <!-- Mensaje de bienvenida -->
     <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#1E6532] via-[#185429] to-[#12421f] text-white p-8 shadow-xl">
         <div class="relative z-10 max-w-2xl">
@@ -16,7 +30,7 @@
                 ¡Bienvenido, {{ user.get_full_name|default:user.username }}!
             </h2>
             <p class="text-emerald-100/90 mt-2 text-sm leading-relaxed font-normal">
-                Panel principal de administración del Instituto <strong>IBACOOP EL PROGRESO</strong>. Gestione los usuarios, expedientes de estudiantes, encargados, personal docente y contrataciones de la institución.
+                Panel principal de administración del Instituto <strong>IBACOOP EL PROGRESO</strong>. Gestione los usuarios del sistema, expedientes estudiantiles, encargados legales y contrataciones del personal.
             </p>
         </div>
         <div class="absolute -right-6 -bottom-6 opacity-15 text-white pointer-events-none">
@@ -31,7 +45,7 @@
         <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs hover:shadow-md transition-shadow">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Usuarios</p>
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Cuentas</p>
                     <h3 class="text-3xl font-extrabold text-slate-900 mt-1">{{ total_usuarios|default:"0" }}</h3>
                 </div>
                 <div class="w-12 h-12 bg-[#1E6532]/10 border border-[#1E6532]/20 rounded-2xl flex items-center justify-center text-[#1E6532]">
@@ -40,7 +54,7 @@
             </div>
             <p class="text-xs font-semibold text-[#1E6532] mt-3 flex items-center gap-1">
                 <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
-                <span>{{ usuarios_activos|default:"0" }} activos</span>
+                <span>{{ usuarios_activos|default:"0" }} cuentas activas</span>
             </p>
         </div>
 
@@ -48,14 +62,14 @@
         <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs hover:shadow-md transition-shadow">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Administradores</p>
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Administración</p>
                     <h3 class="text-3xl font-extrabold text-slate-900 mt-1">{{ admin_count|default:"0" }}</h3>
                 </div>
                 <div class="w-12 h-12 bg-[#7A1C21]/10 border border-[#7A1C21]/20 rounded-2xl flex items-center justify-center text-[#7A1C21]">
                     <i data-lucide="shield-check" class="w-6 h-6"></i>
                 </div>
             </div>
-            <p class="text-xs font-medium text-slate-500 mt-3">Gestores de sistema</p>
+            <p class="text-xs font-medium text-slate-500 mt-3">Gestores de TI y Dirección</p>
         </div>
 
         <!-- Tarjeta de docentes -->
@@ -69,7 +83,7 @@
                     <i data-lucide="book-open" class="w-6 h-6"></i>
                 </div>
             </div>
-            <p class="text-xs font-medium text-slate-500 mt-3">Personal docente</p>
+            <p class="text-xs font-medium text-slate-500 mt-3">Catedráticos e Instructores</p>
         </div>
 
         <!-- Tarjeta de estudiantes -->
@@ -89,13 +103,13 @@
     </div>
 
     <!-- Módulos principales del sistema -->
-    <div>
-        <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+    <div class="space-y-4">
+        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
             <i data-lucide="layout-grid" class="w-5 h-5 text-[#1E6532]"></i>
             <span>Módulos de Administración Activos</span>
         </h3>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
             <!-- Acceso a la gestión de usuarios -->
             <a href="{% url 'usuarios:usuario_list' %}" class="group relative bg-white border border-[#1E6532]/30 rounded-3xl p-6 hover:border-[#1E6532] transition-all duration-300 shadow-sm hover:shadow-xl block">
@@ -112,7 +126,7 @@
                     <i data-lucide="arrow-right" class="w-5 h-5 text-[#1E6532] group-hover:translate-x-1 transition-transform"></i>
                 </h4>
                 <p class="text-xs text-slate-500 mt-2 leading-relaxed font-normal">
-                    Administre las cuentas de usuario, asignación de roles visuales, estado de acceso y grupos de permisos nativos de Django.
+                    Directorio de cuentas IAM, roles de acceso, grupos de permisos nativos de Django y restablecimiento seguro de credenciales con PDF.
                 </p>
             </a>
 
@@ -127,11 +141,11 @@
                     </span>
                 </div>
                 <h4 class="text-lg font-bold text-slate-900 group-hover:text-[#3C7DA8] transition-colors flex items-center justify-between">
-                    <span>Estudiantes y Encargados</span>
+                    <span>Registro de Alumnos</span>
                     <i data-lucide="arrow-right" class="w-5 h-5 text-[#3C7DA8] group-hover:translate-x-1 transition-transform"></i>
                 </h4>
                 <p class="text-xs text-slate-500 mt-2 leading-relaxed font-normal">
-                    Inscripción de alumnos con autogeneración de Usuario por Código MINEDUC y registro de tutores/encargados por DPI.
+                    Padrón escolar, expedientes 360° con porcentaje % de papelería física MINEDUC y usuarios creados por CUI/DPI de 13 dígitos.
                 </p>
             </a>
 
@@ -150,7 +164,7 @@
                     <i data-lucide="arrow-right" class="w-5 h-5 text-[#7A1C21] group-hover:translate-x-1 transition-transform"></i>
                 </h4>
                 <p class="text-xs text-slate-500 mt-2 leading-relaxed font-normal">
-                    Contratación de colaboradores con autogeneración inteligente de username (ej. <code>jgomez</code>) y asignación dinámica de rol según el puesto.
+                    Registrar Empleado con usuario CUI/DPI (13 dígitos), ubicación de contratos físicos, checklist de 8 documentos y asignación dinámica de rol.
                 </p>
             </a>
 

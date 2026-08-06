@@ -40,6 +40,28 @@
         </div>
     {% endif %}
 
+    <!-- Resumen de Errores Generales en el Formulario -->
+    {% if form.errors or persona_form.errors %}
+        <div class="p-5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 shadow-sm space-y-2">
+            <div class="flex items-center gap-2 font-bold text-rose-700">
+                <i data-lucide="alert-triangle" class="w-5 h-5 flex-shrink-0"></i>
+                <span>Atención: El formulario contiene errores que impiden el registro. Revise los campos marcados:</span>
+            </div>
+            <ul class="list-disc list-inside text-xs text-rose-800 font-semibold space-y-1 pl-2">
+                {% for field in persona_form %}
+                    {% for error in field.errors %}
+                        <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
     {% if not es_edicion %}
     <!-- Banner Informativo de Autogeneración de Credenciales -->
     <div class="bg-gradient-to-r from-[#1E6532]/10 via-[#3C7DA8]/10 to-slate-50 border border-[#1E6532]/20 rounded-2xl p-4 sm:p-5 flex items-start gap-4 shadow-sm">
@@ -47,9 +69,9 @@
             <i data-lucide="key-round" class="w-5 h-5"></i>
         </div>
         <div class="space-y-1">
-            <h3 class="text-sm font-bold text-[#1E6532]">Generación Automática de Credencial de Acceso</h3>
+            <h3 class="text-sm font-bold text-[#1E6532]">Generación Automática de Credencial de Acceso del Alumno</h3>
             <p class="text-xs text-slate-600 leading-relaxed">
-                Al registrar al estudiante se creará automáticamente su usuario de acceso. El <strong>Nombre de Usuario</strong> será su <strong>Código MINEDUC</strong> y la contraseña inicial será <code>Estudiante.2026!</code>.
+                Al registrar al estudiante se creará automáticamente su usuario de acceso. El <strong>Nombre de Usuario</strong> será su <strong>CUI / DPI de 13 dígitos</strong> y se generará una <strong>contraseña temporal aleatoria</strong> imprimible en PDF.
             </p>
         </div>
     </div>
@@ -77,7 +99,10 @@
                     </label>
                     {{ persona_form.cui }}
                     {% if persona_form.cui.errors %}
-                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ persona_form.cui.errors.0 }}</p>
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ persona_form.cui.errors.0 }}</span>
+                        </p>
                     {% endif %}
                     <p class="text-[11px] text-slate-400">13 dígitos sin espacios ni guiones (Código Único de Identificación).</p>
                 </div>
@@ -89,7 +114,10 @@
                     </label>
                     {{ persona_form.nombres }}
                     {% if persona_form.nombres.errors %}
-                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ persona_form.nombres.errors.0 }}</p>
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ persona_form.nombres.errors.0 }}</span>
+                        </p>
                     {% endif %}
                 </div>
 
@@ -100,7 +128,10 @@
                     </label>
                     {{ persona_form.apellidos }}
                     {% if persona_form.apellidos.errors %}
-                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ persona_form.apellidos.errors.0 }}</p>
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ persona_form.apellidos.errors.0 }}</span>
+                        </p>
                     {% endif %}
                 </div>
 
@@ -110,6 +141,12 @@
                         {{ persona_form.fecha_nacimiento.label }}
                     </label>
                     {{ persona_form.fecha_nacimiento }}
+                    {% if persona_form.fecha_nacimiento.errors %}
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ persona_form.fecha_nacimiento.errors.0 }}</span>
+                        </p>
+                    {% endif %}
                 </div>
 
                 <!-- Género -->
@@ -118,6 +155,12 @@
                         {{ persona_form.genero.label }}
                     </label>
                     {{ persona_form.genero }}
+                    {% if persona_form.genero.errors %}
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ persona_form.genero.errors.0 }}</span>
+                        </p>
+                    {% endif %}
                 </div>
 
                 <!-- Correo Comercial/Familiar -->
@@ -127,7 +170,10 @@
                     </label>
                     {{ persona_form.correo }}
                     {% if persona_form.correo.errors %}
-                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ persona_form.correo.errors.0 }}</p>
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ persona_form.correo.errors.0 }}</span>
+                        </p>
                     {% endif %}
                 </div>
 
@@ -138,7 +184,10 @@
                     </label>
                     {{ persona_form.telefono_principal }}
                     {% if persona_form.telefono_principal.errors %}
-                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ persona_form.telefono_principal.errors.0 }}</p>
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ persona_form.telefono_principal.errors.0 }}</span>
+                        </p>
                     {% endif %}
                 </div>
 
@@ -149,7 +198,10 @@
                     </label>
                     {{ persona_form.direccion }}
                     {% if persona_form.direccion.errors %}
-                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ persona_form.direccion.errors.0 }}</p>
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ persona_form.direccion.errors.0 }}</span>
+                        </p>
                     {% endif %}
                 </div>
             </div>
@@ -173,7 +225,10 @@
                     </label>
                     {{ form.codigo_mineduc }}
                     {% if form.codigo_mineduc.errors %}
-                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.codigo_mineduc.errors.0 }}</p>
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ form.codigo_mineduc.errors.0 }}</span>
+                        </p>
                     {% endif %}
                 </div>
 
@@ -183,6 +238,12 @@
                         {{ form.estado_estudiante.label }}
                     </label>
                     {{ form.estado_estudiante }}
+                    {% if form.estado_estudiante.errors %}
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ form.estado_estudiante.errors.0 }}</span>
+                        </p>
+                    {% endif %}
                 </div>
 
                 <!-- Encargado Principal con Búsqueda Dinámica HTMX -->
@@ -242,7 +303,10 @@
                     </div>
 
                     {% if form.encargado.errors %}
-                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.encargado.errors.0 }}</p>
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ form.encargado.errors.0 }}</span>
+                        </p>
                     {% endif %}
                 </div>
 
@@ -273,6 +337,12 @@
                         {{ form.historial_medico.label }}
                     </label>
                     {{ form.historial_medico }}
+                    {% if form.historial_medico.errors %}
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ form.historial_medico.errors.0 }}</span>
+                        </p>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -294,6 +364,12 @@
                         {{ form.nombre_padre.label }}
                     </label>
                     {{ form.nombre_padre }}
+                    {% if form.nombre_padre.errors %}
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ form.nombre_padre.errors.0 }}</span>
+                        </p>
+                    {% endif %}
                 </div>
 
                 <!-- Teléfono Padre -->
@@ -302,6 +378,12 @@
                         {{ form.telefono_padre.label }}
                     </label>
                     {{ form.telefono_padre }}
+                    {% if form.telefono_padre.errors %}
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ form.telefono_padre.errors.0 }}</span>
+                        </p>
+                    {% endif %}
                 </div>
 
                 <!-- Nombre Madre -->
@@ -310,6 +392,12 @@
                         {{ form.nombre_madre.label }}
                     </label>
                     {{ form.nombre_madre }}
+                    {% if form.nombre_madre.errors %}
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ form.nombre_madre.errors.0 }}</span>
+                        </p>
+                    {% endif %}
                 </div>
 
                 <!-- Teléfono Madre -->
@@ -318,6 +406,12 @@
                         {{ form.telefono_madre.label }}
                     </label>
                     {{ form.telefono_madre }}
+                    {% if form.telefono_madre.errors %}
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ form.telefono_madre.errors.0 }}</span>
+                        </p>
+                    {% endif %}
                 </div>
             </div>
         </div>

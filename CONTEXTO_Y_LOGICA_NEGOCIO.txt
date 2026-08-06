@@ -1,0 +1,124 @@
+===============================================================================
+DOCUMENTO DE CONTEXTO Y LÓGICA DE NEGOCIO ERP - IBACOOP EL PROGRESO
+===============================================================================
+
+Este documento establece la arquitectura técnica, las reglas de negocio, los
+estándares de seguridad IAM y el estado de desarrollo de la plataforma de
+Gestión Escolar ERP del Instituto de Educación Básica IBACOOP EL PROGRESO.
+
+===============================================================================
+1. ARQUITECTURA Y REGLAS PRINCIPALES DE NEGOCIO
+===============================================================================
+
+A. IDENTIFICADOR UNIVERSAL DE USUARIO (username = CUI / DPI)
+-------------------------------------------------------------------------------
+* Regla Central: Todo individuo registrado en la plataforma (Estudiantes,
+  Encargados / Tutores Legales y Empleados de Recursos Humanos) utiliza su
+  CUI / DPI de 13 dígitos (emitido por RENAP) como su Nombre de Usuario único.
+* Autenticación Flexibilizada: El sistema utiliza el backend personalizado
+  CUIOrEmailModelBackend (APPS/usuarios/backends.py), permitiendo iniciar
+  sesión indistintamente con el DPI/CUI o con el Correo Electrónico.
+
+B. GESTIÓN SEGURA DE CONTRASEÑAS Y CREDENCIALES PDF (ISO 27001 / OWASP)
+-------------------------------------------------------------------------------
+* Hasheo y Seguridad: Las contraseñas NUNCA se almacenan en texto plano en la
+  base de datos (Django las resguarda encriptadas con algoritmos de un solo
+  sentido PBKDF2 / Argon2).
+* Vida Útil de la Contraseña Temporal: Al registrar un individuo o al ejecutar
+  un reseteo de clave en Gestión de Usuarios, la función
+  generar_password_temporal() crea una contraseña aleatoria de 10 caracteres y
+  marca la bandera debe_cambiar_password = True.
+* Emisión de Comprobantes PDF:
+  - La contraseña temporal existe en la sesión (request.session) exclusivamente
+    durante el momento del alta o del restablecimiento activo.
+  - El botón [Imprimir Credenciales (PDF)] se muestra en el banner y en las
+    tarjetas 360° únicamente mientras la sesión de alta esté activa. Al navegar
+    fuera o expirar la sesión, el botón se oculta por seguridad.
+  - Credenciales Únicas del Alumno: El comprobante en PDF emitido tras la
+    inscripción de un alumno contiene únicamente las credenciales del Alumno
+    (Username CUI, Código MINEDUC y Clave Temporal). Las credenciales del tutor
+    legal se emiten de forma independiente al dar de alta al Encargado.
+  - Restablecimiento de Olvidos: Si un usuario olvida su clave, la re-emisión
+    se realiza centralizadamente en Gestión de Usuarios (IAM) (/usuarios/),
+    donde el administrador genera un nuevo reset con su respectivo comprobante
+    PDF por única vez.
+
+C. SEPARACIÓN DE CONCEPTOS: PUESTOS DE RRHH VS. ROLES DE USUARIO
+-------------------------------------------------------------------------------
+* Puesto / Cargo Laboral (Recursos Humanos): Es la denominación contractual
+  física de la persona dentro del colegio (ej. Director General, Catedrático,
+  Secretaria de Dirección, Contador, Auxiliar, Conserjería / Servicios).
+* Rol de Usuario (Seguridad / IAM): Define el perfil de menú y visibilidad en
+  el software (RolChoices en APPS/usuarios/models.py):
+  - ADMINISTRADOR: Gestión técnica del sistema y permisos.
+  - DIRECTOR: Gestión ejecutiva y supervisión institucional.
+  - SECRETARIA: Control de matrículas, expedientes y papelería física.
+  - CONTADOR: Gestión financiera, cobros y planillas.
+  - DOCENTE: Ingreso de notas y control académico.
+  - ESTUDIANTE: Consulta de calificaciones y tareas.
+  - ENCARGADO: Portal de padres de familia (acceso multihijos).
+  - PERSONAL (Personal General): Asignado automáticamente al personal operativo
+    o de servicios (conserjes, mantenimiento) para brindar un perfil seguro sin
+    visibilidad a cuadros de notas ni finanzas.
+* Mapeo Dinámico: La función mapear_rol_segun_puesto() en APPS/rrhh/views.py
+  clasifica automáticamente el puesto ingresado al rol de usuario correspondiente.
+
+D. INTEGRIDAD HISTÓRICA Y BORRADO LÓGICO (ModeloAuditable)
+-------------------------------------------------------------------------------
+* Regla de No Eliminación Física: Ningún estudiante, tutor legal o empleado se
+  elimina de forma permanente de la base de datos (DELETE FROM...).
+* Implementación: Todos los modelos del sistema heredan de ModeloAuditable
+  (APPS/core/models.py), incorporando la bandera esta_eliminado = True/False y
+  el ActivosManager que excluye de forma transparente los registros eliminados
+  lógicamente en todas las consultas del sistema.
+
+E. ESTÁNDAR DE NOTIFICACIONES Y RENDERIZADO DE FORMULARIO
+-------------------------------------------------------------------------------
+* Renderizado Directo de Alertas: Todos los templates procesan de inmediato el
+  bloque {% if messages %}. Esto asegura que notificaciones o alertas de un
+  módulo no se queden retenidas en la sesión ni aparezcan "fantasma" en otros
+  módulos.
+* Doble Capa de Errores en Formularios:
+  1. Alerta Resumen al Inicio: Si el formulario o los subformularios contienen
+     errores de validación, se despliega un cuadro en rojo al inicio listing
+     los campos específicos con problemas.
+  2. Mensajes de Error por Campo: Debajo de absolutamente cada input, se muestra
+     el mensaje de error específico formateado en rojo con el ícono x-circle.
+
+===============================================================================
+2. MÓDULOS OPERATIVOS DEL SISTEMA (ESTADO ACTUAL)
+===============================================================================
+
+1. MÓDULO GESTIÓN DE USUARIOS (IAM) (APPS/usuarios/)
+-------------------------------------------------------------------------------
+* Directorio completo de cuentas con búsqueda por CUI, nombre, email o rol.
+* Activación y bloqueo rápido de cuentas en 1 clic.
+* Restablecimiento seguro de claves con generación de PDF de credenciales.
+
+2. MÓDULO REGISTRO DE ALUMNOS (PADRÓN ESCOLAR) (APPS/estudiantes/)
+-------------------------------------------------------------------------------
+* Inscripción de alumnos con CUI de 13 dígitos y Código MINEDUC.
+* Vinculación e integración con Encargados / Tutores por DPI (con buscador
+  dinámico HTMX).
+* Ficha de Expediente 360° con porcentaje % visual de papelería física MINEDUC
+  (5 documentos obligatorios: RENAP, DPI Encargado, Certificado Grado Anterior,
+  Diploma Primaria y Código MINEDUC).
+* Emisión de Ficha de Expediente (PDF) y Comprobante de Credenciales Exclusivo
+  del Alumno (PDF) y del Tutor (PDF).
+
+3. MÓDULO RECURSOS HUMANOS (APPS/rrhh/)
+-------------------------------------------------------------------------------
+* Acción oficial "Registrar Empleado" con usuario CUI (13 dígitos).
+* Resguardo de contratos físicos (número correlativo y ubicación de archivador).
+* Checklist de 8 documentos obligatorios (MINEDUC/MINTRAB/IGSS) con porcentaje %
+  de papelería física entregada.
+* Mapeo inteligente Puesto -> Rol.
+* Ficha 360° de Empleado, edición atómica y reportes PDF (Expediente / Credenciales).
+
+===============================================================================
+3. VERIFICACIÓN Y ESTADO DE DESARROLLO
+===============================================================================
+* Django System Check: 0 errores (python manage.py check).
+* Base de Datos: PostgreSQL corriendo bajo Docker Compose (ibacoop_db).
+* Servidor Web: Django corriendo bajo Docker Compose (ibacoop_web).
+===============================================================================

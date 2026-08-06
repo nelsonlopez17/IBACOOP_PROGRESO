@@ -29,6 +29,8 @@ class RolChoices(models.TextChoices):
     DOCENTE       = 'DOCENTE',       'Docente'
     ESTUDIANTE    = 'ESTUDIANTE',    'Estudiante'
     ENCARGADO     = 'ENCARGADO',     'Encargado'
+    PERSONAL      = 'PERSONAL',      'Personal General'
+
 
 
 class Usuario(AbstractUser):

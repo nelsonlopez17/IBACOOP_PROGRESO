@@ -97,6 +97,64 @@ class Personal(ModeloAuditable):
         verbose_name='Salario base asignado (Q)'
     )
 
+    # Ubicación del Contrato y Resguardo Físico en Secretaría
+    numero_contrato_fisico = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name='No. Contrato Físico',
+        help_text='Número o correlativo del contrato laboral firmado en físico.'
+    )
+    ubicacion_expediente_fisico = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name='Ubicación Físico (Archivador/Carpeta)',
+        help_text='Ej. Archivador B-1, Carpeta 15 (Secretaría).'
+    )
+    contacto_emergencia_nombre = models.CharField(
+        max_length=150,
+        blank=True,
+        verbose_name='Nombre contacto de emergencia'
+    )
+    contacto_emergencia_telefono = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name='Teléfono contacto de emergencia'
+    )
+
+    # Checklist Papelería Obligatoria Nivel Medio (Guatemala)
+    doc_dpi_personal = models.BooleanField(
+        default=False,
+        verbose_name='Fotocopia DPI / CUI (RENAP)'
+    )
+    doc_nit_sat = models.BooleanField(
+        default=False,
+        verbose_name='Constancia de NIT (RTU SAT)'
+    )
+    doc_titulo_academico = models.BooleanField(
+        default=False,
+        verbose_name='Fotocopia Título Académico / Cédula Docente'
+    )
+    doc_colegiado_activo = models.BooleanField(
+        default=False,
+        verbose_name='Constancia Colegiado Activo / Registro MINEDUC'
+    )
+    doc_antecedentes_penales = models.BooleanField(
+        default=False,
+        verbose_name='Antecedentes Penales (Vigentes)'
+    )
+    doc_antecedentes_policiales = models.BooleanField(
+        default=False,
+        verbose_name='Antecedentes Policiales (Vigentes)'
+    )
+    doc_contrato_fisico = models.BooleanField(
+        default=False,
+        verbose_name='Contrato Físico Firmado'
+    )
+    doc_tarjeta_salud = models.BooleanField(
+        default=False,
+        verbose_name='Tarjeta de Salud / Sanidad'
+    )
+
     class Meta:
         verbose_name = 'Personal'
         verbose_name_plural = 'Personal'
@@ -104,6 +162,39 @@ class Personal(ModeloAuditable):
 
     def __str__(self):
         return f"{self.persona.nombre_completo} - {self.puesto.nombre_puesto}"
+
+    @property
+    def expediente_completo(self):
+        """Indica si se entregaron los documentos obligatorios principales."""
+        return all([
+            self.doc_dpi_personal,
+            self.doc_nit_sat,
+            self.doc_titulo_academico,
+            self.doc_antecedentes_penales,
+            self.doc_antecedentes_policiales,
+            self.doc_contrato_fisico
+        ])
+
+    @property
+    def documentos_entregados_count(self):
+        """Retorna la cantidad de documentos entregados de la lista (0 a 8)."""
+        docs = [
+            self.doc_dpi_personal,
+            self.doc_nit_sat,
+            self.doc_titulo_academico,
+            self.doc_colegiado_activo,
+            self.doc_antecedentes_penales,
+            self.doc_antecedentes_policiales,
+            self.doc_contrato_fisico,
+            self.doc_tarjeta_salud
+        ]
+        return sum(1 for d in docs if d)
+
+    @property
+    def porcentaje_expediente(self):
+        """Retorna el porcentaje de papelería física completada (0 a 100)."""
+        return int((self.documentos_entregados_count / 8) * 100)
+
 
 
 class AsistenciaPersonal(ModeloAuditable):

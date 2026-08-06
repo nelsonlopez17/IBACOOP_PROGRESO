@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Nómina de Personal{% endblock %}
+{% block title %}Control de Personal y Recursos Humanos{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
@@ -8,20 +8,25 @@
     <!-- Encabezado de la Sección -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+                <a href="{% url 'core:home' %}" class="hover:underline">Dashboard</a>
+                <span>/</span>
+                <span class="text-slate-500">Recursos Humanos</span>
+            </div>
             <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
                 <i data-lucide="briefcase" class="w-7 h-7 text-[#1E6532]"></i>
-                Control de Personal y Nómina
+                Control de Personal y Expedientes
             </h1>
-            <p class="text-xs text-slate-500 mt-1">Colaboradores, docentes y personal administrativo instituido.</p>
+            <p class="text-xs text-slate-500 mt-1">Colaboradores, docentes y personal administrativo registrados.</p>
         </div>
         
-        <a href="{% url 'rrhh:personal_create' %}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
+        <a href="{% url 'rrhh:personal_create' %}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20 self-start sm:self-auto">
             <i data-lucide="user-plus" class="w-4 h-4"></i>
-            Nueva Contratación
+            Registrar Empleado
         </a>
     </div>
 
-    <!-- Mensajes -->
+    <!-- Alertas del Sistema -->
     {% if messages %}
         <div class="space-y-3">
             {% for message in messages %}
@@ -35,25 +40,109 @@
         </div>
     {% endif %}
 
+    <!-- Tarjetas Métricas Rápidas -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 shadow-xs">
+            <div class="w-10 h-10 rounded-xl bg-[#1E6532]/10 text-[#1E6532] flex items-center justify-center flex-shrink-0 font-bold">
+                <i data-lucide="users" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Empleados</p>
+                <h3 class="text-xl font-extrabold text-slate-900">{{ total_empleados|default:"0" }}</h3>
+            </div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 shadow-xs">
+            <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 font-bold">
+                <i data-lucide="user-check" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Personal Activo</p>
+                <h3 class="text-xl font-extrabold text-emerald-700">{{ activos_count|default:"0" }}</h3>
+            </div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 shadow-xs">
+            <div class="w-10 h-10 rounded-xl bg-[#3C7DA8]/10 text-[#3C7DA8] flex items-center justify-center flex-shrink-0 font-bold">
+                <i data-lucide="award" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Control Digital</p>
+                <h3 class="text-xs font-bold text-slate-600 mt-1">Expedientes & Papelería</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barra de Búsqueda y Filtros -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+        <form method="get" class="flex flex-col sm:flex-row gap-3 items-center justify-between">
+            <div class="relative flex-1 w-full">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                <input 
+                    type="text" 
+                    name="q" 
+                    value="{{ q }}"
+                    placeholder="Buscar empleado por Nombre, DPI/CUI o Puesto..." 
+                    class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1E6532] focus:bg-white transition-colors"
+                >
+            </div>
+
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <select name="estado" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#1E6532]">
+                    <option value="">-- Todos los Estados --</option>
+                    {% for val, label in estados_laborales %}
+                        <option value="{{ val }}" {% if estado_filtro == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+
+                <button type="submit" class="px-4 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-900 transition-colors">
+                    Filtrar
+                </button>
+                
+                {% if q or estado_filtro %}
+                    <a href="{% url 'rrhh:personal_list' %}" class="px-3 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors">
+                        Limpiar
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
     <!-- Tabla de Personal -->
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left text-xs border-collapse">
                 <thead>
                     <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
-                        <th class="py-3.5 px-6">Colaborador</th>
+                        <th class="py-3.5 px-6">Empleado / Colaborador</th>
                         <th class="py-3.5 px-6">Puesto / Cargo</th>
-                        <th class="py-3.5 px-6">Usuario Acceso</th>
-                        <th class="py-3.5 px-6">Rol Asignado</th>
+                        <th class="py-3.5 px-6">Usuario Acceso (CUI)</th>
                         <th class="py-3.5 px-6">Salario Base</th>
-                        <th class="py-3.5 px-6">Estado Laboral</th>
+                        <th class="py-3.5 px-6">Papelería Físico</th>
+                        <th class="py-3.5 px-6">Estado</th>
+                        <th class="py-3.5 px-6 text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
                     {% for empleado in personal_list %}
                         <tr class="hover:bg-slate-50/60 transition-colors">
-                            <td class="py-4 px-6 font-bold text-slate-900">{{ empleado.persona.nombre_completo }}</td>
-                            <td class="py-4 px-6 font-semibold text-[#1E6532]">{{ empleado.puesto.nombre_puesto }}</td>
+                            <!-- Nombre y CUI -->
+                            <td class="py-4 px-6">
+                                <a href="{% url 'rrhh:personal_detail' empleado.pk %}" class="font-bold text-slate-900 hover:text-[#1E6532] block">
+                                    {{ empleado.persona.nombre_completo }}
+                                </a>
+                                <span class="text-[11px] text-slate-400 font-mono">DPI: {{ empleado.persona.cui }}</span>
+                            </td>
+
+                            <!-- Puesto -->
+                            <td class="py-4 px-6">
+                                <span class="font-semibold text-[#1E6532] block">{{ empleado.puesto.nombre_puesto }}</span>
+                                {% if empleado.ubicacion_expediente_fisico %}
+                                    <span class="text-[10px] text-slate-400 block"><i data-lucide="archive" class="w-3 h-3 inline"></i> {{ empleado.ubicacion_expediente_fisico }}</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Usuario Acceso -->
                             <td class="py-4 px-6">
                                 {% if empleado.persona.usuario %}
                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
@@ -64,31 +153,71 @@
                                     <span class="text-slate-400">Sin cuenta</span>
                                 {% endif %}
                             </td>
+
+                            <!-- Salario -->
+                            <td class="py-4 px-6 font-mono font-bold text-slate-800">Q{{ empleado.salario_base_asignado }}</td>
+
+                            <!-- Papelería % -->
                             <td class="py-4 px-6">
-                                {% if empleado.persona.usuario %}
-                                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#3C7DA8]/10 text-[#3C7DA8]">
-                                        {{ empleado.persona.usuario.get_rol_display }}
+                                <div class="flex items-center gap-2">
+                                    <div class="w-16 bg-slate-100 rounded-full h-2 overflow-hidden">
+                                        <div class="h-2 rounded-full {% if empleado.expediente_completo %}bg-emerald-500{% else %}bg-amber-500{% endif %}" style="width: {{ empleado.porcentaje_expediente }}%"></div>
+                                    </div>
+                                    <span class="text-[11px] font-bold {% if empleado.expediente_completo %}text-emerald-700{% else %}text-amber-700{% endif %}">
+                                        {{ empleado.porcentaje_expediente }}%
                                     </span>
+                                </div>
+                                <span class="text-[10px] text-slate-400 block mt-0.5">({{ empleado.documentos_entregados_count }}/8 docs)</span>
+                            </td>
+
+                            <!-- Estado Laboral -->
+                            <td class="py-4 px-6">
+                                {% if empleado.estado_laboral == 'ACTIVO' %}
+                                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">Activo</span>
+                                {% else %}
+                                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">{{ empleado.get_estado_laboral_display }}</span>
                                 {% endif %}
                             </td>
-                            <td class="py-4 px-6 font-mono font-bold text-slate-800">Q{{ empleado.salario_base_asignado }}</td>
-                            <td class="py-4 px-6">
-                                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
-                                    {{ empleado.get_estado_laboral_display }}
-                                </span>
+
+                            <!-- Botones de Acción -->
+                            <td class="py-4 px-6 text-right space-x-1">
+                                <a href="{% url 'rrhh:personal_detail' empleado.pk %}" title="Ver Expediente 360°" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-slate-700 hover:bg-[#1E6532] hover:text-white transition-colors">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </a>
+                                <a href="{% url 'rrhh:personal_update' empleado.pk %}" title="Modificar Empleado" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-slate-700 hover:bg-[#3C7DA8] hover:text-white transition-colors">
+                                    <i data-lucide="edit" class="w-4 h-4"></i>
+                                </a>
+                                <a href="{% url 'rrhh:personal_pdf_expediente' empleado.pk %}" target="_blank" title="Ficha Expediente PDF" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-slate-700 hover:bg-emerald-700 hover:text-white transition-colors">
+                                    <i data-lucide="file-text" class="w-4 h-4"></i>
+                                </a>
                             </td>
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="6" class="py-12 text-center text-slate-400">
+                            <td colspan="7" class="py-12 text-center text-slate-400">
                                 <i data-lucide="briefcase" class="w-10 h-10 mx-auto mb-2 text-slate-300"></i>
-                                <p class="text-sm font-semibold">No hay colaboradores contratados aún.</p>
+                                <p class="text-sm font-semibold">No se encontraron empleados registrados.</p>
                             </td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+
+        <!-- Paginación -->
+        {% if is_paginated %}
+            <div class="px-6 py-4 bg-slate-50/50 border-t border-slate-200 flex items-center justify-between">
+                <span class="text-xs text-slate-500">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                <div class="flex items-center gap-2">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&estado={{ estado_filtro }}" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50">Anterior</a>
+                    {% endif %}
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}&q={{ q }}&estado={{ estado_filtro }}" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50">Siguiente</a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

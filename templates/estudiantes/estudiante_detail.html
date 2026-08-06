@@ -30,10 +30,12 @@
                 <i data-lucide="file-text" class="w-4 h-4"></i>
                 Ficha Expediente (PDF)
             </a>
+            {% if clave_temp_est or clave_temp_tutor %}
             <a href="{% url 'estudiantes:estudiante_pdf_credenciales' estudiante.pk %}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-[#3C7DA8] text-white rounded-xl text-xs font-bold hover:bg-[#3C7DA8]/90 transition-all shadow-md shadow-[#3C7DA8]/20">
                 <i data-lucide="key" class="w-4 h-4"></i>
                 Credenciales Acceso (PDF)
             </a>
+            {% endif %}
             <a href="{% url 'estudiantes:estudiante_update' estudiante.pk %}" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-900 transition-all shadow-sm">
                 <i data-lucide="edit-3" class="w-4 h-4"></i>
                 Editar
@@ -58,10 +60,12 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-2.5 self-stretch sm:self-auto flex-shrink-0 pt-2 sm:pt-0">
+                        {% if clave_temp_est or clave_temp_tutor %}
                         <a href="{% url 'estudiantes:estudiante_pdf_credenciales' estudiante.pk %}" target="_blank" class="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black transition-all shadow-md flex items-center gap-2">
                             <i data-lucide="key-round" class="w-4 h-4"></i>
                             <span>Descargar Credenciales (PDF)</span>
                         </a>
+                        {% endif %}
                         <a href="{% url 'estudiantes:estudiante_pdf_expediente' estudiante.pk %}" target="_blank" class="px-4 py-2.5 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2">
                             <i data-lucide="file-text" class="w-4 h-4"></i>
                             <span>Ficha (PDF)</span>
@@ -271,5 +275,42 @@
         {% endif %}
 
     </div>
+
+    <!-- Card 4: Cuenta de Usuario Institucional ERP (Estandarizada con RRHH) -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-[#3C7DA8]/10 text-[#3C7DA8] flex items-center justify-center font-bold flex-shrink-0">
+                <i data-lucide="shield-check" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h3 class="text-sm font-bold text-slate-900">Cuenta de Usuario Institucional ERP</h3>
+                <p class="text-xs text-slate-500 mt-0.5">
+                    Usuario Alumno: <strong class="font-mono text-slate-900">{{ estudiante.persona.cui }}</strong> (CUI/DPI) | 
+                    Rol: <strong class="text-[#1E6532]">Estudiante</strong>
+                    {% if estudiante.encargado %}
+                        <br/>Usuario Tutor: <strong class="font-mono text-slate-900">{{ estudiante.encargado.persona.cui }}</strong> (CUI/DPI) | Rol: <strong class="text-[#3C7DA8]">Encargado</strong>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        {% if clave_temp_est or clave_temp_tutor %}
+            <a href="{% url 'estudiantes:estudiante_pdf_credenciales' estudiante.pk %}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#3C7DA8] text-white rounded-xl text-xs font-bold hover:bg-[#3C7DA8]/90 transition-all shadow-md shadow-[#3C7DA8]/20 flex-shrink-0">
+                <i data-lucide="printer" class="w-4 h-4"></i>
+                Imprimir Credenciales (PDF)
+            </a>
+        {% else %}
+            <div class="text-right flex-shrink-0">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                    Cuenta Configurada
+                </span>
+                <p class="text-[10px] text-slate-400 mt-1 max-w-xs leading-normal">
+                    Para restablecer contraseñas en caso de olvido, utilice el directorio en <a href="{% url 'usuarios:usuario_list' %}" class="text-[#3C7DA8] font-bold hover:underline">Gestión de Usuarios</a>.
+                </p>
+            </div>
+        {% endif %}
+    </div>
+
 </div>
 {% endblock %}

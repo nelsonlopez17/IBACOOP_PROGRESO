@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Contratación de Personal{% endblock %}
+{% block title %}{% if es_edicion %}Modificar Empleado - {{ form.instance.persona.nombre_completo }}{% else %}Registrar Empleado{% endif %}{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto space-y-6">
@@ -11,18 +11,18 @@
             <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
                 <a href="{% url 'core:home' %}" class="hover:underline">Dashboard</a>
                 <span>/</span>
-                <span>Recursos Humanos</span>
+                <a href="{% url 'rrhh:personal_list' %}" class="hover:underline">Recursos Humanos</a>
                 <span>/</span>
-                <span class="text-slate-500">Nueva Contratación</span>
+                <span class="text-slate-500">{% if es_edicion %}Modificar Empleado{% else %}Registrar Empleado{% endif %}</span>
             </div>
             <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
-                <i data-lucide="briefcase" class="w-7 h-7 text-[#1E6532]"></i>
-                Contratación de Nuevo Colaborador
+                <i data-lucide="{% if es_edicion %}edit-3{% else %}user-plus{% endif %}" class="w-7 h-7 text-[#1E6532]"></i>
+                {% if es_edicion %}Modificar Datos del Empleado{% else %}Registrar Empleado{% endif %}
             </h1>
         </div>
         <a href="{% url 'rrhh:personal_list' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm self-start sm:self-auto">
             <i data-lucide="arrow-left" class="w-4 h-4 text-slate-500"></i>
-            Volver a Nómina de Personal
+            Volver a Lista de Personal
         </a>
     </div>
 
@@ -40,18 +40,42 @@
         </div>
     {% endif %}
 
-    <!-- Banner Informativo -->
-    <div class="bg-gradient-to-r from-[#7A1C21]/10 via-[#1E6532]/10 to-slate-50 border border-[#7A1C21]/20 rounded-2xl p-4 sm:p-5 flex items-start gap-4 shadow-sm">
-        <div class="w-10 h-10 rounded-xl bg-[#7A1C21] text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-[#7A1C21]/20">
-            <i data-lucide="user-check" class="w-5 h-5"></i>
+    <!-- Resumen de Errores Generales en el Formulario -->
+    {% if form.errors or persona_form.errors %}
+        <div class="p-5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 shadow-sm space-y-2">
+            <div class="flex items-center gap-2 font-bold text-rose-700">
+                <i data-lucide="alert-triangle" class="w-5 h-5 flex-shrink-0"></i>
+                <span>Atención: El formulario contiene errores que impiden el registro. Revise los campos marcados:</span>
+            </div>
+            <ul class="list-disc list-inside text-xs text-rose-800 font-semibold space-y-1 pl-2">
+                {% for field in persona_form %}
+                    {% for error in field.errors %}
+                        <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
         </div>
-        <div class="space-y-1">
-            <h3 class="text-sm font-bold text-[#7A1C21]">Generación Inteligente de Usuario & Asignación de Rol</h3>
-            <p class="text-xs text-slate-600 leading-relaxed">
-                El sistema generará el nombre de usuario combinando la inicial de su nombre y su primer apellido (ej. <code>jgomez</code> o <code>jgomez456</code> en colisión). El <strong>Rol Visual</strong> en el sistema se asignará dinámicamente según las palabras clave del <strong>Puesto</strong> seleccionado.
-            </p>
+    {% endif %}
+
+    <!-- Banner Informativo en Modo Registro -->
+    {% if not es_edicion %}
+        <div class="bg-gradient-to-r from-[#7A1C21]/10 via-[#1E6532]/10 to-slate-50 border border-[#7A1C21]/20 rounded-2xl p-4 sm:p-5 flex items-start gap-4 shadow-sm">
+            <div class="w-10 h-10 rounded-xl bg-[#7A1C21] text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-[#7A1C21]/20">
+                <i data-lucide="shield-check" class="w-5 h-5"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-sm font-bold text-[#7A1C21]">Generación de Usuario por CUI & Clave Aleatoria Segura</h3>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Al guardar este registro, el sistema creará automáticamente la cuenta de usuario usando su <strong>DPI / CUI de 13 dígitos</strong> y asignará el rol según el puesto. Se generará una <strong>contraseña temporal aleatoria</strong> imprimible en el Comprobante en PDF.
+                </p>
+            </div>
         </div>
-    </div>
+    {% endif %}
 
     <!-- Formulario Unificado -->
     <form method="post" novalidate class="space-y-6">
@@ -75,9 +99,12 @@
                     </label>
                     {{ persona_form.cui }}
                     {% if persona_form.cui.errors %}
-                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ persona_form.cui.errors.0 }}</p>
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ persona_form.cui.errors.0 }}</span>
+                        </p>
                     {% endif %}
-                    <p class="text-[11px] text-slate-400">13 dígitos de DPI sin guiones.</p>
+                    <p class="text-[11px] text-slate-400">13 dígitos del CUI de DPI sin espacios ni guiones (Servirá como Nombre de Usuario).</p>
                 </div>
 
                 <!-- Nombres -->
@@ -87,7 +114,10 @@
                     </label>
                     {{ persona_form.nombres }}
                     {% if persona_form.nombres.errors %}
-                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ persona_form.nombres.errors.0 }}</p>
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ persona_form.nombres.errors.0 }}</span>
+                        </p>
                     {% endif %}
                 </div>
 
@@ -98,7 +128,10 @@
                     </label>
                     {{ persona_form.apellidos }}
                     {% if persona_form.apellidos.errors %}
-                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ persona_form.apellidos.errors.0 }}</p>
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ persona_form.apellidos.errors.0 }}</span>
+                        </p>
                     {% endif %}
                 </div>
 
@@ -109,7 +142,10 @@
                     </label>
                     {{ persona_form.correo }}
                     {% if persona_form.correo.errors %}
-                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ persona_form.correo.errors.0 }}</p>
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ persona_form.correo.errors.0 }}</span>
+                        </p>
                     {% endif %}
                 </div>
 
@@ -119,6 +155,12 @@
                         {{ persona_form.telefono_principal.label }}
                     </label>
                     {{ persona_form.telefono_principal }}
+                    {% if persona_form.telefono_principal.errors %}
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ persona_form.telefono_principal.errors.0 }}</span>
+                        </p>
+                    {% endif %}
                 </div>
 
                 <!-- Dirección -->
@@ -127,17 +169,23 @@
                         {{ persona_form.direccion.label }}
                     </label>
                     {{ persona_form.direccion }}
+                    {% if persona_form.direccion.errors %}
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ persona_form.direccion.errors.0 }}</span>
+                        </p>
+                    {% endif %}
                 </div>
             </div>
         </div>
 
-        <!-- Sección 2: Información Laboral (Personal) -->
+        <!-- Sección 2: Información Laboral & Resguardo de Contrato Físico -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
             <div class="flex items-center gap-3 border-b border-slate-100 pb-3">
                 <div class="w-8 h-8 rounded-lg bg-[#1E6532]/10 text-[#1E6532] flex items-center justify-center font-bold text-sm">2</div>
                 <div>
-                    <h2 class="text-base font-bold text-slate-900">Detalles del Contrato Laboral</h2>
-                    <p class="text-xs text-slate-500">Puesto instituido, fecha de contratación y compensación.</p>
+                    <h2 class="text-base font-bold text-slate-900">Información Laboral & Resguardo Físico</h2>
+                    <p class="text-xs text-slate-500">Puesto instituido, compensación y ubicación de archivo físico del contrato en Secretaría.</p>
                 </div>
             </div>
 
@@ -149,7 +197,10 @@
                     </label>
                     {{ form.puesto }}
                     {% if form.puesto.errors %}
-                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.puesto.errors.0 }}</p>
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ form.puesto.errors.0 }}</span>
+                        </p>
                     {% endif %}
                 </div>
 
@@ -160,7 +211,10 @@
                     </label>
                     {{ form.nit }}
                     {% if form.nit.errors %}
-                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.nit.errors.0 }}</p>
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ form.nit.errors.0 }}</span>
+                        </p>
                     {% endif %}
                 </div>
 
@@ -171,7 +225,10 @@
                     </label>
                     {{ form.fecha_contratacion }}
                     {% if form.fecha_contratacion.errors %}
-                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.fecha_contratacion.errors.0 }}</p>
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ form.fecha_contratacion.errors.0 }}</span>
+                        </p>
                     {% endif %}
                 </div>
 
@@ -182,7 +239,10 @@
                     </label>
                     {{ form.salario_base_asignado }}
                     {% if form.salario_base_asignado.errors %}
-                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.salario_base_asignado.errors.0 }}</p>
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ form.salario_base_asignado.errors.0 }}</span>
+                        </p>
                     {% endif %}
                 </div>
 
@@ -193,9 +253,121 @@
                     </label>
                     {{ form.estado_laboral }}
                     {% if form.estado_laboral.errors %}
-                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.estado_laboral.errors.0 }}</p>
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ form.estado_laboral.errors.0 }}</span>
+                        </p>
                     {% endif %}
                 </div>
+
+                <!-- No. Contrato Físico -->
+                <div class="space-y-1">
+                    <label for="{{ form.numero_contrato_fisico.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ form.numero_contrato_fisico.label }}
+                    </label>
+                    {{ form.numero_contrato_fisico }}
+                    {% if form.numero_contrato_fisico.errors %}
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ form.numero_contrato_fisico.errors.0 }}</span>
+                        </p>
+                    {% endif %}
+                </div>
+
+                <!-- Ubicación Físico (Archivador) -->
+                <div class="space-y-1">
+                    <label for="{{ form.ubicacion_expediente_fisico.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ form.ubicacion_expediente_fisico.label }}
+                    </label>
+                    {{ form.ubicacion_expediente_fisico }}
+                    {% if form.ubicacion_expediente_fisico.errors %}
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ form.ubicacion_expediente_fisico.errors.0 }}</span>
+                        </p>
+                    {% endif %}
+                </div>
+
+                <!-- Contacto Emergencia Nombre -->
+                <div class="space-y-1">
+                    <label for="{{ form.contacto_emergencia_nombre.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ form.contacto_emergencia_nombre.label }}
+                    </label>
+                    {{ form.contacto_emergencia_nombre }}
+                    {% if form.contacto_emergencia_nombre.errors %}
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ form.contacto_emergencia_nombre.errors.0 }}</span>
+                        </p>
+                    {% endif %}
+                </div>
+
+                <!-- Contacto Emergencia Teléfono -->
+                <div class="space-y-1">
+                    <label for="{{ form.contacto_emergencia_telefono.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        {{ form.contacto_emergencia_telefono.label }}
+                    </label>
+                    {{ form.contacto_emergencia_telefono }}
+                    {% if form.contacto_emergencia_telefono.errors %}
+                        <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
+                            <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
+                            <span>{{ form.contacto_emergencia_telefono.errors.0 }}</span>
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección 3: Checklist de Papelería Obligatoria (Nivel Medio Guatemala) -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
+            <div class="flex items-center gap-3 border-b border-slate-100 pb-3">
+                <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold text-sm">3</div>
+                <div>
+                    <h2 class="text-base font-bold text-slate-900">Checklist de Papelería Obligatoria en Físico</h2>
+                    <p class="text-xs text-slate-500">Marque los documentos físicos que ya fueron entregados y resguardados en Secretaría.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <label class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+                    {{ form.doc_dpi_personal }}
+                    <span class="text-xs font-semibold text-slate-800">{{ form.doc_dpi_personal.label }}</span>
+                </label>
+
+                <label class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+                    {{ form.doc_nit_sat }}
+                    <span class="text-xs font-semibold text-slate-800">{{ form.doc_nit_sat.label }}</span>
+                </label>
+
+                <label class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+                    {{ form.doc_titulo_academico }}
+                    <span class="text-xs font-semibold text-slate-800">{{ form.doc_titulo_academico.label }}</span>
+                </label>
+
+                <label class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+                    {{ form.doc_colegiado_activo }}
+                    <span class="text-xs font-semibold text-slate-800">{{ form.doc_colegiado_activo.label }}</span>
+                </label>
+
+                <label class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+                    {{ form.doc_antecedentes_penales }}
+                    <span class="text-xs font-semibold text-slate-800">{{ form.doc_antecedentes_penales.label }}</span>
+                </label>
+
+                <label class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+                    {{ form.doc_antecedentes_policiales }}
+                    <span class="text-xs font-semibold text-slate-800">{{ form.doc_antecedentes_policiales.label }}</span>
+                </label>
+
+                <label class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+                    {{ form.doc_contrato_fisico }}
+                    <span class="text-xs font-semibold text-slate-800">{{ form.doc_contrato_fisico.label }}</span>
+                </label>
+
+                <label class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+                    {{ form.doc_tarjeta_salud }}
+                    <span class="text-xs font-semibold text-slate-800">{{ form.doc_tarjeta_salud.label }}</span>
+                </label>
             </div>
         </div>
 
@@ -205,8 +377,8 @@
                 Cancelar
             </a>
             <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
-                <i data-lucide="user-plus" class="w-4 h-4"></i>
-                Registrar y Contratar
+                <i data-lucide="{% if es_edicion %}save{% else %}user-plus{% endif %}" class="w-4 h-4"></i>
+                {% if es_edicion %}Guardar Cambios{% else %}Registrar Empleado{% endif %}
             </button>
         </div>
     </form>

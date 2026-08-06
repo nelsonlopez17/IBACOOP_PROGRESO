@@ -8,6 +8,11 @@
     <!-- Encabezado de la Sección -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+                <a href="{% url 'core:home' %}" class="hover:underline">Dashboard</a>
+                <span>/</span>
+                <span class="text-slate-500">Registro de Alumnos</span>
+            </div>
             <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
                 <i data-lucide="graduation-cap" class="w-7 h-7 text-[#1E6532]"></i>
                 Registro de Alumnos (Padrón Escolar)
@@ -15,14 +20,14 @@
             <p class="text-xs text-slate-500 mt-1">Expedientes estudiantiles, tutores legales y verificación de papelería oficial MINEDUC.</p>
         </div>
         
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 flex-wrap">
             <a href="{% url 'estudiantes:encargado_create' %}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
                 <i data-lucide="user-check" class="w-4 h-4 text-[#3C7DA8]"></i>
                 Registrar Encargado
             </a>
             <a href="{% url 'estudiantes:estudiante_create' %}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
                 <i data-lucide="user-plus" class="w-4 h-4"></i>
-                Nuevo Registro de Alumno
+                Registrar Alumno
             </a>
         </div>
     </div>
@@ -31,15 +36,70 @@
     {% if messages %}
         <div class="space-y-3">
             {% for message in messages %}
-                <div class="p-4 rounded-xl flex items-start gap-3 border shadow-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-900 border-emerald-200{% else %}bg-rose-50 text-rose-900 border-rose-200{% endif %}">
-                    <i data-lucide="{% if message.tags == 'success' %}check-circle-2{% else %}alert-triangle{% endif %}" class="w-5 h-5 flex-shrink-0 mt-0.5 {% if message.tags == 'success' %}text-emerald-600{% else %}text-rose-600{% endif %}"></i>
-                    <div class="text-sm font-medium leading-relaxed">
-                        {{ message }}
+                {% if nuevo_encargado_pk and message.tags == 'success' %}
+                    <div class="p-5 rounded-2xl bg-gradient-to-r from-[#3C7DA8] via-teal-700 to-[#1E6532] text-white shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-[#3C7DA8]/30">
+                        <div class="flex items-start gap-3.5">
+                            <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center flex-shrink-0 text-white font-bold shadow-sm">
+                                <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                            </div>
+                            <div class="space-y-1">
+                                <h3 class="text-sm font-extrabold tracking-wide">¡Encargado / Tutor Registrado Exitosamente!</h3>
+                                <p class="text-xs text-teal-100 leading-relaxed font-medium">
+                                    {{ message }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2.5 self-stretch sm:self-auto flex-shrink-0 pt-2 sm:pt-0">
+                            <a href="{% url 'estudiantes:encargado_pdf_credenciales' nuevo_encargado_pk %}" target="_blank" class="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black transition-all shadow-md flex items-center gap-2">
+                                <i data-lucide="key-round" class="w-4 h-4"></i>
+                                <span>Descargar Credenciales Tutor (PDF)</span>
+                            </a>
+                        </div>
                     </div>
-                </div>
+                {% else %}
+                    <div class="p-4 rounded-xl flex items-start gap-3 border shadow-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-900 border-emerald-200{% else %}bg-rose-50 text-rose-900 border-rose-200{% endif %}">
+                        <i data-lucide="{% if message.tags == 'success' %}check-circle-2{% else %}alert-triangle{% endif %}" class="w-5 h-5 flex-shrink-0 mt-0.5 {% if message.tags == 'success' %}text-emerald-600{% else %}text-rose-600{% endif %}"></i>
+                        <div class="text-sm font-medium leading-relaxed">
+                            {{ message }}
+                        </div>
+                    </div>
+                {% endif %}
             {% endfor %}
         </div>
     {% endif %}
+
+    <!-- Tarjetas Métricas Rápidas -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 shadow-xs">
+            <div class="w-10 h-10 rounded-xl bg-[#1E6532]/10 text-[#1E6532] flex items-center justify-center flex-shrink-0 font-bold">
+                <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Alumnos</p>
+                <h3 class="text-xl font-extrabold text-slate-900">{{ total_estudiantes|default:"0" }}</h3>
+            </div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 shadow-xs">
+            <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0 font-bold">
+                <i data-lucide="user-check" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Alumnos Activos</p>
+                <h3 class="text-xl font-extrabold text-emerald-700">{{ activos_count|default:"0" }}</h3>
+            </div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 shadow-xs">
+            <div class="w-10 h-10 rounded-xl bg-[#3C7DA8]/10 text-[#3C7DA8] flex items-center justify-center flex-shrink-0 font-bold">
+                <i data-lucide="folder-check" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Expedientes MINEDUC</p>
+                <h3 class="text-xs font-bold text-slate-600 mt-1">Control de Papelería Físico</h3>
+            </div>
+        </div>
+    </div>
 
     <!-- Barra de Filtros y Búsqueda -->
     <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
@@ -92,7 +152,7 @@
                         <th class="py-3.5 px-6">Alumno / CUI</th>
                         <th class="py-3.5 px-6">Código MINEDUC</th>
                         <th class="py-3.5 px-6">Tutor Legal</th>
-                        <th class="py-3.5 px-6">Papelería MINEDUC</th>
+                        <th class="py-3.5 px-6">Papelería Físico</th>
                         <th class="py-3.5 px-6">Estado</th>
                         <th class="py-3.5 px-6 text-right">Acciones</th>
                     </tr>
@@ -101,8 +161,10 @@
                     {% for estudiante in estudiantes %}
                         <tr class="hover:bg-slate-50/60 transition-colors">
                             <td class="py-4 px-6">
-                                <div class="font-bold text-slate-900 text-sm">{{ estudiante.persona.nombre_completo }}</div>
-                                <div class="font-mono text-[11px] text-slate-400">CUI: {{ estudiante.persona.cui }}</div>
+                                <a href="{% url 'estudiantes:estudiante_detail' estudiante.pk %}" class="font-bold text-slate-900 text-sm hover:text-[#1E6532] transition-colors block">
+                                    {{ estudiante.persona.nombre_completo }}
+                                </a>
+                                <div class="font-mono text-[11px] text-slate-400">DPI / CUI: {{ estudiante.persona.cui }}</div>
                             </td>
                             <td class="py-4 px-6 font-mono font-bold text-[#1E6532]">{{ estudiante.codigo_mineduc }}</td>
                             <td class="py-4 px-6">
@@ -114,36 +176,37 @@
                                 {% endif %}
                             </td>
                             <td class="py-4 px-6">
-                                {% if estudiante.expediente_completo %}
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                                        <i data-lucide="check-check" class="w-3.5 h-3.5 text-emerald-600"></i>
-                                        Completo (5/5)
+                                <div class="flex items-center gap-2">
+                                    <div class="w-16 bg-slate-100 rounded-full h-2 overflow-hidden">
+                                        <div class="h-2 rounded-full {% if estudiante.expediente_completo %}bg-emerald-500{% else %}bg-amber-500{% endif %}" style="width: {{ estudiante.porcentaje_expediente }}%"></div>
+                                    </div>
+                                    <span class="text-[11px] font-bold {% if estudiante.expediente_completo %}text-emerald-700{% else %}text-amber-700{% endif %}">
+                                        {{ estudiante.porcentaje_expediente }}%
                                     </span>
-                                {% else %}
-                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                                        <i data-lucide="alert-circle" class="w-3.5 h-3.5 text-amber-600"></i>
-                                        Incompleto ({{ estudiante.documentos_entregados_count }}/5)
-                                    </span>
-                                {% endif %}
+                                </div>
+                                <span class="text-[10px] text-slate-400 block mt-0.5">({{ estudiante.documentos_entregados_count }}/5 docs)</span>
                             </td>
                             <td class="py-4 px-6">
                                 {% if estudiante.estado_estudiante == 'ACTIVO' %}
-                                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">Activo</span>
+                                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">Activo</span>
                                 {% elif estudiante.estado_estudiante == 'RETIRADO' %}
-                                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800">Retirado</span>
+                                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-200">Retirado</span>
                                 {% elif estudiante.estado_estudiante == 'GRADUADO' %}
-                                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-sky-100 text-sky-800">Graduado</span>
+                                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-sky-100 text-sky-800 border border-sky-200">Graduado</span>
                                 {% else %}
-                                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-800">{{ estudiante.get_estado_estudiante_display }}</span>
+                                    <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-800 border border-slate-200">{{ estudiante.get_estado_estudiante_display }}</span>
                                 {% endif %}
                             </td>
                             <td class="py-4 px-6 text-right">
-                                <div class="flex items-center justify-end gap-2">
+                                <div class="flex items-center justify-end gap-1">
                                     <a href="{% url 'estudiantes:estudiante_detail' estudiante.pk %}" title="Ver Expediente 360°" class="p-2 rounded-lg bg-slate-100 text-slate-600 hover:text-[#1E6532] hover:bg-[#1E6532]/10 transition-colors">
                                         <i data-lucide="eye" class="w-4 h-4"></i>
                                     </a>
                                     <a href="{% url 'estudiantes:estudiante_update' estudiante.pk %}" title="Editar Expediente" class="p-2 rounded-lg bg-slate-100 text-slate-600 hover:text-[#3C7DA8] hover:bg-[#3C7DA8]/10 transition-colors">
                                         <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                    </a>
+                                    <a href="{% url 'estudiantes:estudiante_pdf_expediente' estudiante.pk %}" target="_blank" title="Ficha Expediente PDF" class="p-2 rounded-lg bg-slate-100 text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors">
+                                        <i data-lucide="file-text" class="w-4 h-4"></i>
                                     </a>
                                 </div>
                             </td>

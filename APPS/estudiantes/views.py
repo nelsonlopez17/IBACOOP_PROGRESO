@@ -22,7 +22,8 @@ from APPS.estudiantes.forms import EstudianteForm, EncargadoForm
 from APPS.estudiantes.reports import (
     generar_password_temporal,
     generar_pdf_expediente_estudiante,
-    generar_pdf_credenciales_acceso
+    generar_pdf_credenciales_acceso,
+    generar_pdf_credenciales_encargado
 )
 
 
@@ -82,6 +83,12 @@ class EstudianteListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         context['estado_filtro'] = self.request.GET.get('estado', '')
         context['papeleria_filtro'] = self.request.GET.get('papeleria', '')
         context['estados_list'] = EstadoEstudianteChoices.choices
+        context['total_estudiantes'] = Estudiante.objects.filter(esta_eliminado=False).count()
+        context['activos_count'] = Estudiante.objects.filter(esta_eliminado=False, estado_estudiante=EstadoEstudianteChoices.ACTIVO).count()
+        
+        nuevo_enc_pk = self.request.session.pop('nuevo_encargado_pk', None)
+        if nuevo_enc_pk:
+            context['nuevo_encargado_pk'] = nuevo_enc_pk
         return context
 
 
@@ -97,6 +104,15 @@ class EstudianteDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailVi
         return Estudiante.objects.select_related(
             'persona', 'persona__usuario', 'encargado', 'encargado__persona'
         ).filter(esta_eliminado=False)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        estudiante = self.object
+        context['clave_temp_est'] = self.request.session.get(f'temp_pwd_estudiante_{estudiante.pk}')
+        if estudiante.encargado_id:
+            context['clave_temp_tutor'] = self.request.session.get(f'temp_pwd_tutor_{estudiante.encargado_id}')
+        return context
+
 
 
 class EstudianteCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
@@ -316,13 +332,14 @@ class EncargadoCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateVie
 
                 # Guardar clave en sesión para eventual constancia
                 self.request.session[f'temp_pwd_tutor_{encargado.pk}'] = clave_temporal
+                self.request.session['nuevo_encargado_pk'] = encargado.pk
 
             messages.success(
                 self.request,
                 f"Encargado '{persona.nombre_completo}' registrado exitosamente. "
-                f"Cuenta autogenerada → Usuario (DPI): {usuario.username} | Clave Temporal: {clave_temporal}"
+                f"Cuenta autogenerada → Usuario (DPI): {usuario.username} | Clave Temporal: {clave_temporal}."
             )
-            return super().form_valid(form)
+            return redirect('estudiantes:estudiante_list')
 
         except Exception as e:
             messages.error(self.request, f"Error al registrar al encargado: {str(e)}")
@@ -365,7 +382,7 @@ def descargar_expediente_pdf(request, pk):
 @login_required
 @permission_required('estudiantes.view_estudiante', raise_exception=True)
 def descargar_credenciales_pdf(request, pk):
-    """Genera y descarga el Comprobante de Credenciales de Acceso en PDF."""
+    """Genera y descarga el Comprobante de Credenciales de Acceso en PDF (disponible solo en sesión de alta/reset)."""
     estudiante = get_object_or_404(
         Estudiante.objects.select_related('persona', 'encargado', 'encargado__persona'),
         pk=pk,
@@ -378,8 +395,40 @@ def descargar_credenciales_pdf(request, pk):
     if estudiante.encargado_id:
         clave_temp_tutor = request.session.get(f'temp_pwd_tutor_{estudiante.encargado_id}')
 
+    if not clave_temp_est and not clave_temp_tutor:
+        messages.warning(
+            request,
+            "Las credenciales de primer ingreso ya no están activas en la sesión actual. "
+            "Por políticas de seguridad (IAM), las contraseñas no se guardan en texto plano. "
+            "Para generar un nuevo comprobante de acceso, utilice la opción 'Restablecer Contraseña' en el módulo de Gestión de Usuarios."
+        )
+        return redirect('estudiantes:estudiante_detail', pk=pk)
+
     return generar_pdf_credenciales_acceso(
         estudiante,
-        clave_temporal_estudiante=clave_temp_est,
-        clave_temporal_tutor=clave_temp_tutor
+        clave_temporal_estudiante=clave_temp_est
     )
+
+
+@login_required
+@permission_required('estudiantes.view_encargado', raise_exception=True)
+def descargar_credenciales_encargado_pdf(request, pk):
+    """Genera y descarga el Comprobante de Credenciales de Acceso del Tutor/Encargado en PDF."""
+    encargado = get_object_or_404(
+        Encargado.objects.select_related('persona', 'persona__usuario'),
+        pk=pk,
+        esta_eliminado=False
+    )
+    clave_temp = request.session.get(f'temp_pwd_tutor_{pk}')
+    if not clave_temp:
+        messages.warning(
+            request,
+            "Las credenciales temporales de primer ingreso del tutor ya no están activas en la sesión actual. "
+            "Por políticas de seguridad (IAM), las contraseñas no se guardan en texto plano. "
+            "Para generar un nuevo comprobante, utilice la opción 'Restablecer Contraseña' en Gestión de Usuarios."
+        )
+        return redirect('estudiantes:estudiante_list')
+
+    return generar_pdf_credenciales_encargado(encargado, clave_temporal=clave_temp)
+
+
