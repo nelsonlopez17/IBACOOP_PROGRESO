@@ -8,29 +8,34 @@
 
     <!-- Alertas y Mensajes del Sistema -->
     {% if messages %}
-        <div class="space-y-3">
-            {% for message in messages %}
-                <div class="p-4 rounded-xl flex items-start gap-3 border shadow-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-900 border-emerald-200{% else %}bg-rose-50 text-rose-900 border-rose-200{% endif %}">
-                    <i data-lucide="{% if message.tags == 'success' %}check-circle-2{% else %}alert-triangle{% endif %}" class="w-5 h-5 flex-shrink-0 mt-0.5 {% if message.tags == 'success' %}text-emerald-600{% else %}text-rose-600{% endif %}"></i>
-                    <div class="text-sm font-medium leading-relaxed">
-                        {{ message }}
-                    </div>
-                </div>
-            {% endfor %}
+    <div class="space-y-3">
+        {% for message in messages %}
+        <div
+            class="p-4 rounded-xl flex items-start gap-3 border shadow-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-900 border-emerald-200{% else %}bg-rose-50 text-rose-900 border-rose-200{% endif %}">
+            <i data-lucide="{% if message.tags == 'success' %}check-circle-2{% else %}alert-triangle{% endif %}"
+                class="w-5 h-5 flex-shrink-0 mt-0.5 {% if message.tags == 'success' %}text-emerald-600{% else %}text-rose-600{% endif %}"></i>
+            <div class="text-sm font-medium leading-relaxed">
+                {{ message }}
+            </div>
         </div>
+        {% endfor %}
+    </div>
     {% endif %}
 
     <!-- Mensaje de bienvenida -->
-    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#1E6532] via-[#185429] to-[#12421f] text-white p-8 shadow-xl">
+    <div
+        class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#1E6532] via-[#185429] to-[#12421f] text-white p-8 shadow-xl">
         <div class="relative z-10 max-w-2xl">
-            <span class="px-3.5 py-1 text-xs font-bold uppercase tracking-wider bg-white/10 text-emerald-200 border border-white/20 rounded-full inline-block mb-3 backdrop-blur-xs">
-                Plataforma de Gestión Escolar ERP v2.0
+            <span
+                class="px-3.5 py-1 text-xs font-bold uppercase tracking-wider bg-white/10 text-emerald-200 border border-white/20 rounded-full inline-block mb-3 backdrop-blur-xs">
+                Plataforma de Gestión Escolar
             </span>
             <h2 class="text-3xl font-extrabold tracking-tight">
                 ¡Bienvenido, {{ user.get_full_name|default:user.username }}!
             </h2>
             <p class="text-emerald-100/90 mt-2 text-sm leading-relaxed font-normal">
-                Panel principal de administración del Instituto <strong>IBACOOP EL PROGRESO</strong>. Gestione los usuarios del sistema, expedientes estudiantiles, encargados legales y contrataciones del personal.
+                Panel principal de administración del Instituto <strong>IBACOOP EL PROGRESO</strong>. Gestione los
+                usuarios del sistema, expedientes estudiantiles, encargados legales y contrataciones del personal.
             </p>
         </div>
         <div class="absolute -right-6 -bottom-6 opacity-15 text-white pointer-events-none">
@@ -48,7 +53,8 @@
                     <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Cuentas</p>
                     <h3 class="text-3xl font-extrabold text-slate-900 mt-1">{{ total_usuarios|default:"0" }}</h3>
                 </div>
-                <div class="w-12 h-12 bg-[#1E6532]/10 border border-[#1E6532]/20 rounded-2xl flex items-center justify-center text-[#1E6532]">
+                <div
+                    class="w-12 h-12 bg-[#1E6532]/10 border border-[#1E6532]/20 rounded-2xl flex items-center justify-center text-[#1E6532]">
                     <i data-lucide="users" class="w-6 h-6"></i>
                 </div>
             </div>
@@ -65,7 +71,8 @@
                     <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Administración</p>
                     <h3 class="text-3xl font-extrabold text-slate-900 mt-1">{{ admin_count|default:"0" }}</h3>
                 </div>
-                <div class="w-12 h-12 bg-[#7A1C21]/10 border border-[#7A1C21]/20 rounded-2xl flex items-center justify-center text-[#7A1C21]">
+                <div
+                    class="w-12 h-12 bg-[#7A1C21]/10 border border-[#7A1C21]/20 rounded-2xl flex items-center justify-center text-[#7A1C21]">
                     <i data-lucide="shield-check" class="w-6 h-6"></i>
                 </div>
             </div>
@@ -79,7 +86,8 @@
                     <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Docentes</p>
                     <h3 class="text-3xl font-extrabold text-slate-900 mt-1">{{ docente_count|default:"0" }}</h3>
                 </div>
-                <div class="w-12 h-12 bg-[#3C7DA8]/10 border border-[#3C7DA8]/20 rounded-2xl flex items-center justify-center text-[#3C7DA8]">
+                <div
+                    class="w-12 h-12 bg-[#3C7DA8]/10 border border-[#3C7DA8]/20 rounded-2xl flex items-center justify-center text-[#3C7DA8]">
                     <i data-lucide="book-open" class="w-6 h-6"></i>
                 </div>
             </div>
@@ -93,7 +101,8 @@
                     <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Estudiantes</p>
                     <h3 class="text-3xl font-extrabold text-slate-900 mt-1">{{ estudiante_count|default:"0" }}</h3>
                 </div>
-                <div class="w-12 h-12 bg-[#42A855]/10 border border-[#42A855]/20 rounded-2xl flex items-center justify-center text-[#42A855]">
+                <div
+                    class="w-12 h-12 bg-[#42A855]/10 border border-[#42A855]/20 rounded-2xl flex items-center justify-center text-[#42A855]">
                     <i data-lucide="user-check" class="w-6 h-6"></i>
                 </div>
             </div>
@@ -112,59 +121,75 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
             <!-- Acceso a la gestión de usuarios -->
-            <a href="{% url 'usuarios:usuario_list' %}" class="group relative bg-white border border-[#1E6532]/30 rounded-3xl p-6 hover:border-[#1E6532] transition-all duration-300 shadow-sm hover:shadow-xl block">
+            <a href="{% url 'usuarios:usuario_list' %}"
+                class="group relative bg-white border border-[#1E6532]/30 rounded-3xl p-6 hover:border-[#1E6532] transition-all duration-300 shadow-sm hover:shadow-xl block">
                 <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 rounded-2xl bg-[#1E6532]/10 border border-[#1E6532]/20 flex items-center justify-center text-[#1E6532] group-hover:scale-110 transition-transform">
+                    <div
+                        class="w-12 h-12 rounded-2xl bg-[#1E6532]/10 border border-[#1E6532]/20 flex items-center justify-center text-[#1E6532] group-hover:scale-110 transition-transform">
                         <i data-lucide="users" class="w-6 h-6"></i>
                     </div>
-                    <span class="text-xs font-bold px-3 py-1 rounded-full bg-[#1E6532]/10 text-[#1E6532] border border-[#1E6532]/20">
+                    <span
+                        class="text-xs font-bold px-3 py-1 rounded-full bg-[#1E6532]/10 text-[#1E6532] border border-[#1E6532]/20">
                         Módulo Activo
                     </span>
                 </div>
-                <h4 class="text-lg font-bold text-slate-900 group-hover:text-[#1E6532] transition-colors flex items-center justify-between">
+                <h4
+                    class="text-lg font-bold text-slate-900 group-hover:text-[#1E6532] transition-colors flex items-center justify-between">
                     <span>Gestión de Usuarios</span>
-                    <i data-lucide="arrow-right" class="w-5 h-5 text-[#1E6532] group-hover:translate-x-1 transition-transform"></i>
+                    <i data-lucide="arrow-right"
+                        class="w-5 h-5 text-[#1E6532] group-hover:translate-x-1 transition-transform"></i>
                 </h4>
                 <p class="text-xs text-slate-500 mt-2 leading-relaxed font-normal">
-                    Directorio de cuentas IAM, roles de acceso, grupos de permisos nativos de Django y restablecimiento seguro de credenciales con PDF.
+                    Directorio de cuentas IAM, roles de acceso, grupos de permisos nativos de Django y restablecimiento
+                    seguro de credenciales con PDF.
                 </p>
             </a>
 
             <!-- Acceso a Estudiantes y Encargados -->
-            <a href="{% url 'estudiantes:estudiante_list' %}" class="group relative bg-white border border-[#3C7DA8]/30 rounded-3xl p-6 hover:border-[#3C7DA8] transition-all duration-300 shadow-sm hover:shadow-xl block">
+            <a href="{% url 'estudiantes:estudiante_list' %}"
+                class="group relative bg-white border border-[#3C7DA8]/30 rounded-3xl p-6 hover:border-[#3C7DA8] transition-all duration-300 shadow-sm hover:shadow-xl block">
                 <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 rounded-2xl bg-[#3C7DA8]/10 border border-[#3C7DA8]/20 flex items-center justify-center text-[#3C7DA8] group-hover:scale-110 transition-transform">
+                    <div
+                        class="w-12 h-12 rounded-2xl bg-[#3C7DA8]/10 border border-[#3C7DA8]/20 flex items-center justify-center text-[#3C7DA8] group-hover:scale-110 transition-transform">
                         <i data-lucide="graduation-cap" class="w-6 h-6"></i>
                     </div>
-                    <span class="text-xs font-bold px-3 py-1 rounded-full bg-[#3C7DA8]/10 text-[#3C7DA8] border border-[#3C7DA8]/20">
+                    <span
+                        class="text-xs font-bold px-3 py-1 rounded-full bg-[#3C7DA8]/10 text-[#3C7DA8] border border-[#3C7DA8]/20">
                         Módulo Activo
                     </span>
                 </div>
-                <h4 class="text-lg font-bold text-slate-900 group-hover:text-[#3C7DA8] transition-colors flex items-center justify-between">
-                    <span>Registro de Alumnos</span>
-                    <i data-lucide="arrow-right" class="w-5 h-5 text-[#3C7DA8] group-hover:translate-x-1 transition-transform"></i>
+                <h4
+                    class="text-lg font-bold text-slate-900 group-hover:text-[#3C7DA8] transition-colors flex items-center justify-between">
+                    <span>Gestión de Alumnos</span>
+                    <i data-lucide="arrow-right"
+                        class="w-5 h-5 text-[#3C7DA8] group-hover:translate-x-1 transition-transform"></i>
                 </h4>
                 <p class="text-xs text-slate-500 mt-2 leading-relaxed font-normal">
-                    Padrón escolar, expedientes 360° con porcentaje % de papelería física MINEDUC y usuarios creados por CUI/DPI de 13 dígitos.
+                    Gestión de alumnos y encargados/tutores.
                 </p>
             </a>
 
             <!-- Acceso a Recursos Humanos (Personal) -->
-            <a href="{% url 'rrhh:personal_list' %}" class="group relative bg-white border border-[#7A1C21]/30 rounded-3xl p-6 hover:border-[#7A1C21] transition-all duration-300 shadow-sm hover:shadow-xl block">
+            <a href="{% url 'rrhh:personal_list' %}"
+                class="group relative bg-white border border-[#7A1C21]/30 rounded-3xl p-6 hover:border-[#7A1C21] transition-all duration-300 shadow-sm hover:shadow-xl block">
                 <div class="flex items-center justify-between mb-4">
-                    <div class="w-12 h-12 rounded-2xl bg-[#7A1C21]/10 border border-[#7A1C21]/20 flex items-center justify-center text-[#7A1C21] group-hover:scale-110 transition-transform">
+                    <div
+                        class="w-12 h-12 rounded-2xl bg-[#7A1C21]/10 border border-[#7A1C21]/20 flex items-center justify-center text-[#7A1C21] group-hover:scale-110 transition-transform">
                         <i data-lucide="briefcase" class="w-6 h-6"></i>
                     </div>
-                    <span class="text-xs font-bold px-3 py-1 rounded-full bg-[#7A1C21]/10 text-[#7A1C21] border border-[#7A1C21]/20">
+                    <span
+                        class="text-xs font-bold px-3 py-1 rounded-full bg-[#7A1C21]/10 text-[#7A1C21] border border-[#7A1C21]/20">
                         Módulo Activo
                     </span>
                 </div>
-                <h4 class="text-lg font-bold text-slate-900 group-hover:text-[#7A1C21] transition-colors flex items-center justify-between">
+                <h4
+                    class="text-lg font-bold text-slate-900 group-hover:text-[#7A1C21] transition-colors flex items-center justify-between">
                     <span>Recursos Humanos</span>
-                    <i data-lucide="arrow-right" class="w-5 h-5 text-[#7A1C21] group-hover:translate-x-1 transition-transform"></i>
+                    <i data-lucide="arrow-right"
+                        class="w-5 h-5 text-[#7A1C21] group-hover:translate-x-1 transition-transform"></i>
                 </h4>
                 <p class="text-xs text-slate-500 mt-2 leading-relaxed font-normal">
-                    Registrar Empleado con usuario CUI/DPI (13 dígitos), ubicación de contratos físicos, checklist de 8 documentos y asignación dinámica de rol.
+                    Gestión de personal.
                 </p>
             </a>
 

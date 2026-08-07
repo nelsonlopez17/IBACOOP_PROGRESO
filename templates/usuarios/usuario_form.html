@@ -6,25 +6,27 @@
 {% block content %}
 <div class="max-w-3xl mx-auto space-y-6">
     
-    <!-- Tarjeta de encabezado del formulario -->
-    <div class="flex items-center justify-between bg-white border border-slate-200 p-6 rounded-3xl shadow-sm">
-        <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-[#1E6532]/10 border border-[#1E6532]/20 rounded-2xl flex items-center justify-center text-[#1E6532]">
-                <i data-lucide="user-cog" class="w-6 h-6"></i>
+    <!-- Encabezado de Página & Breadcrumb -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+                <a href="{% url 'core:home' %}" class="hover:underline">Dashboard</a>
+                <span>/</span>
+                <a href="{% url 'usuarios:usuario_list' %}" class="hover:underline">Directorio de Usuarios</a>
+                <span>/</span>
+                <span class="text-slate-500">{{ titulo_pagina }}</span>
             </div>
-            <div>
-                <h2 class="text-xl font-extrabold text-slate-900">{{ titulo_pagina }}</h2>
-                <p class="text-xs text-slate-500 mt-0.5 font-medium">
-                    Complete la información de la cuenta en el sistema de IBACOOP EL PROGRESO.
-                </p>
-            </div>
+            <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+                <i data-lucide="user-cog" class="w-7 h-7 text-[#1E6532]"></i>
+                {{ titulo_pagina }}
+            </h1>
         </div>
-
-        <a href="{% url 'usuarios:usuario_list' %}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold border border-slate-200 transition-colors">
-            <i data-lucide="arrow-left" class="w-4 h-4"></i>
-            <span>Volver a la Lista</span>
+        <a href="{% url 'usuarios:usuario_list' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm self-start sm:self-auto">
+            <i data-lucide="arrow-left" class="w-4 h-4 text-slate-500"></i>
+            Volver a la Lista
         </a>
     </div>
+
 
     <!-- Alertas y Mensajes del Sistema -->
     {% if messages %}

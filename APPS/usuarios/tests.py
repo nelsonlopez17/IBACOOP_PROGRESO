@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.urls import reverse
 from django.contrib.auth.models import Group
 from APPS.usuarios.models import Usuario
 from APPS.usuarios.forms import CustomUserCreationForm, CustomUserChangeForm
@@ -89,3 +90,65 @@ class UsuarioFormTestCase(TestCase):
 
         # Todos los grupos deben haber sido removidos
         self.assertEqual(usuario_actualizado.groups.count(), 0)
+
+
+class BloqueoCuentaAxesTestCase(TestCase):
+    def setUp(self):
+        self.username = '2580123450101'
+        self.password_correcta = 'ClaveSegura123!'
+        self.password_erronea = 'ClaveIncorrecta'
+        self.login_url = reverse('usuarios:login')
+
+        self.usuario = Usuario.objects.create_user(
+            username=self.username,
+            email='test_bloqueo@colegio.edu.gt',
+            password=self.password_correcta,
+            rol='DOCENTE'
+        )
+
+    def test_bloqueo_despues_de_tres_intentos_fallidos(self):
+        """Verifica que tras 3 intentos fallidos la cuenta queda bloqueada y muestra la pantalla de lockout."""
+        # 1er y 2do intento fallido
+        for _ in range(2):
+            response = self.client.post(self.login_url, {
+                'username': self.username,
+                'password': self.password_erronea
+            })
+            self.assertEqual(response.status_code, 200)
+            self.assertTemplateUsed(response, 'usuarios/login.html')
+
+        # 3er intento fallido -> Bloqueo activado por Axes (retorna HTTP 429 Too Many Requests)
+        response = self.client.post(self.login_url, {
+            'username': self.username,
+            'password': self.password_erronea
+        })
+        self.assertEqual(response.status_code, 429)
+        self.assertTemplateUsed(response, 'usuarios/lockout.html')
+        self.assertContains(response, 'Acceso Bloqueado Temporalmente', status_code=429)
+
+        # Verificar que se registró el intento fallido
+        from axes.models import AccessAttempt
+        self.assertTrue(AccessAttempt.objects.filter(username=self.username).exists())
+
+    def test_login_exitoso_limpia_intentos_fallidos(self):
+        """Verifica que ingresar la contraseña correcta resetea los intentos fallidos acumulados."""
+        from axes.models import AccessAttempt
+
+        # 2 intentos fallidos
+        for _ in range(2):
+            self.client.post(self.login_url, {
+                'username': self.username,
+                'password': self.password_erronea
+            })
+        self.assertEqual(AccessAttempt.objects.filter(username=self.username).count(), 1)
+
+        # Iniciar sesión exitosamente con contraseña correcta
+        response = self.client.post(self.login_url, {
+            'username': self.username,
+            'password': self.password_correcta
+        })
+        self.assertEqual(response.status_code, 302)
+
+        # Los intentos acumulados en Axes deben haberse reseteado a 0
+        self.assertEqual(AccessAttempt.objects.filter(username=self.username).count(), 0)
+

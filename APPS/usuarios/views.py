@@ -5,6 +5,7 @@ Vistas para administrar los usuarios del sistema, control de accesos (IAM),
 restablecimiento de credenciales, cambio de estado, descarga de comprobantes PDF,
 y autoservicio de perfil ("Mi Perfil") y cambio seguro de contraseña.
 """
+from datetime import timedelta
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
@@ -12,10 +13,12 @@ from django.contrib.auth.views import PasswordChangeView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q
 from django.http import HttpResponse, Http404
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views import View
 from django.views.generic import ListView, CreateView, UpdateView, TemplateView
+from axes.models import AccessAttempt
 
 from APPS.usuarios.models import Usuario, RolChoices
 from APPS.usuarios.forms import CustomUserCreationForm, CustomUserChangeForm, MiPerfilContactoForm, MiPasswordChangeForm
@@ -268,3 +271,37 @@ class CambiarMiPasswordView(LoginRequiredMixin, PasswordChangeView):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = 'Actualizar Mi Contraseña'
         return context
+
+
+# ==============================================================================
+# VISTA PERSONALIZADA DE BLOQUEO TEMPORAL DE CUENTA (django-axes)
+# ==============================================================================
+
+def lockout_view(request, credentials=None, *args, **kwargs):
+    """
+    Vista personalizada invocada por django-axes al bloquear una cuenta por 3 intentos fallidos.
+    Calcula el cooloff_time exacto y renderiza usuarios/lockout.html con estado HTTP 429.
+    """
+    ip_address = request.META.get('REMOTE_ADDR')
+    username = None
+    if credentials:
+        username = credentials.get('username')
+
+    attempt = None
+    if username:
+        attempt = AccessAttempt.objects.filter(username__iexact=username).order_by('-attempt_time').first()
+    if not attempt and ip_address:
+        attempt = AccessAttempt.objects.filter(ip_address=ip_address).order_by('-attempt_time').first()
+
+    cooloff_time = None
+    if attempt:
+        cooloff_time = attempt.attempt_time + timedelta(minutes=15)
+    else:
+        cooloff_time = timezone.now() + timedelta(minutes=15)
+
+    context = {
+        'cooloff_time': cooloff_time,
+        'username': username,
+    }
+    return render(request, 'usuarios/lockout.html', context, status=429)
+

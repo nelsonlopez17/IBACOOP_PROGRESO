@@ -1,0 +1,111 @@
+================================================================================
+ERP ESCOLAR — INSTITUTO DE EDUCACIÓN BÁSICA "EL PROGRESO" (IBACOOP)
+PLAN DE IMPLEMENTACIÓN DETALLADO: PORTAL WEB PÚBLICO DE VISITANTES
+================================================================================
+
+1. OBJETIVO DEL PLAN
+--------------------------------------------------------------------------------
+Implementar el Portal Web Público para Visitantes en la ruta raíz (GET /) del 
+proyecto, permitiendo a padres de familia, prospectos, comunidad educativa y 
+autoridades del MINEDUC consultar la información institucional (Oferta 
+Académica, Admisiones, Historia, Noticias y Contacto).
+
+Al mismo tiempo, reorganizar el Dashboard Privado de Gestión a la ruta 
+(/dashboard/), garantizando una separación limpia entre la web pública y el 
+sistema interno de administración (ERP), aplicando redirección inteligente 
+para usuarios autenticados.
+
+
+2. ARQUITECTURA DE RUTAS Y CONTROL DE ACCESO
+--------------------------------------------------------------------------------
+Rutas Públicas (No requieren inicio de sesión):
+  • GET /                       --> Portal Web Público (Landing Page Principal)
+  • GET /nosotros/               --> Historia, Misión, Visión y Valores IBACOOP
+  • GET /oferta-academica/       --> Grados de Nivel Básico (1ro, 2do y 3ro)
+  • GET /admisiones/             --> Requisitos de Inscripción y Papelería MINEDUC
+  • GET /contacto/               --> Formulario de Consultas para Padres / Mapa
+  • GET /usuarios/login/         --> Pantalla de Inicio de Sesión al ERP
+
+Rutas Privadas (Requieren sesión activa - LoginRequiredMixin):
+  • GET /dashboard/ (o /home/)   --> Dashboard Principal de Gestión (KPIs)
+  • GET /estudiantes/            --> Padrón Escolar y Alumnos
+  • GET /rrhh/                   --> Control de Personal
+  • GET /academico/              --> Notas, Cursos y Secciones
+  • GET /financiero/             --> Pagos de Colegiaturas y Cobros
+  • GET /inventario/             --> Control de Activos y Artículos
+
+Regla de Redirección Inteligente en GET /:
+  Si un usuario anonímo ingresa a '/', se le presenta el Portal Público.
+  Si un usuario autenticado (Director, Secretaria, Docente, Estudiante) ingresa a 
+  '/', el sistema detecta la sesión activa y lo redirige a /dashboard/.
+
+
+3. COMPONENTES A IMPLEMENTAR (PASO A PASO)
+
+PASO 3.1: Modelo de Datos para Contenido Dinámico (APPS/portal/models.py)
+  • AnuncioPublico / NoticiaPortal:
+    - titulo (CharField)
+    - resumen (TextField)
+    - contenido_completo (TextField)
+    - fecha_publicacion (DateField)
+    - esta_publicado (BooleanField)
+    - imagen (ImageField, opcional)
+  • SolicitudInformacionContacto:
+    - nombre_remitente (CharField)
+    - correo (EmailField)
+    - telefono (CharField)
+    - mensaje (TextField)
+    - fecha_recepcion (DateTimeField)
+    - atendido (BooleanField)
+
+PASO 3.2: Vistas y Controladores (APPS/portal/views.py y APPS/core/views.py)
+  • PortalPublicoHomeView (TemplateView):
+    - Renderiza la plantilla pública 'portal/index.html'.
+    - Carga noticias/anuncios activos ordenados por fecha.
+  • SolicitudContactoCreateView (CreateView / HTMX):
+    - Procesa el formulario de contacto para prospectos y notifica con mensaje de éxito.
+  • Reubicación de HomeView (Core Dashboard):
+    - Actualizar URL de HomeView a 'dashboard/' en APPS/core/urls.py.
+
+PASO 3.3: Diseño de Plantillas HTML (templates/portal/)
+  • templates/portal/base_portal.html:
+    - Encabezado público con logotipo oficial, paleta de colores institucional 
+      (#1E6532, #7A1C21, #3C7DA8) e iconos de Lucide.
+    - Menú de navegación móvil responsivo.
+    - Botón de Acción Principal en la esquina superior derecha:
+      [ Iniciar Sesión / Portal ERP ] -> Redirige a /usuarios/login/.
+    - Footer institucional con mapa, dirección, teléfonos y créditos.
+  • templates/portal/index.html:
+    - Seccion Hero: Eslogan institucional y llamadas a la acción.
+    - Seccion Oferta Académica: Tarjetas ilustrativas para Nivel Básico.
+    - Seccion Valores Cooperativos: Identidad IBACOOP EL PROGRESO.
+    - Seccion Noticias y Avisos: Carrusel o grid de comunicados oficiales.
+    - Seccion Contacto & Admisiones: Formulario directo para padres.
+
+PASO 3.4: Mapeo de URLs Globales (IBACOOP_PROGRESO/urls.py)
+  • Configurar path('', include('APPS.portal.urls')) para la raíz pública.
+  • Configurar path('dashboard/', include('APPS.core.urls')) para la zona privada.
+
+
+4. PLAN DE VERIFICACIÓN Y PRUEBAS
+--------------------------------------------------------------------------------
+1. Prueba de Usuario Anónimo:
+   - Navegar a http://localhost:8000/ sin haber iniciado sesión.
+   - Confirmar que carga el Portal Público con la marca institucional.
+   - Hacer clic en "Portal ERP / Iniciar Sesión" y verificar redirección a /usuarios/login/.
+
+2. Prueba de Usuario Autenticado:
+   - Iniciar sesión como Director o Administrador.
+   - Navegar a http://localhost:8000/.
+   - Confirmar que redirige automáticamente a http://localhost:8000/dashboard/.
+
+3. Prueba de Formulario de Contacto:
+   - Enviar una consulta desde la web pública.
+   - Verificar que el mensaje se guarde en la base de datos PostgreSQL.
+
+4. Pruebas Automatizadas (Django TestCase):
+   - Ejecutar 'python manage.py test APPS.portal' para validar respuestas HTTP 200/302.
+
+================================================================================
+Documento guardado para futura ejecución — ERP Escolar IBACOOP PROGRESO
+================================================================================

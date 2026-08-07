@@ -24,9 +24,11 @@ requests==2.34.2
 pillow==12.3.0
 reportlab==5.0.0
 
-# Auditoría e Historial de Cambios
+# Auditoría, Seguridad e Historial de Cambios
 django-simple-history==3.13.0
+django-axes==7.0.1
 
 # Estilos CSS y Tailwind
 django-tailwind==4.5.0
 pytailwindcss==0.3.1
+

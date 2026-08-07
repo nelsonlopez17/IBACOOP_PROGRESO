@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Acceso Bloqueado Temporalmente | IBACOOP EL PROGRESO{% endblock %}
+
+{% block auth_content %}
+<div class="w-full max-w-md px-6 py-8">
+    <div class="bg-white border border-slate-200 rounded-3xl shadow-xl p-8 backdrop-blur text-center">
+
+        <!-- Banner / Icono de Alerta de Bloqueo -->
+        <div class="w-20 h-20 bg-[#7A1C21]/10 border border-[#7A1C21]/20 rounded-3xl flex items-center justify-center mx-auto mb-6 text-[#7A1C21] shadow-md shadow-[#7A1C21]/10">
+            <i data-lucide="shield-alert" class="w-10 h-10"></i>
+        </div>
+
+        <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">
+            Acceso Bloqueado Temporalmente
+        </h2>
+        
+        <p class="text-xs font-semibold text-[#7A1C21] mt-1 tracking-wider uppercase">
+            Medida de Seguridad Institucional — IBACOOP EL PROGRESO
+        </p>
+
+        <!-- Alerta de Bloqueo por 15 Minutos -->
+        <div class="my-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-left text-xs leading-relaxed space-y-3 shadow-xs">
+            <div class="flex items-start gap-2.5 font-bold text-amber-950 text-sm">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5"></i>
+                <span>Límite de 3 intentos fallidos superado</span>
+            </div>
+            <p class="text-slate-700 font-normal">
+                Se han introducido credenciales erróneas <strong>3 veces consecutivas</strong>. Como medida de protección contra accesos no autorizados, el sistema ha suspendido el acceso a esta cuenta / dirección IP.
+            </p>
+            <div class="pt-3 border-t border-amber-200/80 font-bold text-amber-900 flex items-center gap-2">
+                <i data-lucide="clock" class="w-4 h-4 text-amber-700 flex-shrink-0"></i>
+                <span>Su cuenta ha sido bloqueada temporalmente por <strong>15 minutos</strong>.</span>
+            </div>
+        </div>
+
+        <p class="text-xs text-slate-500 mb-6">
+            Transcurridos los 15 minutos podrá intentar iniciar sesión nuevamente. Si olvidó su contraseña o requiere ayuda inmediata, comuníquese con la Administración del colegio.
+        </p>
+
+        <!-- Botón para regresar al Login -->
+        <a href="{% url 'usuarios:login' %}"
+            class="w-full py-3.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-lg focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 transition-all text-sm flex items-center justify-center gap-2">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            <span>Volver a la pantalla de inicio</span>
+        </a>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -11,22 +12,22 @@ DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 't')
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,web,0.0.0.0').split(',')
 
 
-# ==============================================================================
+
 # MODELO DE USUARIO PERSONALIZADO
-# CRÍTICO: Debe definirse ANTES de la primera migración.
-# ==============================================================================
+
 
 AUTH_USER_MODEL = 'usuarios.Usuario'
 
 AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesBackend',
     'APPS.usuarios.backends.CUIOrEmailModelBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
 
 
-# ==============================================================================
+
 # APLICACIONES INSTALADAS
-# ==============================================================================
+
 
 INSTALLED_APPS = [
     # Componentes principales de Django
@@ -51,12 +52,13 @@ INSTALLED_APPS = [
     'tailwind',
     'theme',
     'simple_history',          # Auditoría de cambios (Notas, Pagos, Inventario)
+    'axes',                    # Control de seguridad y bloqueo temporal por intentos fallidos
 ]
 
 
-# ==============================================================================
+
 # MIDDLEWARE
-# ==============================================================================
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -65,6 +67,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'axes.middleware.AxesMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'APPS.usuarios.middleware.EnforcePasswordChangeMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -92,9 +95,9 @@ TEMPLATES = [
 WSGI_APPLICATION = 'IBACOOP_PROGRESO.wsgi.application'
 
 
-# ==============================================================================
+
 # BASE DE DATOS — PostgreSQL
-# ==============================================================================
+
 
 DATABASES = {
     'default': {
@@ -108,9 +111,9 @@ DATABASES = {
 }
 
 
-# ==============================================================================
+
 # VALIDACIÓN DE CONTRASEÑAS
-# ==============================================================================
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -128,9 +131,9 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# ==============================================================================
+
 # INTERNACIONALIZACIÓN
-# ==============================================================================
+
 
 LANGUAGE_CODE = 'es-gt'
 TIME_ZONE = 'America/Guatemala'
@@ -138,9 +141,9 @@ USE_I18N = True
 USE_TZ = True
 
 
-# ==============================================================================
+
 # ARCHIVOS ESTÁTICOS — WhiteNoise
-# ==============================================================================
+
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
@@ -168,3 +171,17 @@ LOGIN_REDIRECT_URL = 'core:home'
 LOGOUT_REDIRECT_URL = 'usuarios:login'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+
+# BLOQUEO DE CUENTAS POR INTENTOS FALLIDOS — django-axes
+
+AXES_FAILURE_LIMIT = 3
+AXES_COOLOFF_TIME = timedelta(minutes=0.5)
+AXES_RESET_ON_SUCCESS = True
+AXES_LOCKOUT_TEMPLATE = 'usuarios/lockout.html'
+AXES_LOCKOUT_CALLABLE = 'APPS.usuarios.views.lockout_view'
+AXES_ENABLE_ADMIN = True
+AXES_ONLY_USER_FAILURES = True #bloquear usuario desde cualquier ip
+
+
