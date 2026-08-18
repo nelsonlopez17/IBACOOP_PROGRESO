@@ -1,0 +1,435 @@
+================================================================================
+          SISTEMA DE GESTIÓN ESCOLAR - INSTITUTO "EL PROGRESO" (ERP)
+        DOCUMENTO OFICIAL DE ESCENARIOS DE PRUEBA: CAJA NEGRA Y CAJA BLANCA
+================================================================================
+
+PROYECTO: IBACOOP_PROGRESO (ERP Educativo Nivel Básico MINEDUC Guatemala)
+TECNOLOGÍAS: Python 3.12, Django 6.0, PostgreSQL 16, HTMX 1.9, ReportLab 4.4,
+             django-axes, django-simple-history, Docker Compose.
+FECHA DE GENERACIÓN: 2026-08-09
+ESTADO: Especificación Completa de Cobertura de Pruebas
+
+--------------------------------------------------------------------------------
+                                TABLA DE CONTENIDO
+--------------------------------------------------------------------------------
+1. INTRODUCCIÓN Y METODOLOGÍA DE PRUEBAS
+2. PARTE I: ESCENARIOS DE PRUEBA DE CAJA NEGRA (BLACK BOX TESTING)
+   2.1 Módulo de Autenticación, Usuarios y Seguridad (Axes + Roles)
+   2.2 Módulo de Registro de Alumnos y Expediente Digital 360° (MINEDUC)
+   2.3 Módulo Académico (Asignaciones, Evaluaciones, Promoción y Asistencia)
+   2.4 Módulo Financiero (Cuentas por Cobrar, Abonos y Auditoría)
+   2.5 Módulo de Control de Inventario
+   2.6 Módulo de Recursos Humanos (RRHH) y Planilla
+   2.7 Módulo del Portal Web Público Institucional
+3. PARTE II: ESCENARIOS DE PRUEBA DE CAJA BLANCA (WHITE BOX TESTING)
+   3.1 Cobertura de Arquitectura Base (ModeloAuditable, Soft Delete y RESTRICT)
+   3.2 Cobertura de Autenticación Interna (CUIOrEmailModelBackend y Axes)
+   3.3 Cobertura de Middlewares (EnforcePasswordChangeMiddleware)
+   3.4 Cobertura de Validaciones Internas de Formularios (PersonaForm, EstudianteForm)
+   3.5 Cobertura de Lógica de Negocio en Modelos (Cálculos, Properties e Historial)
+   3.6 Cobertura de Generación de Documentos PDF (ReportLab Canvas y Flowables)
+4. MATRIZ DE RASTREABILIDAD Y PRUEBAS AUTOMATIZADAS DJANGO (TESTCASE SUITE)
+
+================================================================================
+ 1. INTRODUCCIÓN Y METODOLOGÍA DE PRUEBAS
+================================================================================
+Este documento consolida la suite de pruebas del Sistema de Gestión Escolar del 
+Instituto "El Progreso".
+
+- PRUEBAS DE CAJA NEGRA (BLACK BOX):
+  Evalúan la funcionalidad del sistema desde el punto de vista del usuario final 
+  (Administrador, Secretaría, Contador, Director, Docente, Estudiante, Encargado),
+  verificando que las entradas produzcan las salidas esperadas según las reglas
+  de negocio del MINEDUC y requerimientos de interfaz, sin analizar el código fuente.
+
+- PRUEBAS DE CAJA BLANCA (WHITE BOX):
+  Evalúan la estructura interna del código en Django, verificando la cobertura
+  de ramas condicionales (if/else), métodos de modelos, managers personalizados
+  (ActivosManager), autenticación por múltiples criterios, middlewares, 
+  captura de excepciones (RestrictedError), validaciones clean_* y versionado
+  histórico con django-simple-history.
+
+
+================================================================================
+ 2. PARTE I: ESCENARIOS DE PRUEBA DE CAJA NEGRA (BLACK BOX TESTING)
+================================================================================
+
+--------------------------------------------------------------------------------
+2.1 Módulo de Autenticación, Usuarios y Seguridad
+--------------------------------------------------------------------------------
+
+[CN-AUTH-01] Inicio de Sesión Exitoso mediante CUI (13 dígitos)
+  - Rol / Actor: Todos los usuarios con CUI registrado.
+  - Precondiciones: Usuario activo y contraseña válida.
+  - Entradas: 
+      * Usuario: "2580123450101" (CUI de 13 dígitos).
+      * Contraseña: "ClaveSegura123!"
+  - Pasos de Ejecución:
+      1. Navegar a /usuarios/login/.
+      2. Ingresar el CUI en el campo 'Usuario o Correo'.
+      3. Ingresar la contraseña y pulsar 'Iniciar Sesión'.
+  - Resultado Esperado: Autenticación exitosa (HTTP 302), redirección al Dashboard principal y mensaje de bienvenida.
+
+[CN-AUTH-02] Inicio de Sesión Exitoso mediante Correo Electrónico
+  - Rol / Actor: Docente / Secretaria / Contador.
+  - Precondiciones: Usuario con email configurado en el sistema.
+  - Entradas:
+      * Usuario: "docente.matematicas@elprogreso.edu.gt"
+      * Contraseña: "ClaveSegura123!"
+  - Pasos de Ejecución:
+      1. Navegar a /usuarios/login/.
+      2. Ingresar el correo electrónico institucional.
+      3. Ingresar contraseña y enviar el formulario.
+  - Resultado Esperado: Autenticación exitosa (HTTP 302) y acceso concedido al sistema.
+
+[CN-AUTH-03] Rechazo de Login con Credenciales Erróneas
+  - Rol / Actor: Usuario general.
+  - Precondiciones: Cuenta existente.
+  - Entradas:
+      * Usuario: "2580123450101"
+      * Contraseña: "ClaveIncorrecta"
+  - Resultado Esperado: Permanece en la página de login (HTTP 200), muestra alerta en pantalla: "Credenciales inválidas, revise su CUI/Correo y Contraseña".
+
+[CN-AUTH-04] Bloqueo Temporal por Reiteración de Intentos Fallidos (django-axes)
+  - Rol / Actor: Atacante o Usuario desmemoriado.
+  - Precondiciones: Sistema configurado con límite de 3 fallos consecutivos.
+  - Entradas:
+      * 3 intentos consecutivos con contraseña incorrecta.
+  - Pasos de Ejecución:
+      1. Enviar el formulario de login 3 veces seguidas con datos erróneos.
+  - Resultado Esperado: Al 3er intento fallido el sistema responde con HTTP 429 (Too Many Requests), renderiza la plantilla 'usuarios/lockout.html' e informa "Acceso Bloqueado Temporalmente por demasiados intentos fallidos".
+
+[CN-AUTH-05] Restablecimiento de Contador Axes tras Login Correcto
+  - Rol / Actor: Usuario.
+  - Precondiciones: Acumulación de 2 intentos fallidos previos.
+  - Entradas:
+      * Intento 1 y 2: Contraseña errónea.
+      * Intento 3: Contraseña correcta.
+  - Resultado Esperado: El 3er intento es exitoso, inicia sesión y el contador de fallos se resetea a 0.
+
+[CN-AUTH-06] Redirección Obligatoria al Cambio de Contraseña en Primer Ingreso
+  - Rol / Actor: Nuevo Estudiante / Encargado creado por Secretaría.
+  - Precondiciones: Usuario creado con marca 'debe_cambiar_password = True'.
+  - Pasos de Ejecución:
+      1. Iniciar sesión con la clave temporal proporcionada.
+      2. Intentar ingresar a cualquier URL (/estudiantes/, /dashboard/, etc.).
+  - Resultado Esperado: El middleware intercepta la solicitud y redirige automáticamente a /usuarios/cambiar-password/ impidiendo el uso del sistema hasta actualizar la clave.
+
+--------------------------------------------------------------------------------
+2.2 Módulo de Registro de Alumnos y Expediente Digital 360° (MINEDUC)
+--------------------------------------------------------------------------------
+
+[CN-EST-01] Registro Completo de Nuevo Estudiante con Tutor Legal
+  - Rol / Actor: Secretaría / Administración.
+  - Precondiciones: El Encargado Legal ya fue creado o se creará en el mismo flujo.
+  - Entradas:
+      * CUI Estudiante: "3001123450101" (13 dígitos).
+      * Nombres / Apellidos: "Mario Alberto" "Gómez Pérez"
+      * Fecha Nacimiento: "2012-05-15" (Edad: 13-14 años).
+      * Código MINEDUC: "M-458921"
+      * Documentos MINEDUC: Certificado RENAP (Sí), DPI Encargado (Sí), Certificado Grado Anterior (Sí), Diploma Primaria (Sí), Código MINEDUC (Sí).
+  - Pasos de Ejecución:
+      1. Acceder a /estudiantes/crear/.
+      2. Seleccionar o buscar Encargado mediante componente HTMX.
+      3. Llenar información personal y checklist MINEDUC.
+      4. Guardar formulario.
+  - Resultado Esperado: Redirección al detalle del estudiante, expediente marcado como 100% Completo (5/5 documentos) y generación automática de su cuenta de usuario.
+
+[CN-EST-02] Rechazo de Formulario por CUI Inválido (Longitud / Caracteres)
+  - Rol / Actor: Secretaría.
+  - Entradas:
+      * CUI: "12345" (Solo 5 dígitos) o "300112345010A" (Con letras).
+  - Resultado Esperado: Error de validación en pantalla: "El CUI debe contener exactamente 13 dígitos numéricos".
+
+[CN-EST-03] Rechazo por CUI o Correo Duplicado en Base de Datos
+  - Rol / Actor: Secretaría.
+  - Precondiciones: Ya existe una Persona con el CUI "2580123450101" o correo "juan@colegio.edu.gt".
+  - Entradas: Crear otra persona con el mismo CUI o correo.
+  - Resultado Esperado: Formulario rechazado con mensaje: "Ya existe una persona registrada con este CUI / Correo electrónico".
+
+[CN-EST-04] Rechazo de Estudiante por Fuera del Rango de Edad (Ciclo Básico)
+  - Rol / Actor: Secretaría.
+  - Precondiciones: Norma MINEDUC Ciclo Básico (10 <= Edad < 18 años).
+  - Entradas:
+      * Fecha Nacimiento: "2019-01-01" (Edad: 7 años - Primaria) o "2000-01-01" (Edad: 26 años - Adulto).
+  - Resultado Esperado: Excepción de validación: "La edad del estudiante (X años) debe estar entre 10 y 17 años para el Ciclo Básico".
+
+[CN-EST-05] Búsqueda Dinámica de Encargado con HTMX (Asociación de Hermanos)
+  - Rol / Actor: Secretaría.
+  - Entradas: Escribir los primeros 3 caracteres del CUI o Apellido del Encargado en la casilla de búsqueda.
+  - Resultado Esperado: La tabla HTMX se actualiza asíncronamente sin recargar la página, mostrando la lista de encargados coincidentes con botón de selección.
+
+[CN-EST-06] Descarga de Ficha Única de Expediente (PDF ReportLab)
+  - Rol / Actor: Secretaría / Director.
+  - Pasos de Ejecución:
+      1. Abrir detalle del estudiante /estudiantes/<id>/.
+      2. Pulsar botón 'Imprimir Expediente PDF'.
+  - Resultado Esperado: Descarga de archivo 'expediente_<codigo>.pdf' con encabezado institucional, foto, checklist de papelería, datos de tutores y área de firmas.
+
+[CN-EST-07] Generación e Impresión de Credenciales de Acceso (PDF)
+  - Rol / Actor: Secretaría.
+  - Pasos de Ejecución:
+      1. Pulsar 'Generar Credenciales PDF' en el módulo de estudiantes.
+  - Resultado Esperado: Documento PDF descargable con talones desprendibles que contienen el CUI, usuario y clave temporal para el Estudiante y su Tutor.
+
+--------------------------------------------------------------------------------
+2.3 Módulo Académico (Grados, Secciones, Cursos, Evaluaciones y Promoción)
+--------------------------------------------------------------------------------
+
+[CN-ACA-01] Asignación de Estudiante a Grado y Sección Activa
+  - Rol / Actor: Director / Secretaría.
+  - Precondiciones: Ciclo Escolar 2026 activo, Seccion "1ro Básico A" con cupo disponible.
+  - Pasos de Ejecución: Asignar al estudiante activo a la sección "1ro Básico A".
+  - Resultado Esperado: Registro exitoso de AsignacionEstudiante para el ciclo actual.
+
+[CN-ACA-02] Control de Cupo Máximo por Sección
+  - Rol / Actor: Secretaría.
+  - Precondiciones: Sección con cupo_maximo = 30 y 30 estudiantes ya asignados.
+  - Pasos de Ejecución: Intentar inscribir el estudiante número 31.
+  - Resultado Esperado: Alerta de sistema: "La sección ha alcanzado su cupo máximo de 30 alumnos".
+
+[CN-ACA-03] Registro y Control de Notas por Bloque (Zona y Examen)
+  - Rol / Actor: Docente.
+  - Precondiciones: Asignación de curso activa.
+  - Entradas:
+      * Nota Zona: 45.00 / 70.00
+      * Nota Examen: 25.00 / 30.00
+  - Resultado Esperado: Suma total de Bloque = 70.00 pts. Guardado exitoso.
+
+[CN-ACA-04] Rechazo de Notas Fuera de Rango (>100 o Negativas)
+  - Rol / Actor: Docente.
+  - Entradas: Nota Zona = 75.00 (Máximo 70) o Nota Examen = -5.00.
+  - Resultado Esperado: Error de validación: "La nota de zona no puede superar 70 puntos ni ser negativa".
+
+[CN-ACA-05] Cálculo Automático de Promedio Final y Estado de Promoción
+  - Rol / Actor: Sistema / Director.
+  - Precondiciones: 4 Bloques registrados (B1: 70, B2: 50, B3: 65, B4: 55).
+  - Algoritmo: Promedio = (70 + 50 + 65 + 55) / 4 = 60.00 pts.
+  - Resultado Esperado: NotaFinalCurso registrada con 60.00 pts y marca 'esta_promocionado = True'. Si el promedio fuera 59.99 pts, se marca 'esta_promocionado = False'.
+
+--------------------------------------------------------------------------------
+2.4 Módulo Financiero (Cuentas por Cobrar y Abonos)
+--------------------------------------------------------------------------------
+
+[CN-FIN-01] Generación de Cuenta por Cobrar (Colegiatura / Matrícula)
+  - Rol / Actor: Contador.
+  - Entradas: Concepto "Colegiatura Febrero", Estudiante X, Monto: Q.350.00, Fecha Vencimiento.
+  - Resultado Esperado: Creación del estado de cuenta con saldo pendiente de Q.350.00.
+
+[CN-FIN-02] Registro de Abono Parcial o Total con Boleta Bancaria
+  - Rol / Actor: Contador.
+  - Entradas: Abono de Q.200.00 a la cuenta de Q.350.00. Boleta No: "BANC-889412".
+  - Resultado Esperado: Saldo actualizado a Q.150.00. Estado de la cuenta cambia a 'PARCIAL'.
+
+[CN-FIN-03] Rechazo de Abono por Monto Superior al Saldo Pendiente
+  - Rol / Actor: Contador.
+  - Precondiciones: Saldo pendiente Q.150.00.
+  - Entradas: Intentar abonar Q.200.00.
+  - Resultado Esperado: Formulario rechazado: "El monto del abono excede el saldo pendiente de la cuenta (Q.150.00)".
+
+--------------------------------------------------------------------------------
+2.5 Módulo de Inventario y Bienes Institucionales
+--------------------------------------------------------------------------------
+
+[CN-INV-01] Ingreso de Stock de Suministros (Movimiento Entrante)
+  - Rol / Actor: Administración / Contador.
+  - Entradas: Artículo "Resma de Hojas Carta", Cantidad: +50 unidades.
+  - Resultado Esperado: Stock actual incrementado adecuadamente.
+
+[CN-INV-02] Rechazo de Salida de Inventario por Sobre-Egreso (Stock Insuficiente)
+  - Rol / Actor: Contador.
+  - Precondiciones: Stock actual = 10 unidades.
+  - Entradas: Registrar egreso de 15 unidades.
+  - Resultado Esperado: Error de validación: "No hay suficiente stock disponible (Disponible: 10)".
+
+--------------------------------------------------------------------------------
+2.6 Módulo de Recursos Humanos (RRHH)
+--------------------------------------------------------------------------------
+
+[CN-RRHH-01] Contratación de Nuevo Personal Docente
+  - Rol / Actor: Director / Contador.
+  - Entradas: Datos Persona, Puesto: "Docente de Curso", NIT: "1234567-8", Salario: Q.3,500.00.
+  - Resultado Esperado: Creación de la ficha laboral asociada a la Persona.
+
+
+================================================================================
+ 3. PARTE II: ESCENARIOS DE PRUEBA DE CAJA BLANCA (WHITE BOX TESTING)
+================================================================================
+
+--------------------------------------------------------------------------------
+3.1 Cobertura de Arquitectura Base (ModeloAuditable, Soft Delete y RESTRICT)
+--------------------------------------------------------------------------------
+
+[CB-CORE-01] Cobertura de Consulta en ActivosManager (esta_eliminado=False)
+  - Clase / Ruta: APPS.core.models.ActivosManager (`APPS/core/models.py`)
+  - Estrategia White Box: Inspección de QuerySet por defecto (`objects.get_queryset()`).
+  - Código Probado:
+      def get_queryset(self):
+          return super().get_queryset().filter(esta_eliminado=False)
+  - Prueba de Cobertura:
+      1. Crear 2 registros (RegA con esta_eliminado=False, RegB con esta_eliminado=True).
+      2. Ejecutar `Modelo.objects.all()`.
+      3. Verificar que solo retorne RegA (Longitud = 1).
+
+[CB-CORE-02] Cobertura del Manager de Auditoría Completa (`todos`)
+  - Clase / Ruta: APPS.core.models.ModeloAuditable.todos (`APPS/core/models.py`)
+  - Prueba de Cobertura:
+      1. Ejecutar `Modelo.todos.all()`.
+      2. Verificar que retorne tanto RegA como RegB (Longitud = 2), garantizando que no se pierdan datos para auditoría.
+
+[CB-CORE-03] Cobertura del Método `delete()` con Protección `RestrictedError`
+  - Clase / Ruta: APPS.core.models.ModeloAuditable.delete (`APPS/core/models.py`)
+  - Fragmento de Código Interno:
+      for rel in self._meta.related_objects:
+          if rel.on_delete == models.RESTRICT:
+              # Introspección de objetos relacionados activos
+              if related_manager.filter(esta_eliminado=False).exists():
+                  raise RestrictedError(...)
+  - Camino Lógico Exigido:
+      Rama True (Existen hijos activos): Levanta `django.db.models.deletion.RestrictedError`.
+  - Prueba de Cobertura (verificada en `APPS/core/tests.py`):
+      1. Crear Grado (Padre) y Sección (Hijo activo con on_delete=RESTRICT).
+      2. Ejecutar `grado.delete()`.
+      3. Capturar excepción `RestrictedError` y validar que `esta_eliminado` siga siendo `False`.
+
+[CB-CORE-04] Cobertura de Transición Exitosa a Soft Delete (Sin Hijos Activos)
+  - Clase / Ruta: APPS.core.models.ModeloAuditable.delete (`APPS/core/models.py`)
+  - Camino Lógico Exigido:
+      Rama False (No hay hijos activos): Ejecuta `self.esta_eliminado = True; self.save()`.
+  - Prueba de Cobertura:
+      1. Eliminar lógicamente primero la Sección (`seccion.delete()`).
+      2. Ejecutar `grado.delete()`.
+      3. Assert statement: `self.assertTrue(grado.esta_eliminado)`.
+
+--------------------------------------------------------------------------------
+3.2 Cobertura de Autenticación Multicriterio y Bloqueo de Cuentas
+--------------------------------------------------------------------------------
+
+[CB-AUTH-01] Cobertura de Ramas en `CUIOrEmailModelBackend.authenticate()`
+  - Clase / Ruta: APPS.usuarios.backends.CUIOrEmailModelBackend (`APPS/usuarios/backends.py`)
+  - Código Interno Probado:
+      if username.isdigit() and len(username) == 13:
+          user = Usuario.objects.get(username=username) # Rama 1: CUI
+      else:
+          user = Usuario.objects.get(email=username)    # Rama 2: Email
+  - Cobertura Exigida:
+      * Test case con string de 13 dígitos para cubrir Rama 1.
+      * Test case con formato email para cubrir Rama 2.
+      * Test case con usuario inexistente para cubrir bloque `except Usuario.DoesNotExist: return None`.
+
+[CB-AUTH-02] Cobertura de Reseteo de Intentos Axes vía Signal `user_logged_in`
+  - Clase / Ruta: Integration test Axes (`APPS/usuarios/tests.py`)
+  - Método Interno: Disparo del signal `user_logged_in` registrado en Axes.
+  - Cobertura de Código:
+      1. Acumular registros en modelo `AccessAttempt.objects.filter(username=username)`.
+      2. Ejecutar autenticación exitosa mediante `self.client.post(login_url, ...)`.
+      3. Verificar que `AccessAttempt.objects.count()` disminuya a 0.
+
+--------------------------------------------------------------------------------
+3.3 Cobertura de Middlewares (Cambio Obligatorio de Contraseña)
+--------------------------------------------------------------------------------
+
+[CB-MID-01] Cobertura de Evaluación de Rutas Exentas en Middleware
+  - Clase / Ruta: APPS.usuarios.middleware.EnforcePasswordChangeMiddleware
+  - Código Interno:
+      EXEMPT_URLS = [reverse('usuarios:login'), reverse('usuarios:logout'), ...]
+      if request.path_info in EXEMPT_URLS:
+          return self.get_response(request) # Rama Exenta
+  - Cobertura Exigida:
+      * Ejecutar petición GET a `/usuarios/login/` con `debe_cambiar_password=True`.
+      * Verificar status code 200 sin redirección infinita.
+      * Ejecutar petición GET a `/estudiantes/` con `debe_cambiar_password=True`.
+      * Verificar respuesta 302 hacia la URL `/usuarios/cambiar-password/`.
+
+--------------------------------------------------------------------------------
+3.4 Cobertura de Validaciones Internas en Formularios (`clean_*`)
+--------------------------------------------------------------------------------
+
+[CB-FORM-01] Cobertura de Expresión Regular y Unicidad en `PersonaForm.clean_cui()`
+  - Clase / Ruta: APPS.core.forms.PersonaForm (`APPS/core/forms.py`)
+  - Código Interno:
+      cui = self.cleaned_data.get('cui')
+      if not re.match(r'^\d{13}$', cui):
+          raise forms.ValidationError("El CUI debe tener 13 dígitos numéricos.")
+      if Persona.objects.filter(cui=cui).exclude(pk=self.instance.pk).exists():
+          raise forms.ValidationError("CUI ya registrado.")
+  - Cobertura de Ramas:
+      * Rama 1: `cui = "ABC1234567890"` -> Dispara Regex Error.
+      * Rama 2: `cui = "12345"` -> Dispara Length Error.
+      * Rama 3: CUI existente en otra instancia -> Dispara Unicidad Error.
+      * Rama 4: Edición del mismo objeto -> `exclude(pk=self.instance.pk)` permite conservar su propio CUI.
+
+[CB-FORM-02] Cobertura de Sincronización M2M en `CustomUserChangeForm.save()`
+  - Clase / Ruta: APPS.usuarios.forms.CustomUserChangeForm (`APPS/usuarios/tests.py`)
+  - Cobertura de Código:
+      1. Crear usuario con 3 grupos asignados (`Docentes`, `Secretaría`, `Contabilidad`).
+      2. Ejecutar `form.save()` enviando únicamente `groups=[group3.id]`.
+      3. Verificar internamente `usuario.groups.clear()` y `usuario.groups.add(group3)`.
+      4. Assert: `group1` y `group2` eliminados correctamente del registro M2M.
+
+--------------------------------------------------------------------------------
+3.5 Cobertura de Lógica de Negocio y Auditoría Inmutable (History)
+--------------------------------------------------------------------------------
+
+[CB-MDL-01] Cobertura del Método `NotaFinalCurso.calcular_nota_final()`
+  - Clase / Ruta: APPS.academico.models.NotaFinalCurso (`APPS/academico/tests.py`)
+  - Código Interno Probado:
+      notas_bloques = NotaBloque.objects.filter(asignacion_estudiante=self.asignacion_estudiante, curso=self.curso)
+      promedio = sum([n.total_nota for n in notas_bloques]) / len(notas_bloques)
+      self.esta_promocionado = (promedio >= Decimal("60.00"))
+      return promedio, self.esta_promocionado
+  - Cobertura de Ramas:
+      * Rama Promocionado: Bloques con suma promedio >= 60.00. Assert `esta_promocionado is True`.
+      * Rama Reprobado: Bloques con suma promedio < 60.00. Assert `esta_promocionado is False`.
+      * Rama División por Cero: Sin bloques registrados (raise o manejo con len > 0).
+
+[CB-AUD-01] Cobertura de Versionado Inmutable con `HistoricalRecords`
+  - Modelos Auditaos: `NotaBloque`, `Abono`, `ArticuloInventario`.
+  - Mecanismo: `django-simple-history`.
+  - Cobertura de Código:
+      1. Modificar el campo `nota_examen` de un objeto `NotaBloque`.
+      2. Consultar `nota_bloque.history.all()`.
+      3. Verificar que exista un registro `HistoricalNotaBloque` con el valor anterior, fecha/hora exacta y `history_user` responsable de la modificación.
+
+
+================================================================================
+ 4. MATRIZ DE RASTREABILIDAD Y EJECUCIÓN DE PRUEBAS AUTOMATIZADAS
+================================================================================
+
+El proyecto cuenta con suites de pruebas unitarias y de integración desarrolladas
+con el framework de pruebas nativo de Django (`unittest` / `django.test.TestCase`).
+
+--------------------------------------------------------------------------------
+RESUMEN DE TESTCASES IMPLEMENTADOS EN CÓDIGO
+--------------------------------------------------------------------------------
+1. `APPS.usuarios.tests.UsuarioFormTestCase`
+   - `test_creacion_usuario_con_grupos`: Asignación correcta M2M al crear usuario.
+   - `test_modificacion_usuario_eliminar_grupos`: Desmarcar grupos en formulario.
+   - `test_eliminar_todos_los_grupos`: Limpieza total de permisos.
+
+2. `APPS.usuarios.tests.BloqueoCuentaAxesTestCase`
+   - `test_bloqueo_despues_de_tres_intentos_fallidos`: Verificación de HTTP 429 y template lockout.
+   - `test_login_exitoso_limpia_intentos_fallidos`: Verificación de reseteo de intentos.
+
+3. `APPS.core.tests.SoftDeleteRestrictedErrorTestCase`
+   - `test_soft_delete_raises_restricted_error_when_active_children_exist`: Introspección y fallo controlado por RESTRICT.
+
+4. `APPS.academico.tests.NotaFinalCursoTestCase`
+   - `test_calculo_nota_final_y_promocion`: Verificación del cálculo de promedios y estado de promoción.
+
+--------------------------------------------------------------------------------
+COMANDOS PARA EJECUCIÓN DE PRUEBAS
+--------------------------------------------------------------------------------
+
+# 1. Ejecutar la totalidad de las pruebas unitarias del proyecto
+python manage.py test APPS
+
+# 2. Ejecutar pruebas de un módulo específico (ejemplo: usuarios)
+python manage.py test APPS.usuarios
+
+# 3. Ejecutar pruebas en el entorno de producción en Docker
+docker compose exec web python manage.py test APPS
+
+================================================================================
+                              FIN DEL DOCUMENTO
+================================================================================

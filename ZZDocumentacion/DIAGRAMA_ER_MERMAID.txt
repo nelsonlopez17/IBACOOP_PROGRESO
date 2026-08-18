@@ -1,0 +1,348 @@
+erDiagram
+
+    %% ------------------------------------------------------------------------
+    %% AUTENTICACIÓN Y ENTIDAD BASE (SUPER TIPO / SUB TIPO)
+    %% ------------------------------------------------------------------------
+    Usuario {
+        bigint id PK
+        string username UK
+        string email
+        string password
+        string rol
+        boolean debe_cambiar_password
+        boolean is_active
+        boolean is_staff
+        boolean is_superuser
+    }
+
+    Persona {
+        bigint id PK
+        bigint usuario_id FK
+        string cui UK
+        string nombres
+        string apellidos
+        date fecha_nacimiento
+        string genero
+        text direccion
+        string telefono_principal
+        string telefono_secundario
+        string correo UK
+        boolean esta_eliminado
+    }
+
+    %% ------------------------------------------------------------------------
+    %% SUBTIPOS DE PERSONA
+    %% ------------------------------------------------------------------------
+    Estudiante {
+        bigint persona_id PK_FK
+        string codigo_mineduc UK
+        string estado_estudiante
+        bigint encargado_id FK
+        string nombre_padre
+        string telefono_padre
+        string nombre_madre
+        string telefono_madre
+        text historial_medico
+        boolean doc_cert_nacimiento_renap
+        boolean doc_dpi_encargado
+        boolean doc_certificado_grado_anterior
+        boolean doc_diploma_primaria
+        boolean doc_codigo_mineduc
+        boolean estado_activo
+        boolean esta_eliminado
+    }
+
+    Encargado {
+        bigint persona_id PK_FK
+        string lugar_de_trabajo
+        boolean esta_eliminado
+    }
+
+    EstudianteEncargado {
+        bigint id PK
+        bigint estudiante_id FK
+        bigint encargado_id FK
+        string parentesco
+        boolean es_contacto_principal
+        boolean esta_eliminado
+    }
+
+    %% ------------------------------------------------------------------------
+    %% RECURSOS HUMANOS (RRHH) Y PLANILLA
+    %% ------------------------------------------------------------------------
+    Puesto {
+        bigint id PK
+        string nombre_puesto UK
+        text descripcion
+        boolean esta_eliminado
+    }
+
+    Personal {
+        bigint persona_id PK_FK
+        bigint puesto_id FK
+        string nit
+        date fecha_contratacion
+        string estado_laboral
+        decimal salario_base_asignado
+        string numero_contrato_fisico
+        string ubicacion_expediente_fisico
+        string contacto_emergencia_nombre
+        string contacto_emergencia_telefono
+        boolean doc_dpi_personal
+        boolean doc_nit_sat
+        boolean doc_titulo_academico
+        boolean doc_colegiado_activo
+        boolean doc_antecedentes_penales
+        boolean doc_antecedentes_policiales
+        boolean doc_contrato_fisico
+        boolean doc_tarjeta_salud
+        boolean esta_eliminado
+    }
+
+    AsistenciaPersonal {
+        bigint id PK
+        bigint personal_id FK
+        date fecha
+        time hora_entrada
+        time hora_salida
+        string estado_asistencia
+        text observaciones
+        boolean esta_eliminado
+    }
+
+    Planilla {
+        bigint id PK
+        bigint personal_id FK
+        bigint ciclo_escolar_id FK
+        int mes_pagado
+        decimal bonificaciones
+        decimal descuentos
+        decimal total_pagar
+        string comprobante_pdf
+        date fecha_pago
+        boolean pagado
+        boolean esta_eliminado
+    }
+
+    %% ------------------------------------------------------------------------
+    %% SUBSISTEMA ACADÉMICO
+    %% ------------------------------------------------------------------------
+    CicloEscolar {
+        bigint id PK
+        int anio UK
+        boolean estado_activo
+        date fecha_inicio
+        date fecha_fin
+        boolean esta_eliminado
+    }
+
+    BloqueAcademico {
+        bigint id PK
+        bigint ciclo_escolar_id FK
+        string nombre_bloque
+        int orden
+        date fecha_inicio
+        date fecha_fin
+        boolean esta_eliminado
+    }
+
+    Grado {
+        bigint id PK
+        string nombre UK
+        int orden
+        boolean esta_eliminado
+    }
+
+    Seccion {
+        bigint id PK
+        bigint grado_id FK
+        string letra
+        int cupo_maximo
+        boolean esta_eliminado
+    }
+
+    Curso {
+        bigint id PK
+        bigint grado_id FK
+        string nombre_curso
+        string codigo_curso UK
+        boolean esta_eliminado
+    }
+
+    AsignacionEstudiante {
+        bigint id PK
+        bigint estudiante_id FK
+        bigint seccion_id FK
+        bigint ciclo_escolar_id FK
+        boolean esta_eliminado
+    }
+
+    AsignacionDocente {
+        bigint id PK
+        bigint personal_id FK
+        bigint curso_id FK
+        bigint seccion_id FK
+        bigint ciclo_escolar_id FK
+        boolean esta_eliminado
+    }
+
+    NotaBloque {
+        bigint id PK
+        bigint asignacion_estudiante_id FK
+        bigint curso_id FK
+        bigint bloque_academico_id FK
+        decimal nota_zona
+        decimal nota_examen
+        boolean esta_eliminado
+    }
+
+    NotaFinalCurso {
+        bigint id PK
+        bigint asignacion_estudiante_id FK
+        bigint curso_id FK
+        decimal nota_promedio
+        boolean aplica_recuperacion
+        decimal nota_recuperacion_1
+        decimal nota_recuperacion_2
+        decimal nota_definitiva
+        boolean esta_promocionado
+        boolean esta_eliminado
+    }
+
+    AsistenciaEstudiantil {
+        bigint id PK
+        bigint asignacion_estudiante_id FK
+        bigint curso_id FK
+        date fecha
+        boolean presente
+        boolean justificado
+        text observaciones
+        boolean esta_eliminado
+    }
+
+    %% ------------------------------------------------------------------------
+    %% SUBSISTEMA FINANCIERO
+    %% ------------------------------------------------------------------------
+    ConceptoPago {
+        bigint id PK
+        string nombre UK
+        decimal monto_estandar
+        boolean esta_eliminado
+    }
+
+    CuentaPorCobrar {
+        bigint id PK
+        bigint estudiante_id FK
+        bigint concepto_id FK
+        bigint ciclo_escolar_id FK
+        decimal monto_total
+        decimal saldo_pendiente
+        date fecha_limite_pago
+        string estado_pago
+        boolean esta_eliminado
+    }
+
+    Abono {
+        bigint id PK
+        bigint cuenta_por_cobrar_id FK
+        decimal monto_pagado
+        date fecha_pago
+        string numero_boleta UK
+        string recibo_pdf
+        text observaciones
+        boolean esta_eliminado
+    }
+
+    %% ------------------------------------------------------------------------
+    %% CONTROL DE INVENTARIOS
+    %% ------------------------------------------------------------------------
+    ArticuloInventario {
+        bigint id PK
+        string codigo_unico UK
+        string nombre
+        text descripcion
+        string categoria
+        int stock_actual
+        int stock_minimo_alerta
+        string unidad_medida
+        boolean esta_eliminado
+    }
+
+    MovimientoInventario {
+        bigint id PK
+        bigint articulo_id FK
+        bigint personal_responsable_id FK
+        string tipo_movimiento
+        int cantidad
+        datetime fecha
+        text motivo
+        string documento_referencia
+        boolean esta_eliminado
+    }
+
+    %% ------------------------------------------------------------------------
+    %% PORTAL WEB PÚBLICO
+    %% ------------------------------------------------------------------------
+    ContenidoWeb {
+        bigint id PK
+        string seccion
+        string titulo
+        text cuerpo
+        string imagen_url
+        string imagen_archivo
+        datetime fecha_publicacion
+        boolean publicado
+        bigint autor_id FK
+        boolean esta_eliminado
+    }
+
+    %% ------------------------------------------------------------------------
+    %% RELACIONES ENTRE ENTIDADES
+    %% ------------------------------------------------------------------------
+
+    Usuario ||--o| Persona : "cuenta_sistema"
+    Persona ||--o| Estudiante : "es_un"
+    Persona ||--o| Encargado : "es_un"
+    Persona ||--o| Personal : "es_un"
+
+    Estudiante }|--|| Encargado : "tutor_principal"
+    Estudiante ||--o{ EstudianteEncargado : "relacion_parentesco"
+    Encargado ||--o{ EstudianteEncargado : "relacion_parentesco"
+
+    Puesto ||--o{ Personal : "cargo"
+    Personal ||--o{ AsistenciaPersonal : "registro_asistencia"
+    Personal ||--o{ Planilla : "pagos_nomina"
+    CicloEscolar ||--o{ Planilla : "periodo_planilla"
+
+    CicloEscolar ||--o{ BloqueAcademico : "evaluaciones"
+    Grado ||--o{ Seccion : "secciones"
+    Grado ||--o{ Curso : "pensum"
+
+    Estudiante ||--o{ AsignacionEstudiante : "matricula"
+    Seccion ||--o{ AsignacionEstudiante : "alumnos"
+    CicloEscolar ||--o{ AsignacionEstudiante : "ciclo"
+
+    Personal ||--o{ AsignacionDocente : "imparte"
+    Curso ||--o{ AsignacionDocente : "materia"
+    Seccion ||--o{ AsignacionDocente : "seccion"
+    CicloEscolar ||--o{ AsignacionDocente : "ciclo"
+
+    AsignacionEstudiante ||--o{ NotaBloque : "evaluacion"
+    Curso ||--o{ NotaBloque : "curso_nota"
+    BloqueAcademico ||--o{ NotaBloque : "bloque_nota"
+
+    AsignacionEstudiante ||--o{ NotaFinalCurso : "promedio"
+    Curso ||--o{ NotaFinalCurso : "curso_promedio"
+
+    AsignacionEstudiante ||--o{ AsistenciaEstudiantil : "asistencia"
+    Curso ||--o{ AsistenciaEstudiantil : "asistencia_curso"
+
+    Estudiante ||--o{ CuentaPorCobrar : "deudas"
+    ConceptoPago ||--o{ CuentaPorCobrar : "concepto"
+    CicloEscolar ||--o{ CuentaPorCobrar : "periodo_cobro"
+    CuentaPorCobrar ||--o{ Abono : "pagos"
+
+    ArticuloInventario ||--o{ MovimientoInventario : "kardex"
+    Personal ||--o{ MovimientoInventario : "responsable"
+
+    Usuario ||--o{ ContenidoWeb : "autor"
