@@ -21,7 +21,7 @@ class ContenidoWebAdmin(admin.ModelAdmin):
             'fields': ('fecha_publicacion', 'publicado', 'autor')
         }),
         ('Auditoría', {
-            'fields': ('creado_en', 'actualizado_en', 'usuario_creacion', 'usuario_modificacion'),
+            'fields': ('creado_en', 'actualizado_en'),
             'classes': ('collapse',),
         }),
     )

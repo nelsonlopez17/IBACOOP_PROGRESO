@@ -7,10 +7,18 @@ Hereda de TailwindFormMixin (APPS.core.forms) para la inyección automática de 
 from django import forms
 from APPS.core.forms import TailwindFormMixin, PersonaForm
 from APPS.estudiantes.models import Estudiante, Encargado, EstudianteEncargado
+from APPS.academico.models import Seccion
 
 
 class EstudianteForm(TailwindFormMixin, forms.ModelForm):
     """Formulario para capturar los datos académicos y de expediente de un Estudiante."""
+
+    seccion_asignada = forms.ModelChoiceField(
+        queryset=Seccion.objects.filter(esta_eliminado=False).select_related('grado').order_by('grado__orden', 'letra'),
+        required=False,
+        label='Grado y Sección Académica Asignada (Matrícula Inmediata)',
+        help_text='Seleccione para matricular e inscribir al alumno en el Módulo Académico con 1 solo clic.'
+    )
 
     class Meta:
         model = Estudiante

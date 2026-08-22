@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrar Pago / Abono{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+
+    <!-- Breadcrumb & Título -->
+    <div class="border-b border-slate-200 pb-4">
+        <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+            <a href="{% url 'financiero:estudiante_cuenta_corriente' estudiante.pk %}" class="hover:underline">Estado de Cuenta Corriente</a>
+            <span>/</span>
+            <span class="text-slate-500">Registrar Pago</span>
+        </div>
+        <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+            <i data-lucide="credit-card" class="w-7 h-7 text-[#1E6532]"></i>
+            Registrar Pago / Abono
+        </h1>
+        <p class="text-xs text-slate-500 mt-1">Registro de boleta de depósito bancario o pago en caja contra la cuenta por cobrar.</p>
+    </div>
+
+    <!-- Resumen del Cargo a Saldar -->
+    <div class="bg-slate-900 text-white rounded-2xl p-6 shadow-md border border-slate-800 space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div>
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Estudiante</span>
+                <h3 class="text-base font-extrabold text-white mt-0.5">{{ estudiante.persona.nombre_completo }}</h3>
+                <p class="text-xs text-slate-400 font-mono">CUI: {{ estudiante.persona.cui }}</p>
+            </div>
+            <div class="text-left sm:text-right">
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Concepto</span>
+                <span class="text-sm font-extrabold text-emerald-400 mt-0.5 block">{{ cuenta.concepto.nombre }}</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 pt-1 text-xs">
+            <div>
+                <span class="text-slate-400 block">Monto Original:</span>
+                <strong class="text-white text-sm font-mono">Q{{ cuenta.monto_total|floatformat:2 }}</strong>
+            </div>
+            <div class="text-right">
+                <span class="text-amber-400 block font-bold">Saldo Pendiente a Saldar:</span>
+                <strong class="text-amber-400 text-base font-mono font-extrabold">Q{{ cuenta.saldo_pendiente|floatformat:2 }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario en Tarjeta -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs font-semibold">
+                {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="space-y-4">
+                <!-- Monto Pagado -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        {{ form.monto_pagado.label }} <span class="text-rose-500">*</span>
+                    </label>
+                    {{ form.monto_pagado }}
+                    {% if form.monto_pagado.errors %}<p class="text-xs text-rose-600 font-semibold mt-1">{{ form.monto_pagado.errors.0 }}</p>{% endif %}
+                </div>
+
+                <!-- Fecha de Pago -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        {{ form.fecha_pago.label }} <span class="text-rose-500">*</span>
+                    </label>
+                    {{ form.fecha_pago }}
+                    {% if form.fecha_pago.errors %}<p class="text-xs text-rose-600 font-semibold mt-1">{{ form.fecha_pago.errors.0 }}</p>{% endif %}
+                </div>
+
+                <!-- Número de Boleta -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        {{ form.numero_boleta.label }} <span class="text-rose-500">*</span>
+                    </label>
+                    {{ form.numero_boleta }}
+                    {% if form.numero_boleta.errors %}<p class="text-xs text-rose-600 font-semibold mt-1">{{ form.numero_boleta.errors.0 }}</p>{% endif %}
+                </div>
+
+                <!-- Observaciones -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        {{ form.observaciones.label }}
+                    </label>
+                    {{ form.observaciones }}
+                    {% if form.observaciones.errors %}<p class="text-xs text-rose-600 font-semibold mt-1">{{ form.observaciones.errors.0 }}</p>{% endif %}
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <a href="{% url 'financiero:estudiante_cuenta_corriente' estudiante.pk %}" class="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors">
+                    Cancelar
+                </a>
+                <button type="submit" class="px-6 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
+                    Guardar y Generar Recibo PDF
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

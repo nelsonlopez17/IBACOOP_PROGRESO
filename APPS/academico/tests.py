@@ -19,11 +19,16 @@ class NotaFinalCursoTestCase(TestCase):
         self.curso = Curso.objects.create(grado=self.grado, nombre_curso="Matemáticas", codigo_curso="MAT-101")
         
         self.user_estudiante = Usuario.objects.create_user(username="alumno1", password="password123")
-        self.estudiante = Estudiante.objects.create(
-            usuario=self.user_estudiante,
-            codigo_mineduc="EST-9999",
+        from APPS.core.models import Persona
+        self.persona = Persona.objects.create(
             nombres="Juan",
-            apellidos="Pérez"
+            apellidos="Pérez",
+            cui="1234567890101",
+            usuario=self.user_estudiante
+        )
+        self.estudiante = Estudiante.objects.create(
+            persona=self.persona,
+            codigo_mineduc="EST-9999"
         )
         self.asignacion = AsignacionEstudiante.objects.create(
             estudiante=self.estudiante,

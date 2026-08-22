@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Cuentas por Cobrar{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Encabezado de la Sección -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+                <a href="{% url 'core:home' %}" class="hover:underline">Dashboard</a>
+                <span>/</span>
+                <span class="text-slate-500">Gestión Financiera</span>
+                <span>/</span>
+                <span class="text-slate-500">Cuentas por Cobrar</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+                <i data-lucide="receipt" class="w-7 h-7 text-[#1E6532]"></i>
+                Gestión de Cuentas por Cobrar
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">Control global de obligaciones financieras, saldos pendientes y cobranza institucional.</p>
+        </div>
+
+        <div class="flex items-center gap-3 flex-wrap">
+            <a href="{% url 'financiero:generar_cobro_masivo' %}"
+                class="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
+                <i data-lucide="users" class="w-4 h-4 text-[#3C7DA8]"></i>
+                Emisión Masiva de Cobros
+            </a>
+            <a href="{% url 'financiero:cuentaporcobrar_create' %}"
+                class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                Asignar Cargo Individual
+            </a>
+        </div>
+    </div>
+
+    <!-- Pestañas de Navegación del Módulo Financiero -->
+    {% include 'financiero/partials/financiero_tabs.html' %}
+
+    <!-- Alertas -->
+    {% if messages %}
+    <div class="space-y-3">
+        {% for message in messages %}
+        <div class="p-4 rounded-xl flex items-start gap-3 border shadow-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-900 border-emerald-200{% else %}bg-rose-50 text-rose-900 border-rose-200{% endif %}">
+            <i data-lucide="{% if message.tags == 'success' %}check-circle-2{% else %}alert-triangle{% endif %}" class="w-5 h-5 flex-shrink-0 mt-0.5 {% if message.tags == 'success' %}text-emerald-600{% else %}text-rose-600{% endif %}"></i>
+            <div class="text-sm font-medium leading-relaxed">{{ message }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Barra de Filtros -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <form method="get" class="flex flex-col md:flex-row items-center gap-3">
+            <div class="relative flex-1 w-full">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                <input type="text" name="q" value="{{ q }}" placeholder="Buscar por alumno, CUI, Código MINEDUC o concepto..."
+                    class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1E6532] focus:bg-white transition-all">
+            </div>
+
+            <!-- Filtro Estado Pago -->
+            <div class="w-full md:w-48">
+                <select name="estado" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:border-[#1E6532] focus:bg-white transition-all">
+                    <option value="">-- Estado de Pago --</option>
+                    {% for val, label in estados_pago %}
+                    <option value="{{ val }}" {% if estado_sel == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Filtro Ciclo Escolar -->
+            <div class="w-full md:w-44">
+                <select name="ciclo" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:border-[#1E6532] focus:bg-white transition-all">
+                    <option value="">-- Ciclo Escolar --</option>
+                    {% for c in ciclos %}
+                    <option value="{{ c.pk }}" {% if ciclo_sel == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.anio }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="flex items-center gap-2 w-full md:w-auto">
+                <button type="submit" class="px-4 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-900 transition-colors shadow-sm w-full md:w-auto">
+                    Filtrar
+                </button>
+                {% if q or estado_sel or ciclo_sel %}
+                <a href="{% url 'financiero:cuentaporcobrar_list' %}" class="px-3 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors text-center w-full md:w-auto">
+                    Limpiar
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabla de Cuentas por Cobrar -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
+                        <th class="py-3.5 px-6">Estudiante / CUI</th>
+                        <th class="py-3.5 px-6">Concepto de Cobro</th>
+                        <th class="py-3.5 px-6">Ciclo</th>
+                        <th class="py-3.5 px-6">Monto Total</th>
+                        <th class="py-3.5 px-6">Saldo Pendiente</th>
+                        <th class="py-3.5 px-6">Estado</th>
+                        <th class="py-3.5 px-6 text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                    {% for cuenta in cuentas %}
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-4 px-6">
+                            <a href="{% url 'financiero:estudiante_cuenta_corriente' cuenta.estudiante.pk %}"
+                                class="font-bold text-slate-900 text-sm hover:text-[#1E6532] transition-colors block">
+                                {{ cuenta.estudiante.persona.nombre_completo }}
+                            </a>
+                            <span class="font-mono text-[11px] text-slate-400">CUI: {{ cuenta.estudiante.persona.cui }}</span>
+                        </td>
+                        <td class="py-4 px-6 font-bold text-slate-800">{{ cuenta.concepto.nombre }}</td>
+                        <td class="py-4 px-6 font-semibold text-slate-600">{{ cuenta.ciclo_escolar.anio }}</td>
+                        <td class="py-4 px-6 font-bold text-slate-900">Q{{ cuenta.monto_total|floatformat:2 }}</td>
+                        <td class="py-4 px-6 font-bold {% if cuenta.saldo_pendiente > 0 %}text-amber-700{% else %}text-emerald-700{% endif %}">
+                            Q{{ cuenta.saldo_pendiente|floatformat:2 }}
+                        </td>
+                        <td class="py-4 px-6">
+                            {% if cuenta.estado_pago == 'PAGADO' %}
+                            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">Solvente / Pagado</span>
+                            {% elif cuenta.estado_pago == 'PARCIAL' %}
+                            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200">Pago Parcial</span>
+                            {% else %}
+                            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-200">Pendiente de Pago</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-4 px-6 text-right">
+                            <div class="flex items-center justify-end gap-1.5">
+                                {% if cuenta.estado_pago != 'PAGADO' %}
+                                <a href="{% url 'financiero:abono_create' cuenta.pk %}"
+                                    class="inline-flex items-center gap-1 px-3 py-1.5 bg-[#1E6532] text-white hover:bg-[#1E6532]/90 rounded-lg text-xs font-bold transition-all shadow-xs">
+                                    <i data-lucide="credit-card" class="w-3.5 h-3.5"></i>
+                                    Registrar Pago
+                                </a>
+                                {% endif %}
+                                <a href="{% url 'financiero:estudiante_cuenta_corriente' cuenta.estudiante.pk %}"
+                                    title="Ver Estado de Cuenta Corriente"
+                                    class="p-2 rounded-lg bg-slate-100 text-slate-600 hover:text-[#1E6532] hover:bg-[#1E6532]/10 transition-colors">
+                                    <i data-lucide="file-text" class="w-4 h-4"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="py-12 text-center text-slate-400">
+                            <i data-lucide="receipt" class="w-10 h-10 mx-auto mb-2 text-slate-300"></i>
+                            <p class="text-sm font-semibold">No se encontraron cuentas por cobrar asociadas a la búsqueda.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if is_paginated %}
+        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+            <div class="flex items-center gap-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&estado={{ estado_sel }}&ciclo={{ ciclo_sel }}" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50">Anterior</a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&q={{ q }}&estado={{ estado_sel }}&ciclo={{ ciclo_sel }}" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50">Siguiente</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

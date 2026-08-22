@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo_pagina }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+
+    <!-- Breadcrumb & Título -->
+    <div class="border-b border-slate-200 pb-4">
+        <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+            <a href="{% url 'financiero:concepto_list' %}" class="hover:underline">Catálogo de Conceptos</a>
+            <span>/</span>
+            <span class="text-slate-500">{{ titulo_pagina }}</span>
+        </div>
+        <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+            <i data-lucide="tag" class="w-7 h-7 text-[#1E6532]"></i>
+            {{ titulo_pagina }}
+        </h1>
+    </div>
+
+    <!-- Formulario en Tarjeta -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs font-semibold">
+                {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="space-y-4">
+                <!-- Nombre del Concepto -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        {{ form.nombre.label }} <span class="text-rose-500">*</span>
+                    </label>
+                    {{ form.nombre }}
+                    {% if form.nombre.errors %}
+                    <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.nombre.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Monto Estándar -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        {{ form.monto_estandar.label }} <span class="text-rose-500">*</span>
+                    </label>
+                    {{ form.monto_estandar }}
+                    {% if form.monto_estandar.errors %}
+                    <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.monto_estandar.errors.0 }}</p>
+                    {% endif %}
+                    <p class="text-[11px] text-slate-400 mt-1">Este monto será el valor predeterminado al asignar el cobro a los estudiantes.</p>
+                </div>
+
+                <!-- Categoría del Concepto -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        {{ form.categoria_concepto.label }} <span class="text-rose-500">*</span>
+                    </label>
+                    {{ form.categoria_concepto }}
+                    {% if form.categoria_concepto.errors %}
+                    <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.categoria_concepto.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Casilla de Automatización al Matricular en Sección -->
+                <div class="p-4 bg-emerald-50/60 border border-emerald-200 rounded-xl space-y-2">
+                    <div class="flex items-center gap-3">
+                        {{ form.aplica_al_inscribir_seccion }}
+                        <label for="{{ form.aplica_al_inscribir_seccion.id_for_label }}" class="text-xs font-extrabold text-[#1E6532] cursor-pointer">
+                            {{ form.aplica_al_inscribir_seccion.label }}
+                        </label>
+                    </div>
+                    <p class="text-[11px] text-slate-500 leading-relaxed">
+                        Si activa esta casilla, este cobro se emitirá automáticamente cada vez que un estudiante sea matriculado en un grado y sección para un ciclo lectivo (aplica tanto para alumnos nuevos como para reinscripciones anuales).
+                    </p>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <a href="{% url 'financiero:concepto_list' %}" class="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors">
+                    Cancelar
+                </a>
+                <button type="submit" class="px-6 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
+                    {{ boton_label|default:"Guardar" }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

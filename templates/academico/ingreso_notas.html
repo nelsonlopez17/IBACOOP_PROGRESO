@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Ingresar / Evaluar Calificación{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+
+    <!-- Breadcrumb -->
+    <div class="border-b border-slate-200 pb-4">
+        <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+            <a href="{% url 'academico:notas_lista' %}" class="hover:underline">Mis Cursos y Notas</a>
+            <span>/</span>
+            <span class="text-slate-500">Evaluar Alumno</span>
+        </div>
+        <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+            <i data-lucide="edit-3" class="w-7 h-7 text-[#1E6532]"></i>
+            Ingresar / Actualizar Calificación
+        </h1>
+    </div>
+
+    <!-- Ficha del Alumno y Materia -->
+    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-2">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div>
+                <span class="text-slate-400 font-bold uppercase tracking-wider block">Alumno:</span>
+                <span class="text-slate-900 font-extrabold text-sm">{{ object.asignacion_estudiante.estudiante.persona.nombre_completo }}</span>
+            </div>
+            <div>
+                <span class="text-slate-400 font-bold uppercase tracking-wider block">Grado y Sección:</span>
+                <span class="text-slate-900 font-bold">{{ object.asignacion_estudiante.seccion }}</span>
+            </div>
+            <div>
+                <span class="text-slate-400 font-bold uppercase tracking-wider block">Asignatura / Curso:</span>
+                <span class="text-[#1E6532] font-bold">{{ object.curso.nombre_curso }}</span>
+            </div>
+            <div>
+                <span class="text-slate-400 font-bold uppercase tracking-wider block">Bimestre:</span>
+                <span class="text-slate-900 font-bold">{{ object.bloque_academico.nombre_bloque }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs font-semibold">
+                {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Nota de Zona (Máx. 60 pts) <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="number" name="nota_zona" step="0.01" min="0" max="60" value="{{ form.nota_zona.value|default:object.nota_zona }}"
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:border-[#1E6532]">
+                    {% if form.nota_zona.errors %}<p class="text-xs text-rose-600 font-semibold mt-1">{{ form.nota_zona.errors.0 }}</p>{% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Nota de Examen (Máx. 40 pts) <span class="text-rose-500">*</span>
+                    </label>
+                    <input type="number" name="nota_examen" step="0.01" min="0" max="40" value="{{ form.nota_examen.value|default:object.nota_examen }}"
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:border-[#1E6532]">
+                    {% if form.nota_examen.errors %}<p class="text-xs text-rose-600 font-semibold mt-1">{{ form.nota_examen.errors.0 }}</p>{% endif %}
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <a href="{% url 'academico:notas_lista' %}" class="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors">
+                    Cancelar
+                </a>
+                <button type="submit" class="px-6 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
+                    Guardar Calificación
+                </button>
+            </div>
+        </form>
+    </div>
+
+</div>
+{% endblock %}

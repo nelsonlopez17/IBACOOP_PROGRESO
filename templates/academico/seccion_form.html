@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Nueva Sección{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+
+    <!-- Breadcrumb -->
+    <div class="border-b border-slate-200 pb-4">
+        <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+            <a href="{% url 'academico:configuracion_pensum' %}" class="hover:underline">Configuración Académica</a>
+            <span>/</span>
+            <span class="text-slate-500">Nueva Sección</span>
+        </div>
+        <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+            <i data-lucide="layout-grid" class="w-7 h-7 text-[#1E6532]"></i>
+            Registrar Nueva Sección
+        </h1>
+    </div>
+
+    <!-- Formulario -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs font-semibold">
+                {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        {{ form.grado.label }} <span class="text-rose-500">*</span>
+                    </label>
+                    {{ form.grado }}
+                    {% if form.grado.errors %}<p class="text-xs text-rose-600 font-semibold mt-1">{{ form.grado.errors.0 }}</p>{% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        {{ form.letra.label }} <span class="text-rose-500">*</span>
+                    </label>
+                    {{ form.letra }}
+                    {% if form.letra.errors %}<p class="text-xs text-rose-600 font-semibold mt-1">{{ form.letra.errors.0 }}</p>{% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        {{ form.cupo_maximo.label }} <span class="text-rose-500">*</span>
+                    </label>
+                    {{ form.cupo_maximo }}
+                    {% if form.cupo_maximo.errors %}<p class="text-xs text-rose-600 font-semibold mt-1">{{ form.cupo_maximo.errors.0 }}</p>{% endif %}
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <a href="{% url 'academico:configuracion_pensum' %}" class="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors">
+                    Cancelar
+                </a>
+                <button type="submit" class="px-6 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
+                    Guardar Sección
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

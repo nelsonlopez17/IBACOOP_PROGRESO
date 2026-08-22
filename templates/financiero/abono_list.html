@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}Historial General de Pagos{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Encabezado de la Sección -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+                <a href="{% url 'core:home' %}" class="hover:underline">Dashboard</a>
+                <span>/</span>
+                <span class="text-slate-500">Gestión Financiera</span>
+                <span>/</span>
+                <span class="text-slate-500">Historial de Pagos</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+                <i data-lucide="history" class="w-7 h-7 text-[#1E6532]"></i>
+                Historial General de Pagos
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">Inspección general de boletas bancarias y comprobantes de abonos recibidos.</p>
+        </div>
+    </div>
+
+    <!-- Pestañas de Navegación del Módulo Financiero -->
+    {% include 'financiero/partials/financiero_tabs.html' %}
+
+    <!-- Alertas -->
+    {% if messages %}
+    <div class="space-y-3">
+        {% for message in messages %}
+        <div class="p-4 rounded-xl flex items-start gap-3 border shadow-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-900 border-emerald-200{% else %}bg-rose-50 text-rose-900 border-rose-200{% endif %}">
+            <i data-lucide="{% if message.tags == 'success' %}check-circle-2{% else %}alert-triangle{% endif %}" class="w-5 h-5 flex-shrink-0 mt-0.5 {% if message.tags == 'success' %}text-emerald-600{% else %}text-rose-600{% endif %}"></i>
+            <div class="text-sm font-medium leading-relaxed">{{ message }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Barra de Filtros -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <form method="get" class="flex flex-col md:flex-row items-center gap-3">
+            <div class="relative flex-1 w-full">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                <input type="text" name="q" value="{{ q }}" placeholder="Buscar por número de boleta, alumno, CUI o concepto..."
+                    class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1E6532] focus:bg-white transition-all">
+            </div>
+
+            <!-- Rango Fechas -->
+            <div class="flex items-center gap-2 w-full md:w-auto">
+                <input type="date" name="fecha_desde" value="{{ fecha_desde }}" placeholder="Desde" title="Fecha Desde"
+                    class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:border-[#1E6532] focus:bg-white transition-all">
+                <span class="text-slate-400 text-xs font-bold">-</span>
+                <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}" placeholder="Hasta" title="Fecha Hasta"
+                    class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:border-[#1E6532] focus:bg-white transition-all">
+            </div>
+
+            <div class="flex items-center gap-2 w-full md:w-auto">
+                <button type="submit" class="px-4 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-900 transition-colors shadow-sm w-full md:w-auto">
+                    Filtrar
+                </button>
+                {% if q or fecha_desde or fecha_hasta %}
+                <a href="{% url 'financiero:abono_list' %}" class="px-3 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors text-center w-full md:w-auto">
+                    Limpiar
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabla de Historial -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
+                        <th class="py-3.5 px-6">Boleta / Referencia</th>
+                        <th class="py-3.5 px-6">Fecha Pago</th>
+                        <th class="py-3.5 px-6">Estudiante / CUI</th>
+                        <th class="py-3.5 px-6">Concepto Saldado</th>
+                        <th class="py-3.5 px-6">Monto Abonado</th>
+                        <th class="py-3.5 px-6 text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                    {% for abono in abonos %}
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-4 px-6 font-mono font-bold text-slate-900">{{ abono.numero_boleta }}</td>
+                        <td class="py-4 px-6 font-mono text-slate-600">{{ abono.fecha_pago|date:"d/m/Y" }}</td>
+                        <td class="py-4 px-6">
+                            <a href="{% url 'financiero:estudiante_cuenta_corriente' abono.cuenta_por_cobrar.estudiante.pk %}"
+                                class="font-bold text-slate-900 hover:text-[#1E6532] transition-colors block">
+                                {{ abono.cuenta_por_cobrar.estudiante.persona.nombre_completo }}
+                            </a>
+                            <span class="font-mono text-[11px] text-slate-400">CUI: {{ abono.cuenta_por_cobrar.estudiante.persona.cui }}</span>
+                        </td>
+                        <td class="py-4 px-6 font-bold text-slate-800">{{ abono.cuenta_por_cobrar.concepto.nombre }}</td>
+                        <td class="py-4 px-6 font-bold text-[#1E6532] text-sm">Q{{ abono.monto_pagado|floatformat:2 }}</td>
+                        <td class="py-4 px-6 text-right">
+                            <a href="{% url 'financiero:recibo_pdf' abono.pk %}" target="_blank"
+                                class="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-lg text-xs font-black transition-all shadow-xs">
+                                <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                                Recibo (PDF)
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="py-12 text-center text-slate-400">
+                            <i data-lucide="history" class="w-10 h-10 mx-auto mb-2 text-slate-300"></i>
+                            <p class="text-sm font-semibold">No se encontraron registros de abonos con los filtros especificados.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if is_paginated %}
+        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-500">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+            <div class="flex items-center gap-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50">Anterior</a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&q={{ q }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50">Siguiente</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

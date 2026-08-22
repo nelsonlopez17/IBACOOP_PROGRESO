@@ -110,12 +110,28 @@
                     <span>Gestión de Alumnos</span>
                 </a>
 
+                <!-- Gestión Académica (Módulo Unificado) -->
+                <a href="{% url 'academico:asignacion_estudiante_list' %}"
+                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if 'academico' in request.resolver_match.namespace %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
+                    <i data-lucide="graduation-cap"
+                        class="w-4 h-4 {% if 'academico' in request.resolver_match.namespace %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
+                    <span>Gestión Académica</span>
+                </a>
+
                 <!-- Recursos Humanos -->
                 <a href="{% url 'rrhh:personal_list' %}"
                     class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if 'personal' in request.resolver_match.view_name %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
                     <i data-lucide="briefcase"
                         class="w-4 h-4 {% if 'personal' in request.resolver_match.view_name %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
                     <span>Recursos Humanos</span>
+                </a>
+
+                <!-- Gestión Financiera (Módulo Unificado) -->
+                <a href="{% url 'financiero:cuentaporcobrar_list' %}"
+                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if 'financiero' in request.resolver_match.namespace %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
+                    <i data-lucide="receipt"
+                        class="w-4 h-4 {% if 'financiero' in request.resolver_match.namespace %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
+                    <span>Gestión Financiera</span>
                 </a>
 
             </nav>

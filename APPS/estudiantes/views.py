@@ -111,6 +111,26 @@ class EstudianteDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailVi
         context['clave_temp_est'] = self.request.session.get(f'temp_pwd_estudiante_{estudiante.pk}')
         if estudiante.encargado_id:
             context['clave_temp_tutor'] = self.request.session.get(f'temp_pwd_tutor_{estudiante.encargado_id}')
+
+        from APPS.academico.models import CicloEscolar, AsignacionEstudiante, AsistenciaEstudiantil
+        try:
+            ciclo_activo = CicloEscolar.objects.get(estado_activo=True, esta_eliminado=False)
+            context['asignacion_actual'] = AsignacionEstudiante.objects.filter(
+                estudiante=estudiante,
+                ciclo_escolar=ciclo_activo,
+                esta_eliminado=False
+            ).select_related('seccion__grado').first()
+        except Exception:
+            context['asignacion_actual'] = None
+
+        asistencias_qs = AsistenciaEstudiantil.objects.filter(
+            asignacion_estudiante__estudiante=estudiante,
+            esta_eliminado=False
+        )
+        context['asistencias_presente_count'] = asistencias_qs.filter(presente=True).count()
+        context['asistencias_justificadas_count'] = asistencias_qs.filter(presente=False, justificado=True).count()
+        context['asistencias_ausentes_count'] = asistencias_qs.filter(presente=False, justificado=False).count()
+
         return context
 
 
@@ -185,6 +205,61 @@ class EstudianteCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateVi
                 estudiante = form.save(commit=False)
                 estudiante.persona = persona
                 estudiante.save()
+
+                # 4. Generación automática de CuentasPorCobrar de Primer Ingreso (Paquete Inicial)
+                try:
+                    from APPS.financiero.models import ConceptoPago, CuentaPorCobrar, EstadoPagoChoices, CategoriaConceptoChoices
+                    from APPS.academico.models import CicloEscolar, AsignacionEstudiante, Curso, NotaFinalCurso
+
+                    ciclo_activo = CicloEscolar.objects.filter(estado_activo=True, esta_eliminado=False).first()
+                    
+                    # Buscar todos los conceptos marcados para generar automáticamente al matricular en sección
+                    conceptos_iniciales = list(ConceptoPago.objects.filter(
+                        aplica_al_inscribir_seccion=True,
+                        esta_eliminado=False
+                    ))
+
+                    # Si ninguno tiene la casilla marcada, buscar por categoría MATRICULA o por nombre
+                    if not conceptos_iniciales:
+                        c_matr = ConceptoPago.objects.filter(
+                            categoria_concepto=CategoriaConceptoChoices.MATRICULA,
+                            esta_eliminado=False
+                        ).first() or ConceptoPago.objects.filter(
+                            nombre__icontains='inscripci',
+                            esta_eliminado=False
+                        ).first()
+                        if c_matr:
+                            conceptos_iniciales = [c_matr]
+
+                    if ciclo_activo and conceptos_iniciales:
+                        for concepto in conceptos_iniciales:
+                            CuentaPorCobrar.objects.create(
+                                estudiante=estudiante,
+                                concepto=concepto,
+                                ciclo_escolar=ciclo_activo,
+                                monto_total=concepto.monto_estandar,
+                                saldo_pendiente=concepto.monto_estandar,
+                                estado_pago=EstadoPagoChoices.PENDIENTE
+                            )
+
+                    # Matrícula en el Módulo Académico si se seleccionó sección
+                    seccion_asignada = form.cleaned_data.get('seccion_asignada')
+                    if seccion_asignada and ciclo_activo:
+                        asig_acad, _ = AsignacionEstudiante.objects.get_or_create(
+                            estudiante=estudiante,
+                            ciclo_escolar=ciclo_activo,
+                            defaults={
+                                'seccion': seccion_asignada
+                            }
+                        )
+                        cursos = Curso.objects.filter(grado=seccion_asignada.grado, esta_eliminado=False)
+                        for curso in cursos:
+                            NotaFinalCurso.objects.get_or_create(
+                                asignacion_estudiante=asig_acad,
+                                curso=curso
+                            )
+                except Exception as ex_fin:
+                    pass
 
                 # Almacenar contraseña temporal en la sesión para la primera descarga de PDF
                 self.request.session[f'temp_pwd_estudiante_{estudiante.pk}'] = clave_temporal

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Ingreso de Examen de Recuperación MINEDUC{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+
+    <!-- Header -->
+    <div class="border-b border-slate-200 pb-4">
+        <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+            <a href="{% url 'academico:cierre_ciclo_escolar' %}" class="hover:underline">Cierre y Promoción</a>
+            <span>/</span>
+            <span class="text-slate-500">Examen de Recuperación</span>
+        </div>
+        <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+            <i data-lucide="award" class="w-7 h-7 text-[#1E6532]"></i>
+            Ingreso de Examen Extraordinario de Recuperación
+        </h1>
+        <p class="text-xs text-slate-500 mt-1">
+            Alumno: <span class="font-extrabold text-slate-900">{{ object.asignacion_estudiante.estudiante.persona.nombre_completo }}</span> | 
+            Curso: <span class="font-extrabold text-[#1E6532]">{{ object.curso.nombre_curso }}</span>
+        </p>
+    </div>
+
+    <!-- Formulario en Tarjeta -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-1">
+                <p class="font-bold flex items-center gap-1.5">
+                    <i data-lucide="info" class="w-4 h-4 text-amber-600"></i>
+                    Reglamento de Evaluaciones MINEDUC:
+                </p>
+                <p class="text-[11px] leading-relaxed text-amber-800">
+                    La nota mínima para aprobar en examen extraordinario de recuperación es de 60.00 puntos. Al guardar, se recalculará automáticamente el estado de promoción y el promedio en la Certificación de Estudios.
+                </p>
+            </div>
+
+            <div class="space-y-4">
+                <!-- Nota Pruebas Recuperación 1 -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        {{ form.nota_recuperacion_1.label }}
+                    </label>
+                    {{ form.nota_recuperacion_1 }}
+                    {% if form.nota_recuperacion_1.errors %}
+                    <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.nota_recuperacion_1.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Nota Pruebas Recuperación 2 -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        {{ form.nota_recuperacion_2.label }}
+                    </label>
+                    {{ form.nota_recuperacion_2 }}
+                    {% if form.nota_recuperacion_2.errors %}
+                    <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.nota_recuperacion_2.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <a href="{% url 'academico:cierre_ciclo_escolar' %}" class="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors">
+                    Cancelar
+                </a>
+                <button type="submit" class="px-6 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
+                    Guardar y Recalcular Promoción
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

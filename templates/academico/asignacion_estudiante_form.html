@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Inscribir Alumno en Sección{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+
+    <!-- Breadcrumb -->
+    <div class="border-b border-slate-200 pb-4">
+        <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+            <a href="{% url 'academico:asignacion_estudiante_list' %}" class="hover:underline">Inscripciones</a>
+            <span>/</span>
+            <span class="text-slate-500">Inscribir Alumno</span>
+        </div>
+        <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+            <i data-lucide="user-plus" class="w-7 h-7 text-[#1E6532]"></i>
+            Inscribir Alumno en Grado y Sección
+        </h1>
+        <p class="text-xs text-slate-500 mt-1">Matrícula formal del estudiante para el ciclo lectivo activo.</p>
+    </div>
+
+    <!-- Formulario -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs font-semibold">
+                {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="space-y-4">
+                <!-- Estudiante -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        {{ form.estudiante.label }} <span class="text-rose-500">*</span>
+                    </label>
+                    {{ form.estudiante }}
+                    {% if form.estudiante.errors %}<p class="text-xs text-rose-600 font-semibold mt-1">{{ form.estudiante.errors.0 }}</p>{% endif %}
+                </div>
+
+                <!-- Sección -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        {{ form.seccion.label }} <span class="text-rose-500">*</span>
+                    </label>
+                    {{ form.seccion }}
+                    {% if form.seccion.errors %}<p class="text-xs text-rose-600 font-semibold mt-1">{{ form.seccion.errors.0 }}</p>{% endif %}
+                </div>
+
+                <!-- Ciclo Escolar -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        {{ form.ciclo_escolar.label }} <span class="text-rose-500">*</span>
+                    </label>
+                    {{ form.ciclo_escolar }}
+                    {% if form.ciclo_escolar.errors %}<p class="text-xs text-rose-600 font-semibold mt-1">{{ form.ciclo_escolar.errors.0 }}</p>{% endif %}
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <a href="{% url 'academico:asignacion_estudiante_list' %}" class="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors">
+                    Cancelar
+                </a>
+                <button type="submit" class="px-6 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
+                    Completar Inscripción
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

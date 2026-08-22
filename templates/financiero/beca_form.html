@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Otorgar Beca o Convenio{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+
+    <!-- Header -->
+    <div class="border-b border-slate-200 pb-4">
+        <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+            <a href="{% url 'financiero:beca_list' %}" class="hover:underline">Becas y Convenios</a>
+            <span>/</span>
+            <span class="text-slate-500">Nueva Beca</span>
+        </div>
+        <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+            <i data-lucide="award" class="w-7 h-7 text-[#1E6532]"></i>
+            Otorgar Beca o Convenio de Descuento
+        </h1>
+    </div>
+
+    <!-- Tarjeta Formulario -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            <div class="space-y-4">
+                <!-- Estudiante -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        {{ form.estudiante.label }} <span class="text-rose-500">*</span>
+                    </label>
+                    {{ form.estudiante }}
+                    {% if form.estudiante.errors %}
+                    <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.estudiante.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Motivo del Convenio -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        {{ form.motivo_convenio.label }} <span class="text-rose-500">*</span>
+                    </label>
+                    {{ form.motivo_convenio }}
+                    {% if form.motivo_convenio.errors %}
+                    <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.motivo_convenio.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Concepto -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        {{ form.concepto.label }}
+                    </label>
+                    {{ form.concepto }}
+                    <p class="text-[11px] text-slate-400 mt-1">Deje en blanco para aplicar a todas las mensualidades regulares.</p>
+                </div>
+
+                <!-- Descuento Porcentaje y Fijo -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            {{ form.porcentaje_descuento.label }}
+                        </label>
+                        {{ form.porcentaje_descuento }}
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            {{ form.monto_descuento_fijo.label }}
+                        </label>
+                        {{ form.monto_descuento_fijo }}
+                    </div>
+                </div>
+
+                <!-- Activo -->
+                <div class="flex items-center gap-3 pt-2">
+                    {{ form.esta_activo }}
+                    <label for="{{ form.esta_activo.id_for_label }}" class="text-xs font-bold text-slate-700 cursor-pointer">
+                        {{ form.esta_activo.label }}
+                    </label>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <a href="{% url 'financiero:beca_list' %}" class="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors">
+                    Cancelar
+                </a>
+                <button type="submit" class="px-6 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
+                    Guardar Convenio
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

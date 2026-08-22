@@ -26,9 +26,17 @@
                 <i data-lucide="arrow-left" class="w-4 h-4 text-slate-500"></i>
                 Volver
             </a>
+            <a href="{% url 'financiero:estudiante_cuenta_corriente' estudiante.pk %}" class="inline-flex items-center gap-2 px-4 py-2 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
+                <i data-lucide="receipt" class="w-4 h-4"></i>
+                Estado de Cuenta Corriente
+            </a>
             <a href="{% url 'estudiantes:estudiante_pdf_expediente' estudiante.pk %}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-700 text-white rounded-xl text-xs font-bold hover:bg-emerald-800 transition-all shadow-md shadow-emerald-700/20">
                 <i data-lucide="file-text" class="w-4 h-4"></i>
                 Ficha Expediente (PDF)
+            </a>
+            <a href="{% url 'academico:certificacion_pdf' estudiante.pk %}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-700 text-white rounded-xl text-xs font-bold hover:bg-indigo-800 transition-all shadow-md shadow-indigo-700/20">
+                <i data-lucide="award" class="w-4 h-4"></i>
+                Certificación de Estudios (PDF)
             </a>
             {% if clave_temp_est or clave_temp_tutor %}
             <a href="{% url 'estudiantes:estudiante_pdf_credenciales' estudiante.pk %}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-[#3C7DA8] text-white rounded-xl text-xs font-bold hover:bg-[#3C7DA8]/90 transition-all shadow-md shadow-[#3C7DA8]/20">
@@ -92,6 +100,17 @@
                     {% else %}
                         <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">{{ estudiante.get_estado_estudiante_display }}</span>
                     {% endif %}
+
+                    {% if asignacion_actual %}
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-900 border border-blue-200">
+                            🎓 {{ asignacion_actual.seccion }} (Ciclo {{ asignacion_actual.ciclo_escolar.anio }})
+                        </span>
+                    {% else %}
+                        <a href="{% url 'academico:asignacion_estudiante_create' %}?estudiante={{ estudiante.pk }}" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200 transition-colors inline-flex items-center gap-1">
+                            <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                            <span>Sin Sección (Inscribir Inmediatamente)</span>
+                        </a>
+                    {% endif %}
                 </div>
                 <p class="text-xs text-slate-500 font-mono">CUI: {{ estudiante.persona.cui }} | Código MINEDUC: <span class="font-bold text-[#1E6532]">{{ estudiante.codigo_mineduc }}</span></p>
             </div>
@@ -112,6 +131,37 @@
                     </span>
                 {% endif %}
             </div>
+        </div>
+    </div>
+
+    <!-- Resumen Acumulado de Asistencia Estudiantil -->
+    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-[#1E6532]/10 text-[#1E6532] flex items-center justify-center font-bold">
+                <i data-lucide="calendar-check" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <h3 class="text-sm font-extrabold text-slate-900">Resumen de Asistencia del Estudiante</h3>
+                <p class="text-xs text-slate-500">Registro acumulado de inasistencias y justificaciones en el ciclo lectivo.</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3 flex-wrap sm:flex-nowrap">
+            <div class="px-3.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-center flex-1 sm:flex-none">
+                <span class="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">Asistencias</span>
+                <span class="text-sm font-black text-emerald-700">{{ asistencias_presente_count }} Días</span>
+            </div>
+            <div class="px-3.5 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-center flex-1 sm:flex-none">
+                <span class="text-[10px] font-bold text-blue-800 uppercase tracking-wider block">Justificadas</span>
+                <span class="text-sm font-black text-blue-700">{{ asistencias_justificadas_count }} Días</span>
+            </div>
+            <div class="px-3.5 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-center flex-1 sm:flex-none">
+                <span class="text-[10px] font-bold text-rose-800 uppercase tracking-wider block">Injustificadas</span>
+                <span class="text-sm font-black text-rose-700">{{ asistencias_ausentes_count }} Días</span>
+            </div>
+            <a href="{% url 'academico:asistencia_historial' %}?q={{ estudiante.persona.cui }}" class="px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-colors">
+                Ver Detalle
+            </a>
         </div>
     </div>
 

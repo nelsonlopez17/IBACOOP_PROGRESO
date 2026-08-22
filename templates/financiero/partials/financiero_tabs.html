@@ -1,0 +1,38 @@
+<!-- Sub-navegación por Pestañas Horizontales (Tabs) para el Módulo Financiero -->
+<div class="bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-1 overflow-x-auto">
+    <a href="{% url 'financiero:cuentaporcobrar_list' %}"
+        class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {% if request.resolver_match.view_name == 'financiero:cuentaporcobrar_list' or request.resolver_match.view_name == 'financiero:generar_cobro_masivo' or request.resolver_match.view_name == 'financiero:cuentaporcobrar_create' or request.resolver_match.view_name == 'financiero:estudiante_cuenta_corriente' %}bg-[#1E6532] text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
+        <i data-lucide="receipt" class="w-4 h-4"></i>
+        <span>Cuentas por Cobrar</span>
+    </a>
+
+    <a href="{% url 'financiero:abono_list' %}"
+        class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {% if request.resolver_match.view_name == 'financiero:abono_list' or request.resolver_match.view_name == 'financiero:abono_create' %}bg-[#1E6532] text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
+        <i data-lucide="history" class="w-4 h-4"></i>
+        <span>Historial de Pagos</span>
+    </a>
+
+    <a href="{% url 'financiero:concepto_list' %}"
+        class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {% if 'concepto' in request.resolver_match.view_name %}bg-[#1E6532] text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
+        <i data-lucide="tag" class="w-4 h-4"></i>
+        <span>Catálogo de Conceptos</span>
+    </a>
+
+    <a href="{% url 'financiero:beca_list' %}"
+        class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {% if 'beca' in request.resolver_match.view_name %}bg-[#1E6532] text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
+        <i data-lucide="award" class="w-4 h-4"></i>
+        <span>Becas y Convenios</span>
+    </a>
+
+    <a href="{% url 'financiero:calendario_anual' %}"
+        class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {% if 'calendario_anual' in request.resolver_match.view_name %}bg-[#1E6532] text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
+        <i data-lucide="calendar-range" class="w-4 h-4"></i>
+        <span>Calendario Anual</span>
+    </a>
+
+    <a href="{% url 'financiero:antiguedad_saldos' %}"
+        class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {% if 'antiguedad_saldos' in request.resolver_match.view_name %}bg-[#1E6532] text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
+        <i data-lucide="pie-chart" class="w-4 h-4"></i>
+        <span>Antigüedad de Cartera</span>
+    </a>
+</div>

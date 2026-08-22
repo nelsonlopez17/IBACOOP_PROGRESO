@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Convenios y Becas de Descuento{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Encabezado -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+                <a href="{% url 'core:home' %}" class="hover:underline">Dashboard</a>
+                <span>/</span>
+                <span class="text-slate-500">Gestión Financiera</span>
+                <span>/</span>
+                <span class="text-slate-500">Becas y Convenios</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+                <i data-lucide="award" class="w-7 h-7 text-[#1E6532]"></i>
+                Becas y Convenios de Descuento
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">Administración de descuentos automáticos aplicables al cobro de colegiaturas.</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <a href="{% url 'financiero:beca_create' %}"
+                class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                Otorgar Nueva Beca
+            </a>
+        </div>
+    </div>
+
+    <!-- Pestañas del Módulo Financiero -->
+    {% include 'financiero/partials/financiero_tabs.html' %}
+
+    <!-- Buscador -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between gap-4">
+        <form method="get" class="flex-1 max-w-md">
+            <div class="relative">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                <input type="text" name="q" value="{{ q }}" placeholder="Buscar por alumno o motivo de convenio..."
+                    class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1E6532] focus:bg-white">
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabla -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
+                        <th class="py-3.5 px-6">Estudiante Beneficiario</th>
+                        <th class="py-3.5 px-6">Motivo / Convenio</th>
+                        <th class="py-3.5 px-6">Concepto Aplicable</th>
+                        <th class="py-3.5 px-6 text-center">Descuento</th>
+                        <th class="py-3.5 px-6 text-center">Estado</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                    {% for b in becas %}
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-4 px-6">
+                            <a href="{% url 'estudiantes:estudiante_detail' b.estudiante.pk %}" class="font-bold text-slate-900 hover:text-[#1E6532] transition-colors block text-sm">
+                                {{ b.estudiante.persona.nombre_completo }}
+                            </a>
+                            <span class="font-mono text-[11px] text-slate-400">CUI: {{ b.estudiante.persona.cui }}</span>
+                        </td>
+                        <td class="py-4 px-6 font-bold text-slate-800">{{ b.motivo_convenio }}</td>
+                        <td class="py-4 px-6 font-semibold text-slate-600">
+                            {{ b.concepto.nombre|default:"Todas las Colegiaturas" }}
+                        </td>
+                        <td class="py-4 px-6 text-center font-extrabold text-[#1E6532] text-sm">
+                            {% if b.porcentaje_descuento > 0 %}
+                                {{ b.porcentaje_descuento }}% Off
+                            {% else %}
+                                Q{{ b.monto_descuento_fijo|floatformat:2 }} Off
+                            {% endif %}
+                        </td>
+                        <td class="py-4 px-6 text-center">
+                            {% if b.esta_activo %}
+                            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">Activo</span>
+                            {% else %}
+                            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-500 border border-slate-200">Inactivo</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="py-12 text-center text-slate-400">
+                            <i data-lucide="award" class="w-10 h-10 mx-auto mb-2 text-slate-300"></i>
+                            <p class="text-sm font-semibold">No se encontraron convenios o becas registrados.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
