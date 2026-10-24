@@ -19,7 +19,7 @@
                 <i data-lucide="award" class="w-7 h-7 text-[#1E6532]"></i>
                 Becas y Convenios de Descuento
             </h1>
-            <p class="text-xs text-slate-500 mt-1">Administración de descuentos automáticos aplicables al cobro de colegiaturas.</p>
+            <p class="text-xs text-slate-500 mt-1">Administración de descuentos automáticos aplicables al cobro de cuotas mensuales.</p>
         </div>
 
         <div class="flex items-center gap-3">
@@ -39,7 +39,7 @@
         <form method="get" class="flex-1 max-w-md">
             <div class="relative">
                 <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                <input type="text" name="q" value="{{ q }}" placeholder="Buscar por alumno o motivo de convenio..."
+                <input type="text" name="q" value="{{ q }}" placeholder="Buscar por estudiante o motivo de convenio..."
                     class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1E6532] focus:bg-white">
             </div>
         </form>
@@ -69,13 +69,13 @@
                         </td>
                         <td class="py-4 px-6 font-bold text-slate-800">{{ b.motivo_convenio }}</td>
                         <td class="py-4 px-6 font-semibold text-slate-600">
-                            {{ b.concepto.nombre|default:"Todas las Colegiaturas" }}
+                            {{ b.concepto.nombre|default:"Todas las Cuotas Mensuales" }}
                         </td>
                         <td class="py-4 px-6 text-center font-extrabold text-[#1E6532] text-sm">
                             {% if b.porcentaje_descuento > 0 %}
-                                {{ b.porcentaje_descuento }}% Off
+                                {{ b.porcentaje_descuento }}% Desc.
                             {% else %}
-                                Q{{ b.monto_descuento_fijo|floatformat:2 }} Off
+                                Q{{ b.monto_descuento_fijo|floatformat:2 }} Desc.
                             {% endif %}
                         </td>
                         <td class="py-4 px-6 text-center">

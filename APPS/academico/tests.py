@@ -37,7 +37,7 @@ class NotaFinalCursoTestCase(TestCase):
         )
 
     def test_calculo_nota_final_y_promocion(self):
-        # Crear notas para Bloque 1 (Total = 70) y Bloque 2 (Total = 50)
+        # creacion de notas de prueba para bloques academicos
         NotaBloque.objects.create(
             asignacion_estudiante=self.asignacion,
             curso=self.curso,
@@ -59,7 +59,7 @@ class NotaFinalCursoTestCase(TestCase):
         )
         promedio, promocionado = nota_final.calcular_nota_final()
 
-        # Promedio: (70 + 50) / 2 = 60.00 -> Promocionado (>= 60)
+        # verificacion de promocion de estudiante con nota aprobatoria
         self.assertEqual(promedio, Decimal("60.00"))
         self.assertTrue(promocionado)
         self.assertTrue(nota_final.esta_promocionado)

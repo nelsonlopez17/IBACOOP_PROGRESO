@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Generación de Calendario Anual de Colegiaturas{% endblock %}
+{% block title %}Generación de Calendario Anual de Cuotas Mensuales{% endblock %}
 
 {% block content %}
 <div class="max-w-2xl mx-auto space-y-6">
@@ -16,7 +16,7 @@
             <i data-lucide="calendar-range" class="w-7 h-7 text-[#1E6532]"></i>
             Generación Masiva de Calendario Anual
         </h1>
-        <p class="text-xs text-slate-500 mt-1">Emisión automatizada de las 10 mensualidades regulares (Enero a Octubre) para todos los alumnos activos.</p>
+        <p class="text-xs text-slate-500 mt-1">Emisión automatizada de las 10 cuotas mensuales regulares (Enero a Octubre) para todos los estudiantes activos.</p>
     </div>
 
     <!-- Pestañas del Módulo Financiero -->
@@ -32,7 +32,7 @@
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                         Ciclo Lectivo Destino <span class="text-rose-500">*</span>
                     </label>
-                    <select name="ciclo_escolar" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#1E6532]">
+                    <select name="ciclo_escolar" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#1E6532]">
                         {% for c in ciclos %}
                         <option value="{{ c.pk }}" {% if c == ciclo_activo %}selected{% endif %}>
                             Ciclo Escolar {{ c.anio }} {% if c.estado_activo %}(ACTIVO ACTA){% endif %}
@@ -41,12 +41,12 @@
                     </select>
                 </div>
 
-                <!-- Concepto de Colegiatura -->
+                <!-- Concepto de Cuota Mensual -->
                 <div>
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                        Concepto de Colegiatura Mensual <span class="text-rose-500">*</span>
+                        Concepto de Cuota Mensual <span class="text-rose-500">*</span>
                     </label>
-                    <select name="concepto" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#1E6532]">
+                    <select name="concepto" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#1E6532]">
                         {% if concepto_colegiatura %}
                         <option value="{{ concepto_colegiatura.pk }}">
                             {{ concepto_colegiatura.nombre }} (Q{{ concepto_colegiatura.monto_estandar }})
@@ -60,7 +60,7 @@
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                         Día Límite de Pago de cada Mes <span class="text-rose-500">*</span>
                     </label>
-                    <input type="number" name="dia_vencimiento" value="5" min="1" max="28"
+                    <input type="number" name="dia_vencimiento" value="5" min="1" max="28" step="1" required
                         class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#1E6532]">
                     <p class="text-[11px] text-slate-400 mt-1">Por ejemplo: día 5 de cada mes (5 de Enero, 5 de Febrero... 5 de Octubre).</p>
                 </div>
@@ -71,7 +71,7 @@
                         Aviso de Automatización con Becas:
                     </p>
                     <p class="text-[11px] leading-relaxed text-blue-800">
-                        El sistema calculará automáticamente las cuotas con los descuentos o becas vigentes de cada estudiante y omitirá cualquier mensualidad que ya haya sido generada previamente.
+                        El sistema calculará automáticamente las cuotas con los descuentos o becas vigentes de cada estudiante y omitirá cualquier cuota mensual que ya haya sido generada previamente.
                     </p>
                 </div>
             </div>
@@ -82,7 +82,7 @@
                     Cancelar
                 </a>
                 <button type="submit" class="px-6 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
-                    Generar 10 Colegiaturas Anuales
+                    Generar 10 Cuotas Mensuales
                 </button>
             </div>
         </form>

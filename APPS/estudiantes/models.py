@@ -114,7 +114,8 @@ class Estudiante(ModeloAuditable):
         verbose_name_plural = 'Estudiantes'
 
     def __str__(self):
-        return f"{self.persona.nombre_completo} (MINEDUC: {self.codigo_mineduc})"
+        cui = f" | CUI: {self.persona.cui}" if self.persona and self.persona.cui else ""
+        return f"{self.persona.nombre_completo}{cui} (MINEDUC: {self.codigo_mineduc})"
 
     @property
     def expediente_completo(self):
@@ -144,6 +145,76 @@ class Estudiante(ModeloAuditable):
         """Retorna el porcentaje de papelería física completada (0 a 100)."""
         return int((self.documentos_entregados_count / 5) * 100)
 
+    @property
+    def cuentas_inscripcion(self):
+        return self.cuentas_por_cobrar.filter(
+            esta_eliminado=False,
+            concepto__categoria_concepto='MATRICULA'
+        )
+
+    @property
+    def solvencia_inscripcion_estado(self):
+        cuentas = self.cuentas_inscripcion
+        if not cuentas.exists():
+            return 'SIN_COBRO'
+        if all(c.saldo_pendiente <= 0 for c in cuentas):
+            return 'SOLVENTE'
+        return 'PENDIENTE'
+
+    @property
+    def saldo_total_pendiente(self):
+        from decimal import Decimal
+        total = sum(c.saldo_pendiente for c in self.cuentas_por_cobrar.filter(esta_eliminado=False))
+        return total if total else Decimal('0.00')
+
+    @property
+    def semaforo_disciplina(self):
+        """
+        Calcula el estado del semáforo disciplinario del estudiante conforme
+        a la Normativa de Convivencia Pacífica (Acuerdo Ministerial 01-2011 del MINEDUC).
+        """
+        from APPS.disciplina.models import IncidenteDisciplinario, TipoFaltaChoices
+        from APPS.academico.models import CicloEscolar
+
+        ciclo_activo = CicloEscolar.objects.filter(estado_activo=True).first()
+        qs = IncidenteDisciplinario.objects.filter(estudiante=self)
+        if ciclo_activo:
+            qs = qs.filter(ciclo_escolar=ciclo_activo)
+
+        leves = qs.filter(tipo_falta=TipoFaltaChoices.LEVE).count()
+        graves = qs.filter(tipo_falta__in=[TipoFaltaChoices.GRAVE, TipoFaltaChoices.MUY_GRAVE]).count()
+
+        if graves > 0 or leves >= 3:
+            estado = 'ROJO'
+            label = 'Atención Requerida'
+            css_class = 'bg-rose-50 text-rose-700 border-rose-300'
+            icono = 'shield-alert'
+        elif leves > 0:
+            estado = 'AMARILLO'
+            label = 'En Seguimiento'
+            css_class = 'bg-amber-50 text-amber-700 border-amber-300'
+            icono = 'alert-circle'
+        else:
+            estado = 'VERDE'
+            label = 'Conducta Ejemplar'
+            css_class = 'bg-emerald-50 text-emerald-700 border-emerald-300'
+            icono = 'shield-check'
+
+        return {
+            'estado': estado,
+            'label': label,
+            'class': css_class,
+            'icono': icono,
+            'faltas_leves': leves,
+            'faltas_graves': graves,
+            'total': leves + graves,
+        }
+
+    @property
+    def incidentes_conductuales(self):
+        """Alias para retrocompatibilidad con referencias previas."""
+        return self.incidentes_disciplinarios
+
 
 
 class Encargado(ModeloAuditable):
@@ -169,7 +240,8 @@ class Encargado(ModeloAuditable):
         verbose_name_plural = 'Encargados'
 
     def __str__(self):
-        return f"{self.persona.nombre_completo} (Lugar de trabajo: {self.lugar_de_trabajo or 'N/A'})"
+        cui = f" | DPI: {self.persona.cui}" if getattr(self, "persona", None) and self.persona.cui else ""
+        return f"{self.persona.nombre_completo}{cui}"
 
 
 class EstudianteEncargado(ModeloAuditable):

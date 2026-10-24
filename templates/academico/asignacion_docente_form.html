@@ -10,11 +10,11 @@
         <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
             <a href="{% url 'academico:asignacion_docente_list' %}" class="hover:underline">Carga Docente</a>
             <span>/</span>
-            <span class="text-slate-500">Asignar Materia</span>
+            <span class="text-slate-500">{% if es_edicion %}Reasignar Materia{% else %}Asignar Materia{% endif %}</span>
         </div>
         <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
-            <i data-lucide="plus-circle" class="w-7 h-7 text-[#1E6532]"></i>
-            Asignar Carga Académica a Docente
+            <i data-lucide="{% if es_edicion %}user-check{% else %}plus-circle{% endif %}" class="w-7 h-7 text-[#1E6532]"></i>
+            {% if es_edicion %}Reasignar Carga Académica a Docente{% else %}Asignar Carga Académica a Docente{% endif %}
         </h1>
     </div>
 
@@ -71,10 +71,48 @@
                     Cancelar
                 </a>
                 <button type="submit" class="px-6 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
-                    Asignar Materia
+                    {% if es_edicion %}Guardar Reasignación{% else %}Asignar Materia{% endif %}
                 </button>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const cursoGrados = JSON.parse('{{ curso_grados_json|default:"{}"|escapejs }}');
+    const seccionGrados = JSON.parse('{{ seccion_grados_json|default:"{}"|escapejs }}');
+
+    const selectCurso = document.getElementById('id_curso');
+    const selectSeccion = document.getElementById('id_seccion');
+
+    if (!selectCurso || !selectSeccion) return;
+
+    function filtrarSeccionesPorCurso() {
+        const cursoId = selectCurso.value;
+        const gradoEsperado = cursoGrados[cursoId];
+
+        Array.from(selectSeccion.options).forEach(opt => {
+            if (!opt.value) return;
+            const gradoSec = seccionGrados[opt.value];
+            if (!gradoEsperado || gradoSec === gradoEsperado) {
+                opt.style.display = '';
+                opt.disabled = false;
+            } else {
+                opt.style.display = 'none';
+                opt.disabled = true;
+            }
+        });
+
+        if (selectSeccion.value && seccionGrados[selectSeccion.value] !== gradoEsperado) {
+            selectSeccion.value = '';
+        }
+    }
+
+    selectCurso.addEventListener('change', filtrarSeccionesPorCurso);
+    if (selectCurso.value) {
+        filtrarSeccionesPorCurso();
+    }
+});
+</script>
 {% endblock %}

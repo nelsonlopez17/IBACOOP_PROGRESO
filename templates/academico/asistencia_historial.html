@@ -19,7 +19,7 @@
                 <i data-lucide="history" class="w-7 h-7 text-[#1E6532]"></i>
                 Historial e Inspección de Asistencias
             </h1>
-            <p class="text-xs text-slate-500 mt-1">Consolidado general de asistencias, inasistencias y faltas justificadas del alumnado.</p>
+            <p class="text-xs text-slate-500 mt-1">Consolidado general de asistencias, inasistencias y faltas justificadas de los estudiantes.</p>
         </div>
 
         <div class="flex items-center gap-3">
@@ -36,24 +36,49 @@
 
     <!-- Barra de Filtros de Historial -->
     <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-        <form method="get" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-3 items-end">
-            <!-- Búsqueda por Alumno -->
+        <form method="get" id="filtroHistorialForm" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 items-end">
+            <!-- Búsqueda por Estudiante -->
             <div class="md:col-span-2">
-                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Alumno / CUI</label>
+                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Estudiante / CUI</label>
                 <div class="relative">
                     <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
-                    <input type="text" name="q" value="{{ q }}" placeholder="Buscar por alumno..."
+                    <input type="text" name="q" value="{{ q }}" placeholder="Buscar por estudiante..."
                         class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1E6532] focus:bg-white">
                 </div>
+            </div>
+
+            <!-- Grado -->
+            <div>
+                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Grado</label>
+                <select name="grado" id="gradoHistorialSelect" onchange="limpiarSeccionYCurso(); this.form.submit();"
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:border-[#1E6532]">
+                    <option value="">-- Todos --</option>
+                    {% for g in grados %}
+                    <option value="{{ g.pk }}" {% if grado_sel == g.pk|stringformat:"s" %}selected{% endif %}>{{ g.nombre }}</option>
+                    {% endfor %}
+                </select>
             </div>
 
             <!-- Sección -->
             <div>
                 <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Sección</label>
-                <select name="seccion" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:border-[#1E6532]">
+                <select name="seccion" id="seccionHistorialSelect" onchange="limpiarCurso(); this.form.submit();"
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:border-[#1E6532]">
                     <option value="">-- Todas --</option>
                     {% for s in secciones %}
                     <option value="{{ s.pk }}" {% if seccion_sel == s.pk|stringformat:"s" %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Curso -->
+            <div>
+                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Curso</label>
+                <select name="curso" id="cursoHistorialSelect"
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:border-[#1E6532]">
+                    <option value="">-- Todos --</option>
+                    {% for c in cursos %}
+                    <option value="{{ c.pk }}" {% if curso_sel == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.nombre_curso }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -69,18 +94,12 @@
                 </select>
             </div>
 
-            <!-- Fechas -->
-            <div>
-                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Fecha Desde</label>
-                <input type="date" name="fecha_desde" value="{{ fecha_desde }}" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-[#1E6532]">
-            </div>
-
-            <!-- Botones -->
+            <!-- Fechas y Botones -->
             <div class="flex items-center gap-2">
                 <button type="submit" class="w-full py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-900 transition-colors shadow-sm">
                     Filtrar
                 </button>
-                {% if q or seccion_sel or estado_sel or fecha_desde %}
+                {% if q or grado_sel or seccion_sel or curso_sel or estado_sel or fecha_desde or fecha_hasta %}
                 <a href="{% url 'academico:asistencia_historial' %}" class="px-3 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors text-center">
                     Limpiar
                 </a>
@@ -96,7 +115,7 @@
                 <thead>
                     <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
                         <th class="py-3.5 px-6">Fecha</th>
-                        <th class="py-3.5 px-6">Alumno / CUI</th>
+                        <th class="py-3.5 px-6">Estudiante / CUI</th>
                         <th class="py-3.5 px-6">Grado y Sección</th>
                         <th class="py-3.5 px-6">Curso / Materia</th>
                         <th class="py-3.5 px-6 text-center">Estado</th>
@@ -149,14 +168,28 @@
             <span class="text-xs font-semibold text-slate-500">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
             <div class="flex items-center gap-2">
                 {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&seccion={{ seccion_sel }}&estado={{ estado_sel }}&fecha_desde={{ fecha_desde }}" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50">Anterior</a>
+                <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&grado={{ grado_sel }}&seccion={{ seccion_sel }}&curso={{ curso_sel }}&estado={{ estado_sel }}&fecha_desde={{ fecha_desde }}" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50">Anterior</a>
                 {% endif %}
                 {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}&q={{ q }}&seccion={{ seccion_sel }}&estado={{ estado_sel }}&fecha_desde={{ fecha_desde }}" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50">Siguiente</a>
+                <a href="?page={{ page_obj.next_page_number }}&q={{ q }}&grado={{ grado_sel }}&seccion={{ seccion_sel }}&curso={{ curso_sel }}&estado={{ estado_sel }}&fecha_desde={{ fecha_desde }}" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50">Siguiente</a>
                 {% endif %}
             </div>
         </div>
         {% endif %}
     </div>
 </div>
+
+<script>
+function limpiarSeccionYCurso() {
+    const s = document.getElementById('seccionHistorialSelect');
+    const c = document.getElementById('cursoHistorialSelect');
+    if (s) s.removeAttribute('name');
+    if (c) c.removeAttribute('name');
+}
+
+function limpiarCurso() {
+    const c = document.getElementById('cursoHistorialSelect');
+    if (c) c.removeAttribute('name');
+}
+</script>
 {% endblock %}

@@ -2,12 +2,14 @@
 APPS/academico/forms.py
 
 Formularios para la gestión del Módulo Académico del Instituto El Progreso.
-Hereda de TailwindFormMixin (APPS.core.forms) para la inyección automática de estilos visuales.
+Hereda de TailwindFormMixin (APPS.core.forms) para la inyección automática de estilos visuales
+y validaciones de longitud y rango en concordancia con la BD.
 """
 from decimal import Decimal
 from django import forms
 
 from APPS.core.forms import TailwindFormMixin
+from APPS.core.validadores import limpiar_texto_longitud
 from APPS.academico.models import (
     CicloEscolar, BloqueAcademico, Grado, Seccion, Curso,
     AsignacionEstudiante, AsignacionDocente, NotaBloque, NotaFinalCurso, AsistenciaEstudiantil
@@ -29,20 +31,30 @@ class CicloEscolarForm(TailwindFormMixin, forms.ModelForm):
             'estado_activo': '¿Marcar como Ciclo Activo en el Sistema?',
         }
         widgets = {
-            'anio': forms.NumberInput(attrs={'placeholder': 'Ej. 2026', 'min': '2020', 'max': '2050'}),
+            'anio': forms.NumberInput(attrs={'placeholder': 'Ej. 2026', 'min': '2000', 'max': '2100'}),
             'fecha_inicio': forms.DateInput(attrs={'type': 'date'}),
             'fecha_fin': forms.DateInput(attrs={'type': 'date'}),
         }
 
     def clean_anio(self):
         anio = self.cleaned_data.get('anio')
-        if anio:
+        if anio is not None:
+            if anio < 2000 or anio > 2100:
+                raise forms.ValidationError('El año lectivo debe estar comprendido entre 2000 y 2100.')
             qs = CicloEscolar.objects.filter(anio=anio, esta_eliminado=False)
             if self.instance and self.instance.pk:
                 qs = qs.exclude(pk=self.instance.pk)
             if qs.exists():
                 raise forms.ValidationError(f'El ciclo escolar {anio} ya se encuentra registrado.')
         return anio
+
+    def clean(self):
+        cleaned_data = super().clean()
+        fecha_inicio = cleaned_data.get('fecha_inicio')
+        fecha_fin = cleaned_data.get('fecha_fin')
+        if fecha_inicio and fecha_fin and fecha_fin <= fecha_inicio:
+            self.add_error('fecha_fin', 'La fecha de finalización debe ser posterior a la fecha de inicio del ciclo escolar.')
+        return cleaned_data
 
 
 class GradoForm(TailwindFormMixin, forms.ModelForm):
@@ -56,20 +68,41 @@ class GradoForm(TailwindFormMixin, forms.ModelForm):
             'orden': 'Orden de la Jerarquía (1, 2, 3...)',
         }
         widgets = {
-            'nombre': forms.TextInput(attrs={'placeholder': 'Ej. Primero Básico, Segundo Básico'}),
-            'orden': forms.NumberInput(attrs={'placeholder': '1', 'min': '1'}),
+            'nombre': forms.TextInput(attrs={
+                'minlength': '3',
+                'maxlength': '50',
+                'placeholder': 'Ej. Primero Básico, Segundo Básico',
+            }),
+            'orden': forms.NumberInput(attrs={
+                'placeholder': '1',
+                'min': '1',
+                'max': '10',
+            }),
         }
 
     def clean_nombre(self):
         nombre = self.cleaned_data.get('nombre')
         if nombre:
-            nombre = nombre.strip()
+            nombre = limpiar_texto_longitud(
+                nombre,
+                nombre_campo='El nombre del grado',
+                min_length=3,
+                max_length=50,
+                obligatorio=True,
+                evitar_solo_numeros=True,
+            )
             qs = Grado.objects.filter(nombre__iexact=nombre, esta_eliminado=False)
             if self.instance and self.instance.pk:
                 qs = qs.exclude(pk=self.instance.pk)
             if qs.exists():
                 raise forms.ValidationError('Ya existe un grado registrado con este nombre.')
         return nombre
+
+    def clean_orden(self):
+        orden = self.cleaned_data.get('orden')
+        if orden is not None and (orden < 1 or orden > 10):
+            raise forms.ValidationError('El orden jerárquico del grado debe estar entre 1 y 10.')
+        return orden
 
 
 class SeccionForm(TailwindFormMixin, forms.ModelForm):
@@ -84,15 +117,33 @@ class SeccionForm(TailwindFormMixin, forms.ModelForm):
             'cupo_maximo': 'Cupo Máximo de Estudiantes',
         }
         widgets = {
-            'letra': forms.TextInput(attrs={'placeholder': 'Ej. A', 'maxlength': '1'}),
-            'cupo_maximo': forms.NumberInput(attrs={'placeholder': '35', 'min': '1'}),
+            'letra': forms.TextInput(attrs={
+                'placeholder': 'Ej. A',
+                'minlength': '1',
+                'maxlength': '1',
+                'pattern': r'[A-Za-z]',
+                'title': 'Ingrese una sola letra (A-Z) para identificar la sección.',
+            }),
+            'cupo_maximo': forms.NumberInput(attrs={
+                'placeholder': '35',
+                'min': '1',
+                'max': '100',
+            }),
         }
 
     def clean_letra(self):
         letra = self.cleaned_data.get('letra')
         if letra:
             letra = letra.strip().upper()
+            if len(letra) != 1 or not letra.isalpha():
+                raise forms.ValidationError('La sección debe identificarse con una única letra alfabética (A-Z).')
         return letra
+
+    def clean_cupo_maximo(self):
+        cupo = self.cleaned_data.get('cupo_maximo')
+        if cupo is not None and (cupo < 1 or cupo > 100):
+            raise forms.ValidationError('El cupo máximo de la sección debe estar entre 1 y 100 estudiantes.')
+        return cupo
 
     def clean(self):
         cleaned_data = super().clean()
@@ -104,7 +155,7 @@ class SeccionForm(TailwindFormMixin, forms.ModelForm):
             if self.instance and self.instance.pk:
                 qs = qs.exclude(pk=self.instance.pk)
             if qs.exists():
-                raise forms.ValidationError(f'La sección {letra} ya existe para {grado.nombre}.')
+                self.add_error('letra', f'La sección {letra} ya existe para {grado.nombre}.')
         return cleaned_data
 
 
@@ -120,14 +171,41 @@ class CursoForm(TailwindFormMixin, forms.ModelForm):
             'codigo_curso': 'Código del Curso (MINEDUC)',
         }
         widgets = {
-            'nombre_curso': forms.TextInput(attrs={'placeholder': 'Ej. Matemáticas I, Comunicación y Lenguaje I'}),
-            'codigo_curso': forms.TextInput(attrs={'placeholder': 'Ej. MAT-101'}),
+            'nombre_curso': forms.TextInput(attrs={
+                'minlength': '3',
+                'maxlength': '100',
+                'placeholder': 'Ej. Matemáticas I, Comunicación y Lenguaje I',
+            }),
+            'codigo_curso': forms.TextInput(attrs={
+                'minlength': '2',
+                'maxlength': '10',
+                'placeholder': 'Ej. MAT-101',
+            }),
         }
+
+    def clean_nombre_curso(self):
+        nombre = self.cleaned_data.get('nombre_curso')
+        if nombre:
+            return limpiar_texto_longitud(
+                nombre,
+                nombre_campo='El nombre del curso',
+                min_length=3,
+                max_length=100,
+                obligatorio=True,
+                evitar_solo_numeros=True,
+            )
+        return nombre
 
     def clean_codigo_curso(self):
         codigo = self.cleaned_data.get('codigo_curso')
         if codigo:
-            codigo = codigo.strip().upper()
+            codigo = limpiar_texto_longitud(
+                codigo.upper(),
+                nombre_campo='El código del curso',
+                min_length=2,
+                max_length=10,
+                obligatorio=True,
+            )
             qs = Curso.objects.filter(codigo_curso=codigo, esta_eliminado=False)
             if self.instance and self.instance.pk:
                 qs = qs.exclude(pk=self.instance.pk)
@@ -137,7 +215,7 @@ class CursoForm(TailwindFormMixin, forms.ModelForm):
 
 
 class AsignacionEstudianteForm(TailwindFormMixin, forms.ModelForm):
-    """Formulario para inscribir a un alumno en una Sección para un Ciclo Lectivo."""
+    """Formulario para inscribir a un estudiante en una Sección para un Ciclo Lectivo."""
 
     class Meta:
         model = AsignacionEstudiante
@@ -183,11 +261,12 @@ class AsignacionEstudianteForm(TailwindFormMixin, forms.ModelForm):
             if self.instance and self.instance.pk:
                 qs = qs.exclude(pk=self.instance.pk)
             if qs.exists():
-                raise forms.ValidationError(
+                self.add_error(
+                    'estudiante',
                     f'El estudiante {estudiante.persona.nombre_completo} ya está inscrito en el ciclo escolar {ciclo.anio}.'
                 )
 
-        # Validar cupo máximo de la sección
+        # validar cupo maximo de la seccion
         if seccion and ciclo and not (self.instance and self.instance.pk):
             inscritos_actuales = AsignacionEstudiante.objects.filter(
                 seccion=seccion,
@@ -195,7 +274,8 @@ class AsignacionEstudianteForm(TailwindFormMixin, forms.ModelForm):
                 esta_eliminado=False
             ).count()
             if inscritos_actuales >= seccion.cupo_maximo:
-                raise forms.ValidationError(
+                self.add_error(
+                    'seccion',
                     f'La sección {seccion} ha alcanzado su cupo máximo de {seccion.cupo_maximo} estudiantes.'
                 )
         return cleaned_data
@@ -246,7 +326,8 @@ class AsignacionDocenteForm(TailwindFormMixin, forms.ModelForm):
         ciclo = cleaned_data.get('ciclo_escolar')
 
         if curso and seccion and curso.grado != seccion.grado:
-            raise forms.ValidationError(
+            self.add_error(
+                'seccion',
                 f'El curso "{curso.nombre_curso}" pertenece a {curso.grado.nombre}, pero ha seleccionado la sección {seccion}.'
             )
 
@@ -261,14 +342,15 @@ class AsignacionDocenteForm(TailwindFormMixin, forms.ModelForm):
             if self.instance and self.instance.pk:
                 qs = qs.exclude(pk=self.instance.pk)
             if qs.exists():
-                raise forms.ValidationError(
+                self.add_error(
+                    'curso',
                     f'El docente {personal.persona.nombre_completo} ya tiene asignada la materia {curso.nombre_curso} en {seccion} para el ciclo {ciclo.anio}.'
                 )
         return cleaned_data
 
 
 class NotaRecuperacionForm(TailwindFormMixin, forms.ModelForm):
-    """Formulario para ingresar pruebas de recuperación a una NotaFinalCurso."""
+    """Formulario para ingresar pruebas de recuperación a una NotaFinalCurso (escala CNB 0 a 100 pts)."""
 
     class Meta:
         model = NotaFinalCurso
@@ -281,6 +363,14 @@ class NotaRecuperacionForm(TailwindFormMixin, forms.ModelForm):
             'nota_recuperacion_1': forms.NumberInput(attrs={'placeholder': '0.00', 'step': '0.01', 'min': '0', 'max': '100'}),
             'nota_recuperacion_2': forms.NumberInput(attrs={'placeholder': '0.00', 'step': '0.01', 'min': '0', 'max': '100'}),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        for campo in ('nota_recuperacion_1', 'nota_recuperacion_2'):
+            nota = cleaned_data.get(campo)
+            if nota is not None and (nota < Decimal('0.00') or nota > Decimal('100.00')):
+                self.add_error(campo, 'La calificación de recuperación en Guatemala (CNB) debe estar entre 0 y 100 puntos.')
+        return cleaned_data
 
 
 class AsistenciaSeccionForm(TailwindFormMixin, forms.Form):

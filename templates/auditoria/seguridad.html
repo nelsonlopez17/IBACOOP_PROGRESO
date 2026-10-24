@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}Seguridad y Accesos - Control de Bloqueos{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Encabezado con Migas de Pan -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+                <a href="{% url 'core:home' %}" class="hover:underline">Dashboard</a>
+                <span>/</span>
+                <a href="{% url 'auditoria:dashboard' %}" class="hover:underline">Auditoría</a>
+                <span>/</span>
+                <span class="text-slate-500">Seguridad de Accesos</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+                <i data-lucide="shield-alert" class="w-7 h-7 text-[#1E6532]"></i>
+                Seguridad, Intentos Fallidos y Bloqueos
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">
+                Supervisión en tiempo real de ataques de fuerza bruta, IPs bloqueadas y accesos al sistema ERP.
+            </p>
+        </div>
+    </div>
+
+    <!-- Pestañas de Navegación -->
+    {% include 'auditoria/partials/auditoria_tabs.html' %}
+
+    <!-- Tarjetas Métricas de Seguridad -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
+                <i data-lucide="lock" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Bloqueos Activos</span>
+                <h3 class="text-2xl font-extrabold text-rose-700 mt-0.5">{{ total_bloqueos }}</h3>
+                <p class="text-[10px] text-slate-500">Cuentas o IPs bajo penalización</p>
+            </div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-blue-100 text-[#3C7DA8] flex items-center justify-center shrink-0">
+                <i data-lucide="fingerprint" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Historial de Accesos</span>
+                <h3 class="text-2xl font-extrabold text-slate-900 mt-0.5">{{ total_accesos_registrados }}</h3>
+                <p class="text-[10px] text-slate-500">Inicios de sesión evaluados</p>
+            </div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-emerald-100 text-[#1E6532] flex items-center justify-center shrink-0">
+                <i data-lucide="shield-check" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Política de Fuerza Bruta</span>
+                <h3 class="text-base font-extrabold text-[#1E6532] mt-0.5">Máx. 3 Intentos</h3>
+                <p class="text-[10px] text-slate-500">Bloqueo temporal con django-axes</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN 1: Intentos Fallidos / Bloqueos Temporales Activos -->
+    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+        <div class="p-4 border-b border-slate-100 bg-rose-50/40 flex items-center justify-between">
+            <h3 class="font-extrabold text-sm text-rose-900 flex items-center gap-2">
+                <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-600"></i>
+                Cuentas e IPs con Intentos Fallidos Acumulados (En Riesgo de Bloqueo)
+            </h3>
+            <span class="text-xs font-bold text-rose-700">{{ intentos_activos|length }} registros</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                    <tr>
+                        <th class="py-3 px-4">Usuario o Credencial</th>
+                        <th class="py-3 px-4">Dirección IP</th>
+                        <th class="py-3 px-4 text-center">Fallos Acumulados</th>
+                        <th class="py-3 px-4">Último Intento</th>
+                        <th class="py-3 px-4">User-Agent / Navegador</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                    {% for a in intentos_activos %}
+                    <tr class="hover:bg-rose-50/20 transition-colors">
+                        <td class="py-3.5 px-4 font-bold text-slate-900">
+                            {{ a.username|default:"(Sin usuario)" }}
+                        </td>
+                        <td class="py-3.5 px-4 font-mono text-slate-700">
+                            {{ a.ip_address }}
+                        </td>
+                        <td class="py-3.5 px-4 text-center">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-black {% if a.failures_since_start >= 3 %}bg-rose-100 text-rose-800 border border-rose-300{% else %}bg-amber-100 text-amber-800 border border-amber-300{% endif %}">
+                                {{ a.failures_since_start }} / 3
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-4 text-slate-600">
+                            {{ a.attempt_time|date:"d/m/Y H:i:s" }}
+                        </td>
+                        <td class="py-3.5 px-4 text-slate-500 max-w-xs truncate" title="{{ a.user_agent }}">
+                            {{ a.user_agent }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="py-8 text-center text-slate-400">
+                            <i data-lucide="shield-check" class="w-8 h-8 mx-auto text-emerald-500 mb-1"></i>
+                            <p class="font-semibold text-slate-700">No hay cuentas bloqueadas ni intentos sospechosos activos.</p>
+                            <p class="text-xs">El sistema opera con normalidad.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- SECCIÓN 2: Bitácora Reciente de Accesos (AccessLog) -->
+    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="font-extrabold text-sm text-slate-800 flex items-center gap-2">
+                <i data-lucide="history" class="w-4 h-4 text-[#3C7DA8]"></i>
+                Bitácora de Intentos de Inicio de Sesión
+            </h3>
+            <span class="text-xs text-slate-500">Últimos {{ logs_recientes|length }} accesos</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                    <tr>
+                        <th class="py-3 px-4">Fecha y Hora</th>
+                        <th class="py-3 px-4">Usuario</th>
+                        <th class="py-3 px-4">Dirección IP</th>
+                        <th class="py-3 px-4">Ruta Solicitada</th>
+                        <th class="py-3 px-4">Navegador</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                    {% for log in logs_recientes %}
+                    <tr class="hover:bg-slate-50/50 transition-colors">
+                        <td class="py-3 px-4 whitespace-nowrap text-slate-800">
+                            {{ log.attempt_time|date:"d/m/Y H:i:s" }}
+                        </td>
+                        <td class="py-3 px-4 font-bold text-slate-900">
+                            {{ log.username|default:"(Anónimo)" }}
+                        </td>
+                        <td class="py-3 px-4 font-mono text-slate-700">
+                            {{ log.ip_address }}
+                        </td>
+                        <td class="py-3 px-4 text-slate-500">
+                            <code>{{ log.path_info|default:"/usuarios/login/" }}</code>
+                        </td>
+                        <td class="py-3 px-4 text-slate-400 max-w-xs truncate" title="{{ log.user_agent }}">
+                            {{ log.user_agent }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="py-8 text-center text-slate-400">
+                            <p>No se registran eventos de acceso recientes.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

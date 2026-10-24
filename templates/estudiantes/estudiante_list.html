@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Gestión de Alumnos (Padrón Escolar){% endblock %}
+{% block title %}Control de Estudiantes (Padrón Escolar){% endblock %}
 
 {% block content %}
 <div class="space-y-6">
@@ -11,69 +11,73 @@
             <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
                 <a href="{% url 'core:home' %}" class="hover:underline">Dashboard</a>
                 <span>/</span>
-                <span class="text-slate-500">Gestión de Alumnos</span>
+                <span class="text-slate-500">Control de Estudiantes</span>
             </div>
             <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
                 <i data-lucide="graduation-cap" class="w-7 h-7 text-[#1E6532]"></i>
-                Gestión de Alumnos
+                Control de Estudiantes
             </h1>
 
-            <p class="text-xs text-slate-500 mt-1">Expedientes estudiantiles, tutores legales y verificación de
+            <p class="text-xs text-slate-500 mt-1">Expedientes estudiantiles, padres de familia o encargados y verificación de
                 papelería oficial MINEDUC.</p>
         </div>
 
         <div class="flex items-center gap-3 flex-wrap">
+            {% if perms.estudiantes.add_encargado %}
             <a href="{% url 'estudiantes:encargado_create' %}"
                 class="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
                 <i data-lucide="user-check" class="w-4 h-4 text-[#3C7DA8]"></i>
                 Registrar Encargado
             </a>
+            {% endif %}
+            {% if perms.estudiantes.add_estudiante %}
             <a href="{% url 'estudiantes:estudiante_create' %}"
                 class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
                 <i data-lucide="user-plus" class="w-4 h-4"></i>
-                Registrar Alumno
+                Registrar Estudiante
             </a>
+            {% endif %}
         </div>
     </div>
 
-    <!-- Mensajes de Alerta -->
-    {% if messages %}
-    <div class="space-y-3">
-        {% for message in messages %}
-        {% if nuevo_encargado_pk and message.tags == 'success' %}
-        <div
-            class="p-5 rounded-2xl bg-gradient-to-r from-[#3C7DA8] via-teal-700 to-[#1E6532] text-white shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-[#3C7DA8]/30">
-            <div class="flex items-start gap-3.5">
-                <div
-                    class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center flex-shrink-0 text-white font-bold shadow-sm">
-                    <i data-lucide="check-circle-2" class="w-6 h-6"></i>
-                </div>
-                <div class="space-y-1">
-                    <h3 class="text-sm font-extrabold tracking-wide">¡Encargado / Tutor Registrado Exitosamente!</h3>
-                    <p class="text-xs text-teal-100 leading-relaxed font-medium">
-                        {{ message }}
-                    </p>
-                </div>
-            </div>
-            <div class="flex items-center gap-2.5 self-stretch sm:self-auto flex-shrink-0 pt-2 sm:pt-0">
-                <a href="{% url 'estudiantes:encargado_pdf_credenciales' nuevo_encargado_pk %}" target="_blank"
-                    class="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black transition-all shadow-md flex items-center gap-2">
-                    <i data-lucide="key-round" class="w-4 h-4"></i>
-                    <span>Descargar Credenciales Tutor (PDF)</span>
-                </a>
-            </div>
-        </div>
-        {% else %}
-        <div
-            class="p-4 rounded-xl flex items-start gap-3 border shadow-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-900 border-emerald-200{% else %}bg-rose-50 text-rose-900 border-rose-200{% endif %}">
-            <i data-lucide="{% if message.tags == 'success' %}check-circle-2{% else %}alert-triangle{% endif %}"
-                class="w-5 h-5 flex-shrink-0 mt-0.5 {% if message.tags == 'success' %}text-emerald-600{% else %}text-rose-600{% endif %}"></i>
-            <div class="text-sm font-medium leading-relaxed">
-                {{ message }}
-            </div>
-        </div>
+    <!-- Pestañas Principales del Módulo: Estudiantes vs Padres y Encargados -->
+    <div class="flex items-center gap-2 border-b border-slate-200 pb-3">
+        <a href="{% url 'estudiantes:estudiante_list' %}"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all bg-[#1E6532] text-white shadow-md shadow-[#1E6532]/20">
+            <i data-lucide="graduation-cap" class="w-4 h-4"></i>
+            <span>Directorio de Estudiantes</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-white/20 text-white">{{ total_estudiantes|default:"0" }}</span>
+        </a>
+        {% if perms.estudiantes.view_encargado %}
+        <a href="{% url 'estudiantes:encargado_list' %}"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">
+            <i data-lucide="users" class="w-4 h-4"></i>
+            <span>Padres de Familia o Encargados</span>
+        </a>
         {% endif %}
-        {% endfor %}
+    </div>
+
+    <!-- Descarga de Credenciales de Encargado Recién Registrado -->
+    {% if nuevo_encargado_pk %}
+    <div class="p-5 rounded-2xl bg-gradient-to-r from-[#3C7DA8] via-teal-700 to-[#1E6532] text-white shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-[#3C7DA8]/30">
+        <div class="flex items-start gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center flex-shrink-0 text-white font-bold shadow-sm">
+                <i data-lucide="key-round" class="w-6 h-6"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-sm font-extrabold tracking-wide">Credenciales de Padre de Familia o Encargado Disponibles</h3>
+                <p class="text-xs text-teal-100 leading-relaxed font-medium">
+                    Descargue e imprima la ficha en formato PDF con las credenciales temporales del encargado recién registrado.
+                </p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2.5 self-stretch sm:self-auto flex-shrink-0 pt-2 sm:pt-0">
+            <a href="{% url 'estudiantes:encargado_pdf_credenciales' nuevo_encargado_pk %}" target="_blank"
+                class="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black transition-all shadow-md flex items-center gap-2">
+                <i data-lucide="key-round" class="w-4 h-4"></i>
+                <span>Descargar Credenciales Encargado (PDF)</span>
+            </a>
+        </div>
     </div>
     {% endif %}
 
@@ -85,7 +89,7 @@
                 <i data-lucide="graduation-cap" class="w-5 h-5"></i>
             </div>
             <div>
-                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Alumnos</p>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Estudiantes</p>
                 <h3 class="text-xl font-extrabold text-slate-900">{{ total_estudiantes|default:"0" }}</h3>
             </div>
         </div>
@@ -96,7 +100,7 @@
                 <i data-lucide="user-check" class="w-5 h-5"></i>
             </div>
             <div>
-                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Alumnos Activos</p>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Estudiantes Activos</p>
                 <h3 class="text-xl font-extrabold text-emerald-700">{{ activos_count|default:"0" }}</h3>
             </div>
         </div>
@@ -113,13 +117,37 @@
         </div>
     </div>
 
+    <!-- Pestañas de Navegación: Activos vs Retirados -->
+    <div class="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
+        <a href="?estado=ACTIVO{% if q %}&q={{ q }}{% endif %}{% if papeleria_filtro %}&papeleria={{ papeleria_filtro }}{% endif %}"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex-shrink-0 {% if estado_filtro == 'ACTIVO' %}bg-[#1E6532] text-white shadow-md shadow-[#1E6532]/20{% else %}bg-white text-slate-600 hover:bg-slate-100 border border-slate-200{% endif %}">
+            <i data-lucide="user-check" class="w-4 h-4"></i>
+            <span>Estudiantes Activos</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black {% if estado_filtro == 'ACTIVO' %}bg-white/20 text-white{% else %}bg-slate-100 text-slate-600{% endif %}">{{ activos_count|default:"0" }}</span>
+        </a>
+
+        <a href="?estado=RETIRADO{% if q %}&q={{ q }}{% endif %}{% if papeleria_filtro %}&papeleria={{ papeleria_filtro }}{% endif %}"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex-shrink-0 {% if estado_filtro == 'RETIRADO' %}bg-[#7A1C21] text-white shadow-md shadow-[#7A1C21]/20{% else %}bg-white text-slate-600 hover:bg-slate-100 border border-slate-200{% endif %}">
+            <i data-lucide="user-x" class="w-4 h-4"></i>
+            <span>Estudiantes Retirados</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black {% if estado_filtro == 'RETIRADO' %}bg-white/20 text-white{% else %}bg-rose-50 text-rose-700{% endif %}">{{ retirados_count|default:"0" }}</span>
+        </a>
+
+        <a href="?estado=TODOS{% if q %}&q={{ q }}{% endif %}{% if papeleria_filtro %}&papeleria={{ papeleria_filtro }}{% endif %}"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex-shrink-0 {% if estado_filtro == 'TODOS' %}bg-slate-800 text-white shadow-md{% else %}bg-white text-slate-600 hover:bg-slate-100 border border-slate-200{% endif %}">
+            <i data-lucide="users" class="w-4 h-4"></i>
+            <span>Todos los Estudiantes</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black {% if estado_filtro == 'TODOS' %}bg-white/20 text-white{% else %}bg-slate-100 text-slate-600{% endif %}">{{ total_estudiantes|default:"0" }}</span>
+        </a>
+    </div>
+
     <!-- Barra de Filtros y Búsqueda -->
     <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
         <form method="get" class="flex flex-col md:flex-row items-center gap-3">
             <!-- Búsqueda -->
             <div class="relative flex-1 w-full">
                 <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                <input type="text" name="q" value="{{ q }}" placeholder="Buscar por alumno, CUI o Código MINEDUC..."
+                <input type="text" name="q" value="{{ q }}" placeholder="Buscar por estudiante, CUI o Código MINEDUC..."
                     class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1E6532] focus:bg-white transition-all">
             </div>
 
@@ -127,7 +155,7 @@
             <div class="w-full md:w-48">
                 <select name="estado"
                     class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:border-[#1E6532] focus:bg-white transition-all">
-                    <option value="">-- Estado Académico --</option>
+                    <option value="TODOS" {% if estado_filtro == 'TODOS' %}selected{% endif %}>-- Todos los Estados --</option>
                     {% for value, label in estados_list %}
                     <option value="{{ value }}" {% if estado_filtro == value %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
@@ -153,7 +181,7 @@
                     class="px-4 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-900 transition-colors shadow-sm w-full md:w-auto">
                     Filtrar
                 </button>
-                {% if q or estado_filtro or papeleria_filtro %}
+                {% if q or estado_filtro != 'ACTIVO' or papeleria_filtro %}
                 <a href="{% url 'estudiantes:estudiante_list' %}"
                     class="px-3 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors text-center w-full md:w-auto">
                     Limpiar
@@ -170,10 +198,11 @@
                 <thead>
                     <tr
                         class="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
-                        <th class="py-3.5 px-6">Alumno / CUI</th>
+                        <th class="py-3.5 px-6">Estudiante / CUI</th>
                         <th class="py-3.5 px-6">Código MINEDUC</th>
-                        <th class="py-3.5 px-6">Tutor Legal</th>
+                        <th class="py-3.5 px-6">Padre o Encargado</th>
                         <th class="py-3.5 px-6">Papelería Físico</th>
+                        <th class="py-3.5 px-6">Solvencia</th>
                         <th class="py-3.5 px-6">Estado</th>
                         <th class="py-3.5 px-6 text-right">Acciones</th>
                     </tr>
@@ -211,6 +240,21 @@
                             <span class="text-[10px] text-slate-400 block mt-0.5">({{ estudiante.documentos_entregados_count }}/5 docs)</span>
                         </td>
                         <td class="py-4 px-6">
+                            {% if estudiante.solvencia_inscripcion_estado == 'SOLVENTE' %}
+                            <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                <i data-lucide="check" class="w-3 h-3"></i>
+                                Solvente
+                            </span>
+                            {% elif estudiante.solvencia_inscripcion_estado == 'PENDIENTE' %}
+                            <span class="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
+                                <i data-lucide="alert-circle" class="w-3 h-3"></i>
+                                Pendiente
+                            </span>
+                            {% else %}
+                            <span class="text-[11px] text-slate-400 italic">Sin cuota</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-4 px-6">
                             {% if estudiante.estado_estudiante == 'ACTIVO' %}
                             <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">Activo</span>
                             {% elif estudiante.estado_estudiante == 'RETIRADO' %}
@@ -245,7 +289,7 @@
                     <tr>
                         <td colspan="6" class="py-12 text-center text-slate-400">
                             <i data-lucide="users" class="w-10 h-10 mx-auto mb-2 text-slate-300"></i>
-                            <p class="text-sm font-semibold">No se encontraron alumnos con los criterios seleccionados.</p>
+                            <p class="text-sm font-semibold">No se encontraron estudiantes con los criterios seleccionados.</p>
                         </td>
                     </tr>
                     {% endfor %}

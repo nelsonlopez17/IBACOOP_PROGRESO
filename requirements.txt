@@ -32,3 +32,7 @@ django-axes==7.0.1
 django-tailwind==4.5.0
 pytailwindcss==0.3.1
 
+# Procesamiento Asíncrono y Colas de Tareas
+# (Reemplazado por ejecutor nativo en segundo plano basado en hilos y caché)
+
+

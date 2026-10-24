@@ -17,21 +17,9 @@
                 <i data-lucide="refresh-cw" class="w-7 h-7 text-[#1E6532]"></i>
                 Proceso de Reinscripción Rápida al Nuevo Ciclo
             </h1>
-            <p class="text-xs text-slate-500 mt-1">Sugerencia automatizada de asignación de grado superior para alumnos Promovidos o retención.</p>
+            <p class="text-xs text-slate-500 mt-1">Sugerencia automatizada de asignación de grado superior para estudiantes Promovidos o retención.</p>
         </div>
     </div>
-
-    <!-- Alertas -->
-    {% if messages %}
-    <div class="space-y-3">
-        {% for message in messages %}
-        <div class="p-4 rounded-xl flex items-start gap-3 border shadow-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-900 border-emerald-200{% else %}bg-rose-50 text-rose-900 border-rose-200{% endif %}">
-            <i data-lucide="{% if message.tags == 'success' %}check-circle-2{% else %}alert-triangle{% endif %}" class="w-5 h-5 flex-shrink-0 mt-0.5 {% if message.tags == 'success' %}text-emerald-600{% else %}text-rose-600{% endif %}"></i>
-            <div class="text-sm font-medium leading-relaxed">{{ message }}</div>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
 
     <!-- Formulario Masivo de Reinscripción -->
     <form method="post" class="space-y-6">
@@ -41,7 +29,7 @@
         <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
                 <h3 class="text-sm font-extrabold text-slate-900">Seleccionar Ciclo Lectivo Destino</h3>
-                <p class="text-xs text-slate-500">Elija el ciclo en el cual se completará la reinscripción masiva de los alumnos seleccionados.</p>
+                <p class="text-xs text-slate-500">Elija el ciclo en el cual se completará la reinscripción masiva de los estudiantes seleccionados.</p>
             </div>
             <div class="w-full sm:w-64">
                 <select name="nuevo_ciclo" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#1E6532]">
@@ -56,8 +44,8 @@
         <!-- Tabla de Sugerencias de Reinscripción -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div class="p-5 border-b border-slate-100 flex items-center justify-between">
-                <h3 class="text-sm font-extrabold text-slate-900">Nómina de Alumnos Evaluados y Sugerencia de Grado</h3>
-                <span class="text-xs font-bold text-slate-400">Total: {{ sugerencias|length }} alumnos</span>
+                <h3 class="text-sm font-extrabold text-slate-900">Listado de Estudiantes Evaluados y Sugerencia de Grado</h3>
+                <span class="text-xs font-bold text-slate-400">Total: {{ sugerencias|length }} estudiantes</span>
             </div>
 
             <div class="overflow-x-auto">
@@ -67,7 +55,7 @@
                             <th class="py-3.5 px-6 w-10">
                                 <input type="checkbox" id="select-all" class="h-4 w-4 rounded border-slate-300 text-[#1E6532] focus:ring-[#1E6532]">
                             </th>
-                            <th class="py-3.5 px-6">Alumno / CUI</th>
+                            <th class="py-3.5 px-6">Estudiante / CUI</th>
                             <th class="py-3.5 px-6">Grado Origen</th>
                             <th class="py-3.5 px-6">Evaluación Final</th>
                             <th class="py-3.5 px-6">Grado y Sección Sugerida</th>
@@ -104,7 +92,7 @@
                         {% empty %}
                         <tr>
                             <td colspan="5" class="py-12 text-center text-slate-400">
-                                <p class="text-sm font-semibold">No se encontraron alumnos para el proceso de reinscripción.</p>
+                                <p class="text-sm font-semibold">No se encontraron estudiantes para el proceso de reinscripción.</p>
                             </td>
                         </tr>
                         {% endfor %}
@@ -115,7 +103,7 @@
             <div class="p-5 border-t border-slate-100 bg-slate-50/50 flex justify-end">
                 <button type="submit" class="px-6 py-2.5 bg-[#1E6532] hover:bg-[#1E6532]/90 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-[#1E6532]/20 flex items-center gap-2">
                     <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                    Reinscribir Alumnos Seleccionados
+                    Reinscribir Estudiantes Seleccionados
                 </button>
             </div>
         </div>

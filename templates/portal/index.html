@@ -1,0 +1,410 @@
+{% extends 'portal/base_portal.html' %}
+
+{% block title %}Inicio — Instituto "El Progreso" (IBACOOP){% endblock %}
+
+{% block content %}
+<!-- SECCIÓN HERO LIMPIO Y DIRECTO -->
+<section id="inicio" class="relative bg-white border-b border-slate-200 py-16 sm:py-24">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl mx-auto text-center space-y-6">
+            
+            <!-- Sello Oficial MINEDUC -->
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold uppercase tracking-wider">
+                <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
+                <span>Acreditación y Validez Oficial MINEDUC</span>
+            </div>
+
+            <!-- Titular Principal -->
+            <h1 class="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+                Instituto Básico por Cooperativa de Enseñanza <br class="hidden sm:inline">
+                <span class="text-[#1E6532]">Colonia El Progreso • Escuintla</span>
+            </h1>
+
+            <!-- Descripción Concreta -->
+            <p class="text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto">
+                Formación integral para el <strong>Ciclo de Educación Básica</strong> en Escuintla, Guatemala. Impartimos educación de excelencia bajo el Currículo Nacional Base (CNB), valores éticos y principios cooperativos al alcance de las familias.
+            </p>
+
+            <!-- Botones de Acción Directa -->
+            <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+                <a href="#admisiones" 
+                   class="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-[#1E6532] hover:bg-[#164c25] text-white shadow-sm transition-all">
+                    <i data-lucide="file-text" class="w-4 h-4"></i>
+                    <span>Requisitos de Admisión</span>
+                </a>
+                <a href="{% url 'usuarios:login' %}" 
+                   class="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all">
+                    <i data-lucide="lock" class="w-4 h-4 text-slate-500"></i>
+                    <span>Acceso al Sistema Escolar</span>
+                </a>
+            </div>
+
+            <!-- Indicadores Clave en Línea -->
+            <div class="pt-8 border-t border-slate-100 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs font-semibold text-slate-500">
+                <span class="flex items-center gap-2">
+                    <i data-lucide="sun" class="w-4 h-4 text-amber-500"></i>
+                    Jornada Vespertina (13:00 a 18:00 hrs)
+                </span>
+                <span class="flex items-center gap-2">
+                    <i data-lucide="book-open" class="w-4 h-4 text-emerald-600"></i>
+                    1ro, 2do y 3er Grado Básico
+                </span>
+                <span class="flex items-center gap-2">
+                    <i data-lucide="heart-handshake" class="w-4 h-4 text-[#7A1C21]"></i>
+                    Cuotas Accesibles por Cooperativa
+                </span>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- SECCIÓN 1: PLAN DE ESTUDIOS DEL CICLO BÁSICO -->
+<section id="grados" class="py-16 sm:py-20 bg-slate-50 border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="text-center max-w-2xl mx-auto mb-12">
+            <span class="text-xs font-bold uppercase tracking-wider text-[#1E6532] bg-emerald-100/60 px-3 py-1 rounded-full">
+                Oferta Formativa
+            </span>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2 tracking-tight">
+                Plan de Estudios — Ciclo Básico
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-600 mt-2">
+                Alineado rigurosamente con los lineamientos oficiales del Ministerio de Educación de Guatemala.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- Primero Básico -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs hover:border-emerald-300 transition-colors">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-sm mb-4">
+                    1°
+                </div>
+                <h3 class="text-lg font-bold text-slate-900 mb-2">Primero Básico</h3>
+                <p class="text-xs text-slate-600 leading-relaxed mb-4">
+                    Etapa de transición y adaptación pedagógica. Nivelación en habilidades cuantitativas y de comprensión verbal.
+                </p>
+                <ul class="space-y-2 text-xs text-slate-600 border-t border-slate-100 pt-3">
+                    <li class="flex items-center gap-2">
+                        <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600 shrink-0"></i>
+                        <span>Matemáticas y Razonamiento Lógico</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600 shrink-0"></i>
+                        <span>Comunicación y Lenguaje (L1 e Idioma Inglés)</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600 shrink-0"></i>
+                        <span>Iniciación en Laboratorio Digital de Cómputo</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Segundo Básico -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs hover:border-blue-300 transition-colors">
+                <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center font-bold text-sm mb-4">
+                    2°
+                </div>
+                <h3 class="text-lg font-bold text-slate-900 mb-2">Segundo Básico</h3>
+                <p class="text-xs text-slate-600 leading-relaxed mb-4">
+                    Desarrollo del pensamiento crítico y experimental. Fortalecimiento del trabajo colaborativo y cooperativo.
+                </p>
+                <ul class="space-y-2 text-xs text-slate-600 border-t border-slate-100 pt-3">
+                    <li class="flex items-center gap-2">
+                        <i data-lucide="check" class="w-3.5 h-3.5 text-blue-600 shrink-0"></i>
+                        <span>Ciencias Naturales y Experimentación</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <i data-lucide="check" class="w-3.5 h-3.5 text-blue-600 shrink-0"></i>
+                        <span>Ciencias Sociales y Ciudadanía</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <i data-lucide="check" class="w-3.5 h-3.5 text-blue-600 shrink-0"></i>
+                        <span>Emprendimiento para la Productividad</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Tercero Básico -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs hover:border-purple-300 transition-colors">
+                <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center font-bold text-sm mb-4">
+                    3°
+                </div>
+                <h3 class="text-lg font-bold text-slate-900 mb-2">Tercero Básico</h3>
+                <p class="text-xs text-slate-600 leading-relaxed mb-4">
+                    Culminación del ciclo y preparación sólida hacia el Nivel Diversificado y carreras técnicas o científicas.
+                </p>
+                <ul class="space-y-2 text-xs text-slate-600 border-t border-slate-100 pt-3">
+                    <li class="flex items-center gap-2">
+                        <i data-lucide="check" class="w-3.5 h-3.5 text-purple-600 shrink-0"></i>
+                        <span>Álgebra, Geometría y Estadística</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <i data-lucide="check" class="w-3.5 h-3.5 text-purple-600 shrink-0"></i>
+                        <span>Orientación Vocacional Especializada</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <i data-lucide="check" class="w-3.5 h-3.5 text-purple-600 shrink-0"></i>
+                        <span>Diploma Oficial de Educación Básica MINEDUC</span>
+                    </li>
+                </ul>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+<!-- SECCIÓN 2: REQUISITOS DE ADMISIÓN E INSCRIPCIÓN -->
+<section id="admisiones" class="py-16 sm:py-20 bg-white border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+            
+            <!-- Columna Izquierda: Requisitos Documentales -->
+            <div class="lg:col-span-7 space-y-6">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-[#1E6532] bg-emerald-100/60 px-3 py-1 rounded-full">
+                        Admisiones 2026
+                    </span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2 tracking-tight">
+                        Requisitos de Inscripción
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
+                        Para formalizar la inscripción en Secretaría, es indispensable presentar el expediente físico completo conforme a la normativa ministerial:
+                    </p>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                        <div class="w-6 h-6 rounded-full bg-[#1E6532] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">1</div>
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-900">Certificado de Nacimiento (RENAP)</h4>
+                            <p class="text-[11px] text-slate-500">Documento original y vigente emitido por el Registro Nacional de las Personas.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                        <div class="w-6 h-6 rounded-full bg-[#1E6532] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">2</div>
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-900">Documento Personal de Identificación (DPI) del Encargado</h4>
+                            <p class="text-[11px] text-slate-500">Fotocopia legible de ambos lados del padre, madre o encargado.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                        <div class="w-6 h-6 rounded-full bg-[#1E6532] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">3</div>
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-900">Certificado de Estudios de 6to Primaria</h4>
+                            <p class="text-[11px] text-slate-500">Original extendido por el centro educativo primario de procedencia.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                        <div class="w-6 h-6 rounded-full bg-[#1E6532] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">4</div>
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-900">Diploma de Conclusión de Educación Primaria</h4>
+                            <p class="text-[11px] text-slate-500">Original y copia para cotejo en secretaría del establecimiento.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                        <div class="w-6 h-6 rounded-full bg-[#1E6532] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">5</div>
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-900">Constancia de Código Personal</h4>
+                            <p class="text-[11px] text-slate-500">Constancia oficial de estudiante registrada en el sistema SIRE.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna Derecha: Tarjeta Informativa de Secretaría -->
+            <div class="lg:col-span-5 bg-slate-50 rounded-2xl border border-slate-200 p-6 space-y-5">
+                <div class="border-b border-slate-200 pb-4">
+                    <h3 class="text-base font-bold text-slate-900">Horario de Atención en Secretaría</h3>
+                    <p class="text-xs text-slate-500 mt-1">Recepción de expedientes y asesoría presencial.</p>
+                </div>
+
+                <div class="space-y-3 text-xs text-slate-600">
+                    <div class="flex items-center justify-between py-1.5 border-b border-slate-200/60">
+                        <span class="font-medium">Días de atención:</span>
+                        <span class="font-bold text-slate-900">Lunes a Viernes</span>
+                    </div>
+                    <div class="flex items-center justify-between py-1.5 border-b border-slate-200/60">
+                        <span class="font-medium">Horario continuo:</span>
+                        <span class="font-bold text-slate-900">13:00 a 18:00 hrs</span>
+                    </div>
+                    <div class="flex items-center justify-between py-1.5 border-b border-slate-200/60">
+                        <span class="font-medium">Jornada escolar:</span>
+                        <span class="font-bold text-slate-900">Vespertina</span>
+                    </div>
+                    <div class="flex items-center justify-between py-1.5">
+                        <span class="font-medium">Modelo institucional:</span>
+                        <span class="font-bold text-[#1E6532]">Por Cooperativa (Sin fines de lucro)</span>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 space-y-1">
+                    <p class="font-bold flex items-center gap-1.5">
+                        <i data-lucide="info" class="w-4 h-4 text-emerald-600"></i>
+                        Cuotas Accesibles
+                    </p>
+                    <p class="text-[11px] text-emerald-700 leading-relaxed">
+                        El modelo por cooperativa garantiza aportes mensuales económicos orientados al sostenimiento de las instalaciones y material docente.
+                    </p>
+                </div>
+
+                <a href="#contacto" 
+                   class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-[#1E6532] text-white hover:bg-[#164c25] transition-colors">
+                    <i data-lucide="message-square" class="w-4 h-4"></i>
+                    <span>Consultar Disponibilidad de Cupo</span>
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+<!-- SECCIÓN 3: CONTACTO Y COMUNICACIÓN -->
+<section id="contacto" class="py-16 sm:py-20 bg-slate-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="text-center max-w-2xl mx-auto mb-12">
+            <span class="text-xs font-bold uppercase tracking-wider text-[#1E6532] bg-emerald-100/60 px-3 py-1 rounded-full">
+                Comunicación Directa
+            </span>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2 tracking-tight">
+                Contacto y Ubicación
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-600 mt-2">
+                Estamos a su disposición para resolver cualquier duda sobre inscripciones y servicios educativos.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            
+            <!-- Canales Directos -->
+            <div class="lg:col-span-5 space-y-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+                    <h3 class="text-sm font-bold text-slate-900">Canales Oficiales</h3>
+
+                    <div class="space-y-3 text-xs text-slate-600">
+                        <div class="flex items-start gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-[#1E6532] flex items-center justify-center shrink-0">
+                                <i data-lucide="map-pin" class="w-4 h-4"></i>
+                            </div>
+                            <div>
+                                <span class="font-bold text-slate-800 block">Dirección</span>
+                                <span>1ª Avenida 10-30, Colonia El Progreso, Escuintla, Guatemala</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-[#1E6532] flex items-center justify-center shrink-0">
+                                <i data-lucide="phone" class="w-4 h-4"></i>
+                            </div>
+                            <div>
+                                <span class="font-bold text-slate-800 block">Teléfono / Secretaría</span>
+                                <span>+(502) 7889-5918</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-[#1E6532] flex items-center justify-center shrink-0">
+                                <i data-lucide="mail" class="w-4 h-4"></i>
+                            </div>
+                            <div>
+                                <span class="font-bold text-slate-800 block">Correo Electrónico</span>
+                                <span>ibacoop.elprogreso@gmail.com</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+                    <h3 class="text-sm font-bold text-slate-900 mb-1">Comunidad Educativa</h3>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        Los padres de familia inscritos pueden dar seguimiento a las notas, asistencias y pagos a través del Portal ERP.
+                    </p>
+                    <a href="{% url 'usuarios:login' %}" class="inline-flex items-center gap-1.5 text-xs font-bold text-[#1E6532] hover:underline mt-3">
+                        <span>Iniciar Sesión en el ERP</span>
+                        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Formulario de Consulta Limpio -->
+            <div class="lg:col-span-7 bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-xs">
+                <h3 class="text-base font-bold text-slate-900 mb-1">Envíanos un Mensaje</h3>
+                <p class="text-xs text-slate-500 mb-5">Le responderemos a la brevedad posible.</p>
+
+                <form action="{% url 'portal:contacto' %}" method="post" class="space-y-4">
+                    {% csrf_token %}
+                    <div style="display:none !important;" aria-hidden="true">
+                        {{ form.website_url }}
+                    </div>
+
+                    {% if form.non_field_errors %}
+                    <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
+                        {{ form.non_field_errors.0 }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nombre Completo *</label>
+                            {{ form.nombre_remitente }}
+                            {% if form.nombre_remitente.errors %}
+                            <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.nombre_remitente.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Correo Electrónico *</label>
+                            {{ form.correo }}
+                            {% if form.correo.errors %}
+                            <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.correo.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Teléfono / WhatsApp *</label>
+                            {{ form.telefono }}
+                            {% if form.telefono.errors %}
+                            <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.telefono.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Asunto de Consulta *</label>
+                            {{ form.asunto }}
+                            {% if form.asunto.errors %}
+                            <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.asunto.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Mensaje o Consulta *</label>
+                        {{ form.mensaje }}
+                        {% if form.mensaje.errors %}
+                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.mensaje.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" 
+                            class="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-xs bg-[#1E6532] hover:bg-[#164c25] text-white shadow-xs transition-colors cursor-pointer">
+                        <i data-lucide="send" class="w-4 h-4"></i>
+                        <span>Enviar Solicitud</span>
+                    </button>
+                </form>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+{% endblock %}

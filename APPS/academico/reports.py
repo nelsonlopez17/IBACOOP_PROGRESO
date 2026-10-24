@@ -23,7 +23,7 @@ from APPS.academico.models import (
 
 def generar_pdf_boleta_notas(asignacion_estudiante):
     """
-    Genera la Tarjeta / Boleta Oficial de Calificaciones del Alumno en PDF.
+    Genera la Tarjeta / Boleta Oficial de Calificaciones del Estudiante en PDF.
     Desglosa las notas por Bimestre (B1, B2, B3, B4), Promedio Ordinario, Recuperaciones y Estado Final.
     """
     buffer = io.BytesIO()
@@ -126,7 +126,6 @@ def generar_pdf_boleta_notas(asignacion_estudiante):
     seccion = asignacion_estudiante.seccion
     ciclo = asignacion_estudiante.ciclo_escolar
 
-    # 1. Encabezado Oficial
     header_data = [
         [
             Paragraph("INSTITUTO DE EDUCACIÓN BÁSICA<br/><font color='#7A1C21'>'EL PROGRESO'</font><br/><font size=8 color='#64748B'>SISTEMA DE GESTIÓN ESCOLAR (ERP)</font>", style_title),
@@ -141,9 +140,8 @@ def generar_pdf_boleta_notas(asignacion_estudiante):
     story.append(t_header)
     story.append(HRFlowable(width="100%", thickness=2, color=COLOR_VERDE, spaceBefore=4, spaceAfter=10))
 
-    # 2. Datos del Estudiante
     datos_est = [
-        [Paragraph("Nombre del Alumno:", style_label), Paragraph(persona.nombre_completo, style_val_bold),
+        [Paragraph("Nombre del Estudiante:", style_label), Paragraph(persona.nombre_completo, style_val_bold),
          Paragraph("CUI / DPI:", style_label), Paragraph(persona.cui, style_val)],
         [Paragraph("Grado y Sección:", style_label), Paragraph(f"<b>{seccion.grado.nombre} — Sección {seccion.letra}</b>", style_val_bold),
          Paragraph("Ciclo Escolar:", style_label), Paragraph(str(ciclo.anio), style_val)]
@@ -158,15 +156,12 @@ def generar_pdf_boleta_notas(asignacion_estudiante):
     story.append(t_est)
     story.append(Spacer(1, 10))
 
-    # 3. Matriz de Calificaciones por Asignatura
     story.append(Paragraph("EVALUACIÓN DE ASIGNATURAS (PENSUM MINEDUC)", style_sec_header))
     story.append(Spacer(1, 4))
 
-    # Bloques del ciclo
     bloques = BloqueAcademico.objects.filter(ciclo_escolar=ciclo, esta_eliminado=False).order_by('orden')
     cursos = Curso.objects.filter(grado=seccion.grado, esta_eliminado=False).order_by('nombre_curso')
 
-    # Encabezado de la tabla de notas
     table_data = [
         [
             Paragraph("Asignatura / Curso", style_table_header),
@@ -185,7 +180,6 @@ def generar_pdf_boleta_notas(asignacion_estudiante):
     count_cursos = 0
 
     for curso in cursos:
-        # Notas por bloque
         n_b1 = NotaBloque.objects.filter(asignacion_estudiante=asignacion_estudiante, curso=curso, bloque_academico__orden=1, esta_eliminado=False).first()
         n_b2 = NotaBloque.objects.filter(asignacion_estudiante=asignacion_estudiante, curso=curso, bloque_academico__orden=2, esta_eliminado=False).first()
         n_b3 = NotaBloque.objects.filter(asignacion_estudiante=asignacion_estudiante, curso=curso, bloque_academico__orden=3, esta_eliminado=False).first()
@@ -196,7 +190,6 @@ def generar_pdf_boleta_notas(asignacion_estudiante):
         v_b3 = f"{n_b3.nota_total:.1f}" if n_b3 else "-"
         v_b4 = f"{n_b4.nota_total:.1f}" if n_b4 else "-"
 
-        # Nota final de curso
         n_final = NotaFinalCurso.objects.filter(asignacion_estudiante=asignacion_estudiante, curso=curso, esta_eliminado=False).first()
         if n_final:
             n_final.calcular_nota_final()
@@ -229,7 +222,6 @@ def generar_pdf_boleta_notas(asignacion_estudiante):
             Paragraph(color_estado, style_cell_bold),
         ])
 
-    # Fila de promedio general
     promedio_general = round(sum_promedios / count_cursos, 2) if count_cursos > 0 else Decimal('0.00')
     table_data.append([
         Paragraph("<b>PROMEDIO GENERAL DEL CICLO</b>", ParagraphStyle('TotLbl', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, textColor=COLOR_VERDE)),
@@ -249,7 +241,6 @@ def generar_pdf_boleta_notas(asignacion_estudiante):
     story.append(t_notas)
     story.append(Spacer(1, 16))
 
-    # 4. Leyenda de Escala de Evaluación MINEDUC
     style_leyenda = ParagraphStyle(
         'Leyenda',
         parent=styles['Normal'],
@@ -265,10 +256,9 @@ def generar_pdf_boleta_notas(asignacion_estudiante):
     ))
     story.append(Spacer(1, 30))
 
-    # 5. Firmas Oficiales
     datos_firmas = [
         [
-            Paragraph("_______________________________________<br/>Firma del Docente Tutor de Sección", ParagraphStyle('Ctr1', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, alignment=1)),
+            Paragraph("_______________________________________<br/>Firma del Docente Guía", ParagraphStyle('Ctr1', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, alignment=1)),
             Paragraph("_______________________________________<br/>Firma y Sello de Dirección General", ParagraphStyle('Ctr2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, alignment=1))
         ]
     ]
@@ -290,7 +280,7 @@ def generar_pdf_boleta_notas(asignacion_estudiante):
 def generar_pdf_certificacion_estudios(estudiante):
     """
     Genera la Certificación Acumulada de Estudios (Kardex Histórico).
-    Muestra la totalidad de grados y ciclos cursados por el alumno en el instituto.
+    Muestra la totalidad de grados y ciclos cursados por el estudiante en el instituto.
     """
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
@@ -354,15 +344,13 @@ def generar_pdf_certificacion_estudios(estudiante):
 
     persona = estudiante.persona
 
-    # 1. Encabezado
     story.append(Paragraph("INSTITUTO DE EDUCACIÓN BÁSICA 'EL PROGRESO'", style_title))
     story.append(Spacer(1, 2))
     story.append(Paragraph("CERTIFICACIÓN GENERAL DE ESTUDIOS (KARDEX ACUMULADO)", style_subtitle))
     story.append(HRFlowable(width="100%", thickness=2, color=COLOR_VERDE, spaceBefore=6, spaceAfter=14))
 
-    # 2. Datos Alumno
     datos_est = [
-        [Paragraph("Nombre del Alumno:", style_cell_bold), Paragraph(persona.nombre_completo, style_cell_bold),
+        [Paragraph("Nombre del Estudiante:", style_cell_bold), Paragraph(persona.nombre_completo, style_cell_bold),
          Paragraph("CUI / DPI:", style_cell_bold), Paragraph(persona.cui, style_cell)],
         [Paragraph("Código MINEDUC:", style_cell_bold), Paragraph(estudiante.codigo_mineduc, style_cell_bold),
          Paragraph("Estado Académico:", style_cell_bold), Paragraph(estudiante.get_estado_estudiante_display(), style_cell_bold)]
@@ -376,7 +364,6 @@ def generar_pdf_certificacion_estudios(estudiante):
     story.append(t_e)
     story.append(Spacer(1, 14))
 
-    # 3. Recorrer Asignaciones Históricas por Ciclo
     asignaciones = AsignacionEstudiante.objects.filter(
         estudiante=estudiante,
         esta_eliminado=False
@@ -441,7 +428,6 @@ def generar_pdf_certificacion_estudios(estudiante):
             story.append(t_k)
             story.append(Spacer(1, 14))
 
-    # 4. Firmas
     story.append(Spacer(1, 20))
     datos_firmas = [
         [

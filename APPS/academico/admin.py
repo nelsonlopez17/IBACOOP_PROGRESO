@@ -66,7 +66,7 @@ class CursoAdmin(admin.ModelAdmin):
 class AsignacionEstudianteAdmin(admin.ModelAdmin):
     list_display = ['estudiante', 'seccion', 'ciclo_escolar']
     list_filter = ['ciclo_escolar', 'seccion__grado']
-    search_fields = ['estudiante__nombres', 'estudiante__apellidos', 'estudiante__codigo_mineduc']
+    search_fields = ['estudiante__persona__nombres', 'estudiante__persona__apellidos', 'estudiante__codigo_mineduc']
     autocomplete_fields = ['estudiante']
 
 
@@ -74,7 +74,7 @@ class AsignacionEstudianteAdmin(admin.ModelAdmin):
 class AsignacionDocenteAdmin(admin.ModelAdmin):
     list_display = ['personal', 'curso', 'seccion', 'ciclo_escolar']
     list_filter = ['ciclo_escolar', 'seccion__grado', 'curso']
-    search_fields = ['personal__nombres', 'personal__apellidos']
+    search_fields = ['personal__persona__nombres', 'personal__persona__apellidos']
 
 
 @admin.register(NotaBloque)
@@ -86,8 +86,8 @@ class NotaBloqueAdmin(SimpleHistoryAdmin):
     ]
     list_filter = ['bloque_academico__ciclo_escolar', 'curso', 'bloque_academico']
     search_fields = [
-        'asignacion_estudiante__estudiante__nombres',
-        'asignacion_estudiante__estudiante__apellidos',
+        'asignacion_estudiante__estudiante__persona__nombres',
+        'asignacion_estudiante__estudiante__persona__apellidos',
         'asignacion_estudiante__estudiante__codigo_mineduc',
     ]
     readonly_fields = ['get_nota_total', 'creado_en', 'actualizado_en']
@@ -101,13 +101,31 @@ class NotaBloqueAdmin(SimpleHistoryAdmin):
         return obj.nota_total
 
 
+class EstaPromocionadoListFilter(admin.SimpleListFilter):
+    title = '¿Materia Aprobada / Promocionada?'
+    parameter_name = 'esta_promocionado'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('1', 'Sí (Promocionado)'),
+            ('0', 'No (No Promocionado)'),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == '1':
+            return queryset.filter(esta_promocionado=True)
+        if self.value() == '0':
+            return queryset.filter(esta_promocionado=False)
+        return queryset
+
+
 @admin.register(NotaFinalCurso)
 class NotaFinalCursoAdmin(admin.ModelAdmin):
     list_display = ['get_estudiante', 'curso', 'nota_promedio', 'esta_promocionado']
-    list_filter = ['esta_promocionado', 'curso', 'asignacion_estudiante__ciclo_escolar']
+    list_filter = [EstaPromocionadoListFilter, 'curso', 'asignacion_estudiante__ciclo_escolar']
     search_fields = [
-        'asignacion_estudiante__estudiante__nombres',
-        'asignacion_estudiante__estudiante__apellidos',
+        'asignacion_estudiante__estudiante__persona__nombres',
+        'asignacion_estudiante__estudiante__persona__apellidos',
         'asignacion_estudiante__estudiante__codigo_mineduc',
     ]
     readonly_fields = ['creado_en', 'actualizado_en']

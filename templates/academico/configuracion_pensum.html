@@ -26,18 +26,6 @@
     <!-- Pestañas del Módulo Académico -->
     {% include 'academico/partials/academico_tabs.html' %}
 
-    <!-- Alertas -->
-    {% if messages %}
-    <div class="space-y-3">
-        {% for message in messages %}
-        <div class="p-4 rounded-xl flex items-start gap-3 border shadow-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-900 border-emerald-200{% else %}bg-rose-50 text-rose-900 border-rose-200{% endif %}">
-            <i data-lucide="{% if message.tags == 'success' %}check-circle-2{% else %}alert-triangle{% endif %}" class="w-5 h-5 flex-shrink-0 mt-0.5 {% if message.tags == 'success' %}text-emerald-600{% else %}text-rose-600{% endif %}"></i>
-            <div class="text-sm font-medium leading-relaxed">{{ message }}</div>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
     <!-- 1. Sección: Ciclos Escolares Lectivos -->
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -67,9 +55,12 @@
                     <p>Fin: <strong>{{ c.fecha_fin|date:"d/m/Y"|default:"No fijada" }}</strong></p>
                 </div>
                 {% if not c.estado_activo %}
-                <a href="{% url 'academico:activar_ciclo' c.pk %}" class="w-full text-center py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg transition-colors">
-                    Activar este Ciclo
-                </a>
+                <form method="post" action="{% url 'academico:activar_ciclo' c.pk %}" class="w-full">
+                    {% csrf_token %}
+                    <button type="submit" onclick="return confirm('¿Está seguro de activar el Ciclo {{ c.anio }}? Se desactivarán los demás ciclos.');" class="w-full text-center py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer">
+                        Activar este Ciclo
+                    </button>
+                </form>
                 {% endif %}
             </div>
             {% empty %}

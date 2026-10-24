@@ -1,7 +1,20 @@
 from django.contrib import admin
 from simple_history.admin import SimpleHistoryAdmin
 
-from APPS.financiero.models import ConceptoPago, CuentaPorCobrar, Abono
+from APPS.financiero.models import ConceptoPago, CuentaPorCobrar, Abono, EstadoPagoChoices
+
+
+class EstadoPagoListFilter(admin.SimpleListFilter):
+    title = 'Estado del pago'
+    parameter_name = 'estado_pago'
+
+    def lookups(self, request, model_admin):
+        return EstadoPagoChoices.choices
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(estado_pago=self.value())
+        return queryset
 
 
 class AbonoInline(admin.TabularInline):
@@ -21,7 +34,7 @@ class ConceptoPagoAdmin(admin.ModelAdmin):
 @admin.register(CuentaPorCobrar)
 class CuentaPorCobrarAdmin(admin.ModelAdmin):
     list_display = ['estudiante', 'concepto', 'ciclo_escolar', 'monto_total', 'saldo_pendiente', 'estado_pago']
-    list_filter = ['estado_pago', 'concepto', 'ciclo_escolar']
+    list_filter = [EstadoPagoListFilter, 'concepto', 'ciclo_escolar']
     search_fields = ['estudiante__persona__nombres', 'estudiante__persona__apellidos', 'estudiante__codigo_mineduc']
     inlines = [AbonoInline]
     readonly_fields = ['creado_en', 'actualizado_en']

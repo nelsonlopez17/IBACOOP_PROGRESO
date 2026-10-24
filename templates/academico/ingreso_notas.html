@@ -10,7 +10,7 @@
         <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
             <a href="{% url 'academico:notas_lista' %}" class="hover:underline">Mis Cursos y Notas</a>
             <span>/</span>
-            <span class="text-slate-500">Evaluar Alumno</span>
+            <span class="text-slate-500">Evaluar Estudiante</span>
         </div>
         <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
             <i data-lucide="edit-3" class="w-7 h-7 text-[#1E6532]"></i>
@@ -18,11 +18,11 @@
         </h1>
     </div>
 
-    <!-- Ficha del Alumno y Materia -->
+    <!-- Ficha del Estudiante y Materia -->
     <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-2">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <div>
-                <span class="text-slate-400 font-bold uppercase tracking-wider block">Alumno:</span>
+                <span class="text-slate-400 font-bold uppercase tracking-wider block">Estudiante:</span>
                 <span class="text-slate-900 font-extrabold text-sm">{{ object.asignacion_estudiante.estudiante.persona.nombre_completo }}</span>
             </div>
             <div>
@@ -58,7 +58,7 @@
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                         Nota de Zona (Máx. 60 pts) <span class="text-rose-500">*</span>
                     </label>
-                    <input type="number" name="nota_zona" step="0.01" min="0" max="60" value="{{ form.nota_zona.value|default:object.nota_zona }}"
+                    <input type="number" name="nota_zona" step="0.01" min="0" max="60" required value="{{ form.nota_zona.value|default:object.nota_zona }}"
                         class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:border-[#1E6532]">
                     {% if form.nota_zona.errors %}<p class="text-xs text-rose-600 font-semibold mt-1">{{ form.nota_zona.errors.0 }}</p>{% endif %}
                 </div>
@@ -67,7 +67,7 @@
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                         Nota de Examen (Máx. 40 pts) <span class="text-rose-500">*</span>
                     </label>
-                    <input type="number" name="nota_examen" step="0.01" min="0" max="40" value="{{ form.nota_examen.value|default:object.nota_examen }}"
+                    <input type="number" name="nota_examen" step="0.01" min="0" max="40" required value="{{ form.nota_examen.value|default:object.nota_examen }}"
                         class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:border-[#1E6532]">
                     {% if form.nota_examen.errors %}<p class="text-xs text-rose-600 font-semibold mt-1">{{ form.nota_examen.errors.0 }}</p>{% endif %}
                 </div>

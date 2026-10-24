@@ -1,0 +1,272 @@
+{% extends 'portal/base_portal.html' %}
+
+{% block title %}Oferta Académica - Ciclo Básico y Pensum Oficial CNB{% endblock %}
+
+{% block content %}
+<!-- ENCABEZADO DE PÁGINA -->
+<section class="bg-gradient-to-r from-slate-900 via-slate-800 to-[#144823] text-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl space-y-4">
+            <span class="text-xs font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-400/30">
+                Plan de Estudios Oficial MINEDUC
+            </span>
+            <h1 class="text-3xl sm:text-5xl font-black tracking-tight">
+                Oferta Académica — Ciclo Básico
+            </h1>
+            <p class="text-base sm:text-lg text-slate-300 leading-relaxed">
+                Formación integral basada en el Currículo Nacional Base (CNB) de Guatemala, enriquecida con educación tecnológica, inglés y formación en valores cooperativos.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- GRADOS DEL CICLO BÁSICO -->
+<section class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+            <span class="text-xs font-bold uppercase tracking-wider text-[#1E6532] bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                Estructura por Grados
+            </span>
+            <h2 class="text-3xl font-extrabold text-slate-900 mt-3 tracking-tight">
+                Los Tres Peldaños del Nivel Medio
+            </h2>
+            <p class="text-slate-600 mt-4 leading-relaxed">
+                Cada grado cuenta con objetivos psicopedagógicos específicos para acompañar el paso de la niñez a la adolescencia activa.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- 1ro Básico -->
+            <div class="bg-slate-50 border-2 border-emerald-500/30 rounded-3xl p-8 relative flex flex-col justify-between hover:shadow-lg transition-all">
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="w-10 h-10 rounded-xl bg-[#1E6532] text-white flex items-center justify-center font-black text-lg">1°</span>
+                        <span class="text-xs font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">Iniciación y Nivelación</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-900">Primero Básico</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Enfoque especial en la nivelación académica de los egresados de Primaria. Adaptación al ritmo de múltiples catedráticos por materia, refuerzo de la lectura comprensiva y el cálculo numérico.
+                    </p>
+                    <div class="space-y-2 pt-4 border-t border-slate-200 text-xs text-slate-700">
+                        <div class="font-bold text-slate-900 mb-1">Aspectos clave:</div>
+                        <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600"></i> Hábitos y técnicas de estudio</div>
+                        <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600"></i> Introducción a la ofimática en laboratorio</div>
+                        <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600"></i> Integración a la vida cooperativa escolar</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2do Básico -->
+            <div class="bg-slate-50 border-2 border-blue-500/30 rounded-3xl p-8 relative flex flex-col justify-between hover:shadow-lg transition-all">
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="w-10 h-10 rounded-xl bg-[#3C7DA8] text-white flex items-center justify-center font-black text-lg">2°</span>
+                        <span class="text-xs font-bold text-blue-700 bg-blue-100 px-3 py-1 rounded-full">Profundización</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-900">Segundo Básico</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Fortalecimiento de la capacidad investigativa y el razonamiento abstracto en ciencias y álgebra. Fomento del debate respetuoso, proyectos grupales y habilidades socioemocionales.
+                    </p>
+                    <div class="space-y-2 pt-4 border-t border-slate-200 text-xs text-slate-700">
+                        <div class="font-bold text-slate-900 mb-1">Aspectos clave:</div>
+                        <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-blue-600"></i> Álgebra y geometría básica</div>
+                        <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-blue-600"></i> Método científico y experimentos</div>
+                        <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-blue-600"></i> Emprendimiento y formulación de ideas</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3ro Básico -->
+            <div class="bg-slate-50 border-2 border-rose-500/30 rounded-3xl p-8 relative flex flex-col justify-between hover:shadow-lg transition-all">
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="w-10 h-10 rounded-xl bg-[#7A1C21] text-white flex items-center justify-center font-black text-lg">3°</span>
+                        <span class="text-xs font-bold text-rose-700 bg-rose-100 px-3 py-1 rounded-full">Graduación y Cierre</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-900">Tercero Básico</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Consolidación académica para la culminación del ciclo. Asesoría y orientación vocacional hacia las diferentes carreras del Nivel Diversificado (Perito, Bachillerato, Magisterio).
+                    </p>
+                    <div class="space-y-2 pt-4 border-t border-slate-200 text-xs text-slate-700">
+                        <div class="font-bold text-slate-900 mb-1">Aspectos clave:</div>
+                        <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-rose-600"></i> Evaluación diagnóstica oficial MINEDUC</div>
+                        <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-rose-600"></i> Test vocacional y ferias de orientación</div>
+                        <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-rose-600"></i> Diploma de Conclusión de Estudios Básicos</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ÁREAS CURRICULARES DEL CNB -->
+<section class="py-20 bg-slate-50 border-t border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+            <span class="text-xs font-bold uppercase tracking-wider text-[#1E6532] bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                Malla Curricular
+            </span>
+            <h2 class="text-3xl font-extrabold text-slate-900 mt-3 tracking-tight">
+                Áreas y Subáreas del Currículo Nacional Base
+            </h2>
+            <p class="text-slate-600 mt-4 leading-relaxed">
+                Todas las asignaturas impartidas en IBACOOP corresponden estrictamente al plan de estudios oficial del Ministerio de Educación de Guatemala.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex items-start gap-4">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-[#1E6532] flex items-center justify-center shrink-0">
+                    <i data-lucide="message-square" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-900 text-sm">Comunicación y Lenguaje (L1 Español)</h4>
+                    <p class="text-xs text-slate-500 mt-1">Gramática, redacción ortográfica, comprensión lectora y oratoria.</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex items-start gap-4">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-[#1E6532] flex items-center justify-center shrink-0">
+                    <i data-lucide="globe" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-900 text-sm">Comunicación y Lenguaje (L3 Inglés)</h4>
+                    <p class="text-xs text-slate-500 mt-1">Vocabulario básico, estructuras gramaticales y conversación introductoria.</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex items-start gap-4">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-[#1E6532] flex items-center justify-center shrink-0">
+                    <i data-lucide="calculator" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-900 text-sm">Matemáticas</h4>
+                    <p class="text-xs text-slate-500 mt-1">Aritmética, pre-álgebra, geometría, trigonometría básica y estadística descriptiva.</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex items-start gap-4">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-[#1E6532] flex items-center justify-center shrink-0">
+                    <i data-lucide="flask-conical" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-900 text-sm">Ciencias Naturales</h4>
+                    <p class="text-xs text-slate-500 mt-1">Biología humana, botánica, ecología, física fundamental y principios químicos.</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex items-start gap-4">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-[#1E6532] flex items-center justify-center shrink-0">
+                    <i data-lucide="landmark" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-900 text-sm">Ciencias Sociales y Ciudadanía</h4>
+                    <p class="text-xs text-slate-500 mt-1">Historia de Guatemala, geografía universal, derechos humanos y deberes cívicos.</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex items-start gap-4">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-[#1E6532] flex items-center justify-center shrink-0">
+                    <i data-lucide="cpu" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-900 text-sm">Tecnologías del Aprendizaje (TAC)</h4>
+                    <p class="text-xs text-slate-500 mt-1">Laboratorio de cómputo, navegación segura, suites de productividad e informática.</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex items-start gap-4">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-[#1E6532] flex items-center justify-center shrink-0">
+                    <i data-lucide="palette" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-900 text-sm">Educación y Expresión Artística</h4>
+                    <p class="text-xs text-slate-500 mt-1">Música, artes plásticas y visuales, expresión corporal y danza folclórica.</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex items-start gap-4">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-[#1E6532] flex items-center justify-center shrink-0">
+                    <i data-lucide="activity" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-900 text-sm">Educación Física</h4>
+                    <p class="text-xs text-slate-500 mt-1">Desarrollo motor, acondicionamiento físico, deportes colectivos y hábitos saludables.</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex items-start gap-4">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-[#1E6532] flex items-center justify-center shrink-0">
+                    <i data-lucide="trending-up" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-900 text-sm">Emprendimiento para la Productividad</h4>
+                    <p class="text-xs text-slate-500 mt-1">Gestión de proyectos, economía familiar, cooperativismo y talleres manuales.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- INSTALACIONES Y AMBIENTES DE APRENDIZAJE -->
+<section class="py-20 bg-white border-t border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+            <span class="text-xs font-bold uppercase tracking-wider text-[#1E6532] bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                Infraestructura
+            </span>
+            <h2 class="text-3xl font-extrabold text-slate-900 mt-3 tracking-tight">
+                Espacios Diseñados para Aprender y Convivir
+            </h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="p-8 rounded-3xl bg-slate-50 border border-slate-200 space-y-4">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-[#1E6532] flex items-center justify-center">
+                    <i data-lucide="monitor" class="w-6 h-6"></i>
+                </div>
+                <h3 class="font-bold text-lg text-slate-900">Laboratorio Digital TAC</h3>
+                <p class="text-sm text-slate-600 leading-relaxed">
+                    Equipado con computadoras modernas, conexión a internet y software educativo para prácticas supervisadas de cada estudiante.
+                </p>
+            </div>
+
+            <div class="p-8 rounded-3xl bg-slate-50 border border-slate-200 space-y-4">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-[#1E6532] flex items-center justify-center">
+                    <i data-lucide="book-marked" class="w-6 h-6"></i>
+                </div>
+                <h3 class="font-bold text-lg text-slate-900">Aulas Espaciosas y Ventiladas</h3>
+                <p class="text-sm text-slate-600 leading-relaxed">
+                    Salones con iluminación natural, mobiliario escolar ergonómico y ambiente propicio para la concentración pedagógica.
+                </p>
+            </div>
+
+            <div class="p-8 rounded-3xl bg-slate-50 border border-slate-200 space-y-4">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-[#1E6532] flex items-center justify-center">
+                    <i data-lucide="trophy" class="w-6 h-6"></i>
+                </div>
+                <h3 class="font-bold text-lg text-slate-900">Cancha Polideportiva</h3>
+                <p class="text-sm text-slate-600 leading-relaxed">
+                    Área para básquetbol, fútbol sala, voleibol y actos cívicos institucionales protegida para el disfrute seguro.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA ADMISIONES -->
+<section class="py-16 bg-[#1E6532] text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+        <h2 class="text-2xl sm:text-3xl font-extrabold">Inicie el proceso de inscripción para el nuevo ciclo escolar</h2>
+        <p class="text-emerald-100 max-w-2xl mx-auto text-sm sm:text-base">
+            Consulte la papelería requerida y asegure un cupo en el Instituto Básico por Cooperativa de Enseñanza de Colonia El Progreso.
+        </p>
+        <div class="pt-2">
+            <a href="{% url 'portal:admisiones' %}" class="px-8 py-3.5 rounded-xl bg-white text-[#1E6532] font-bold text-sm shadow-md hover:bg-emerald-50 transition-colors inline-flex items-center gap-2">
+                <span>Ver Requisitos de Admisión</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

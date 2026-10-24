@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Antigüedad de Saldos y Cartera Pendiente{% endblock %}
+{% block title %}Saldos Vencidos y Morosidad{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
@@ -13,13 +13,13 @@
                 <span>/</span>
                 <span class="text-slate-500">Gestión Financiera</span>
                 <span>/</span>
-                <span class="text-slate-500">Antigüedad de Cartera</span>
+                <span class="text-slate-500">Saldos Vencidos</span>
             </div>
             <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
-                <i data-lucide="pie-chart" class="w-7 h-7 text-[#1E6532]"></i>
-                Tablero de Antigüedad de Saldos y Cartera
+                <i data-lucide="clock-alert" class="w-7 h-7 text-[#1E6532]"></i>
+                Tablero de Saldos Vencidos y Morosidad
             </h1>
-            <p class="text-xs text-slate-500 mt-1">Análisis ejecutivo del vencimiento de cuotas y estado de saldos pendientes.</p>
+            <p class="text-xs text-slate-500 mt-1">Control del vencimiento de cuotas escolares y estado de cuentas pendientes de pago.</p>
         </div>
     </div>
 
@@ -64,9 +64,9 @@
         <div class="p-4 border-b border-slate-100 flex items-center justify-between">
             <h3 class="text-sm font-extrabold text-slate-800 flex items-center gap-2">
                 <i data-lucide="users" class="w-4 h-4 text-[#1E6532]"></i>
-                Desglose Individual de Saldos Pendientes por Alumno
+                Desglose Individual de Saldos Pendientes por Estudiante
             </h3>
-            <span class="text-xs font-bold text-slate-500">Total Cartera Pendiente: <span class="font-extrabold text-slate-900">Q{{ total_cartera|floatformat:2 }}</span></span>
+            <span class="text-xs font-bold text-slate-500">Total Pendiente de Cobro: <span class="font-extrabold text-slate-900">Q{{ total_cartera|floatformat:2 }}</span></span>
         </div>
 
         <div class="overflow-x-auto">

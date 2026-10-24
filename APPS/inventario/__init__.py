@@ -1,1 +1,1 @@
-# APPS/inventario
+# modulo de control de inventario y movimientos

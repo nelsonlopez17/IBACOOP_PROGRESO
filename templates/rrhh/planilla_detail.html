@@ -1,0 +1,398 @@
+{% extends 'base.html' %}
+
+{% block title %}Boleta de Pago — {{ planilla.personal.persona.nombre_completo }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+
+    <!-- Encabezado & Navegación -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+                <a href="{% url 'core:home' %}" class="hover:underline">Dashboard</a>
+                <span>/</span>
+                <a href="{% url 'rrhh:planilla_list' %}" class="hover:underline">Planilla de Sueldos</a>
+                <span>/</span>
+                <span class="text-slate-500">Detalle de Boleta</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+                <i data-lucide="file-check-2" class="w-7 h-7 text-[#1E6532]"></i>
+                Boleta de Pago de Sueldos
+            </h1>
+        </div>
+
+        <div class="flex items-center gap-2.5 flex-wrap">
+            <a href="{% url 'rrhh:planilla_list' %}" class="inline-flex items-center gap-2 px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
+                <i data-lucide="arrow-left" class="w-4 h-4 text-slate-500"></i>
+                Volver
+            </a>
+            {% if not planilla.pagado %}
+            <a href="{% url 'rrhh:planilla_update' planilla.pk %}" class="inline-flex items-center gap-2 px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
+                <i data-lucide="edit" class="w-4 h-4 text-[#1E6532]"></i>
+                Ajustar Boleta
+            </a>
+            {% endif %}
+            <a href="{% url 'rrhh:planilla_pdf' planilla.pk %}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-[#3C7DA8] text-white rounded-xl text-xs font-bold hover:bg-[#32698e] transition-all shadow-md shadow-[#3C7DA8]/20">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                Descargar PDF
+            </a>
+        </div>
+    </div>
+
+    <!-- Ficha del Colaborador y Estado de Boleta -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-100">
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 rounded-2xl bg-[#1E6532]/10 text-[#1E6532] flex items-center justify-center font-black text-xl border border-[#1E6532]/20 shrink-0">
+                    {{ planilla.personal.persona.primer_nombre|slice:":1" }}{{ planilla.personal.persona.primer_apellido|slice:":1" }}
+                </div>
+                <div>
+                    <div class="flex items-center gap-2.5 flex-wrap">
+                        <h2 class="text-xl font-black text-slate-900">{{ planilla.personal.persona.nombre_completo }}</h2>
+                        {% if planilla.tipo_planilla == 'BONO_14' %}
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-blue-100 text-blue-800 border border-blue-200">
+                            Bono 14 (Decreto 42-92)
+                        </span>
+                        {% elif planilla.tipo_planilla == 'AGUINALDO' %}
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            Aguinaldo (Decreto 76-78)
+                        </span>
+                        {% elif planilla.tipo_planilla == 'EXTRAORDINARIA' %}
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-purple-100 text-purple-800 border border-purple-200">
+                            Planilla Extraordinaria
+                        </span>
+                        {% elif planilla.tipo_planilla == 'LIQUIDACION' %}
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-rose-100 text-rose-800 border border-rose-200">
+                            Liquidación / Finiquito
+                        </span>
+                        {% else %}
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                            Planilla Ordinaria
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center gap-3 mt-1.5 text-xs text-slate-500 flex-wrap">
+                        <span class="font-semibold text-slate-700">{{ planilla.personal.puesto.nombre_puesto }}</span>
+                        <span>â€¢</span>
+                        <span class="font-mono">CUI/DPI: {{ planilla.personal.persona.cui }}</span>
+                        <span>â€¢</span>
+                        <a href="{% url 'rrhh:personal_detail' planilla.personal.pk %}" class="text-[#1E6532] font-semibold hover:underline">
+                            Ver Expediente Digital
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estado de Liquidación -->
+            <div class="flex md:flex-col items-center md:items-end justify-between gap-2 bg-slate-50 md:bg-transparent p-3 md:p-0 rounded-xl">
+                {% if planilla.pagado %}
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                    Pagado
+                </span>
+                <span class="text-xs text-slate-500 font-medium">
+                    Liquidado el {{ planilla.fecha_pago|date:"d/m/Y"|default:"--" }}
+                </span>
+                {% else %}
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800 border border-amber-200">
+                    <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+                    Pendiente de Pago
+                </span>
+                <span class="text-xs text-slate-500 font-medium">
+                    Programado: {{ planilla.fecha_pago|date:"d/m/Y"|default:"Sin fecha" }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Metadatos de la Emisión -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 text-xs">
+            <div>
+                <span class="text-slate-400 block font-medium">Mes Liquidado:</span>
+                <span class="font-bold text-slate-800 text-sm">{{ planilla.get_mes_pagado_display }}</span>
+            </div>
+            <div>
+                <span class="text-slate-400 block font-medium">Ciclo Escolar:</span>
+                <span class="font-bold text-slate-800 text-sm">{{ planilla.ciclo_escolar.anio|default:"--" }}</span>
+            </div>
+            <div>
+                <span class="text-slate-400 block font-medium">Sueldo Base Asignado:</span>
+                <span class="font-bold font-mono text-slate-800 text-sm">Q {{ planilla.personal.salario_base_asignado|floatformat:2 }}</span>
+            </div>
+            <div>
+                <span class="text-slate-400 block font-medium">Estado Laboral:</span>
+                <span class="font-bold text-slate-800 text-sm">{{ planilla.personal.get_estado_laboral_display }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tarjetas de Resumen Financiero -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <div class="flex items-center justify-between text-xs font-bold text-emerald-800 mb-2">
+                <span class="flex items-center gap-1.5">
+                    <i data-lucide="trending-up" class="w-4 h-4 text-emerald-600"></i>
+                    Total Ingresos Brutos
+                </span>
+                <span class="px-2 py-0.5 rounded-md bg-emerald-100 text-[10px]">(+)</span>
+            </div>
+            <div class="text-2xl font-black font-mono text-emerald-700">
+                Q {{ planilla.total_ingresos|floatformat:2 }}
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Sueldo ordinario + bonificaciones de ley y extras</p>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <div class="flex items-center justify-between text-xs font-bold text-rose-800 mb-2">
+                <span class="flex items-center gap-1.5">
+                    <i data-lucide="trending-down" class="w-4 h-4 text-rose-600"></i>
+                    Total Retenciones / Descuentos
+                </span>
+                <span class="px-2 py-0.5 rounded-md bg-rose-100 text-[10px]">(-)</span>
+            </div>
+            <div class="text-2xl font-black font-mono text-rose-600">
+                - Q {{ planilla.total_descuentos|floatformat:2 }}
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">IGSS, anticipos, embargos y retenciones</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-5 text-white shadow-lg">
+            <div class="flex items-center justify-between text-xs font-bold text-slate-300 mb-2">
+                <span class="flex items-center gap-1.5">
+                    <i data-lucide="wallet" class="w-4 h-4 text-emerald-400"></i>
+                    Total Líquido a Pagar
+                </span>
+                <span class="px-2 py-0.5 rounded-md bg-white/10 text-[10px] text-emerald-300 font-extrabold">NETO</span>
+            </div>
+            <div class="text-3xl font-black font-mono text-white tracking-tight">
+                Q {{ planilla.total_pagar|floatformat:2 }}
+            </div>
+            <p class="text-[11px] text-slate-300 mt-1">Monto transferido o acreditado al colaborador</p>
+        </div>
+    </div>
+
+    <!-- Alerta de Motivo de Descuentos Extraordinarios si existe -->
+    {% if planilla.descuento_otros and planilla.descuento_otros > 0 %}
+    <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 flex items-start gap-3">
+        <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600 shrink-0 mt-0.5"></i>
+        <div class="text-xs">
+            <p class="font-bold">Justificación de Descuento Extraordinario (Q {{ planilla.descuento_otros|floatformat:2 }}):</p>
+            <p class="mt-0.5 text-amber-800">{{ planilla.motivo_otros_descuentos|default:"Sin justificación especificada." }}</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Tabla Detallada de Ingresos y Deducciones (Idéntica al PDF Oficial) -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <i data-lucide="list" class="w-4 h-4 text-[#1E6532]"></i>
+                Desglose Íntegro de Conceptos Salariales
+            </h3>
+            <span class="text-xs text-slate-500 font-medium">Valores expresados en Quetzales (Q)</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr class="bg-slate-100/70 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
+                        <th class="py-3 px-6">Concepto Salarial / Detalle</th>
+                        <th class="py-3 px-6 text-right w-44">Ingresos (+)</th>
+                        <th class="py-3 px-6 text-right w-44">Descuentos (-)</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-mono">
+                    <!-- Fila 1: Sueldo Principal -->
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-3 px-6 font-sans font-medium text-slate-800">
+                            {% if planilla.tipo_planilla == 'BONO_14' %}
+                            Bono 14 (Decreto 42-92 del Congreso de la República)
+                            {% elif planilla.tipo_planilla == 'AGUINALDO' %}
+                            Aguinaldo Anual (Decreto 76-78 del Congreso de la República)
+                            {% else %}
+                            Salario Ordinario Devengado
+                            {% endif %}
+                            {% if planilla.dias_laborados < 30 and planilla.tipo_planilla == 'ORDINARIA' %}
+                            <span class="text-xs text-amber-700 font-semibold block">({{ planilla.dias_laborados }} días laborados en el período)</span>
+                            {% elif planilla.dias_laborados < 365 and planilla.tipo_planilla != 'ORDINARIA' and planilla.tipo_planilla != 'EXTRAORDINARIA' %}
+                            <span class="text-xs text-amber-700 font-semibold block">({{ planilla.dias_laborados }} / 365 días computados proporcionalmente)</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-6 text-right font-bold text-slate-800">
+                            Q {{ planilla.salario_ordinario|default:planilla.personal.salario_base_asignado|floatformat:2 }}
+                        </td>
+                        <td class="py-3 px-6 text-right text-slate-400">
+                            -
+                        </td>
+                    </tr>
+
+                    <!-- Bonificación Incentivo Ley 37-2001 -->
+                    {% if planilla.bonificacion_incentivo and planilla.bonificacion_incentivo > 0 %}
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-3 px-6 font-sans font-medium text-slate-800">
+                            Bonificación Incentivo de Ley (Decreto 37-2001)
+                        </td>
+                        <td class="py-3 px-6 text-right font-bold text-emerald-700">
+                            +Q {{ planilla.bonificacion_incentivo|floatformat:2 }}
+                        </td>
+                        <td class="py-3 px-6 text-right text-slate-400">
+                            -
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    <!-- Bonificaciones Adicionales / Horas Extras -->
+                    {% if planilla.bonificaciones and planilla.bonificaciones > 0 %}
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-3 px-6 font-sans font-medium text-slate-800">
+                            Otras Bonificaciones / Horas Extras / Complementos
+                        </td>
+                        <td class="py-3 px-6 text-right font-bold text-emerald-700">
+                            +Q {{ planilla.bonificaciones|floatformat:2 }}
+                        </td>
+                        <td class="py-3 px-6 text-right text-slate-400">
+                            -
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    <!-- Retención Cuota Laboral IGSS -->
+                    {% if planilla.descuento_igss and planilla.descuento_igss > 0 %}
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-3 px-6 font-sans font-medium text-slate-800">
+                            Retención Cuota Laboral IGSS (4.83%)
+                        </td>
+                        <td class="py-3 px-6 text-right text-slate-400">
+                            -
+                        </td>
+                        <td class="py-3 px-6 text-right font-bold text-rose-600">
+                            -Q {{ planilla.descuento_igss|floatformat:2 }}
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    <!-- Retención ISR Asalariados Decreto 10-2012 -->
+                    {% if planilla.retencion_isr and planilla.retencion_isr > 0 %}
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-3 px-6 font-sans font-medium text-slate-800">
+                            Retención ISR Asalariados (Decreto 10-2012)
+                        </td>
+                        <td class="py-3 px-6 text-right text-slate-400">
+                            -
+                        </td>
+                        <td class="py-3 px-6 text-right font-bold text-rose-600">
+                            -Q {{ planilla.retencion_isr|floatformat:2 }}
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    <!-- Anticipo de Sueldo / Vales -->
+                    {% if planilla.descuento_anticipo and planilla.descuento_anticipo > 0 %}
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-3 px-6 font-sans font-medium text-slate-800">
+                            Anticipo de Sueldo / Vales de Pago a Cuenta
+                        </td>
+                        <td class="py-3 px-6 text-right text-slate-400">
+                            -
+                        </td>
+                        <td class="py-3 px-6 text-right font-bold text-rose-600">
+                            -Q {{ planilla.descuento_anticipo|floatformat:2 }}
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    <!-- Retención Judicial / Embargo -->
+                    {% if planilla.descuento_judicial and planilla.descuento_judicial > 0 %}
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-3 px-6 font-sans font-medium text-slate-800">
+                            Retención Judicial / Embargo por Orden de Juzgado
+                        </td>
+                        <td class="py-3 px-6 text-right text-slate-400">
+                            -
+                        </td>
+                        <td class="py-3 px-6 text-right font-bold text-rose-600">
+                            -Q {{ planilla.descuento_judicial|floatformat:2 }}
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    <!-- Otros Descuentos Extraordinarios -->
+                    {% if planilla.descuento_otros and planilla.descuento_otros > 0 %}
+                    <tr class="hover:bg-slate-50/60 transition-colors bg-amber-50/30">
+                        <td class="py-3 px-6 font-sans font-medium text-slate-800">
+                            Otros Descuentos / Faltas
+                            {% if planilla.motivo_otros_descuentos %}
+                            <span class="block text-[11px] text-amber-800 font-normal mt-0.5">Motivo: {{ planilla.motivo_otros_descuentos }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-6 text-right text-slate-400">
+                            -
+                        </td>
+                        <td class="py-3 px-6 text-right font-bold text-rose-600">
+                            -Q {{ planilla.descuento_otros|floatformat:2 }}
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    <!-- Descuentos Generales Históricos si no están desglosados -->
+                    {% if planilla.descuento_igss == 0 and planilla.descuento_anticipo == 0 and planilla.descuento_judicial == 0 and planilla.descuento_otros == 0 and planilla.descuentos > 0 %}
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-3 px-6 font-sans font-medium text-slate-800">
+                            Deducciones Salariales Generales
+                        </td>
+                        <td class="py-3 px-6 text-right text-slate-400">
+                            -
+                        </td>
+                        <td class="py-3 px-6 text-right font-bold text-rose-600">
+                            -Q {{ planilla.descuentos|floatformat:2 }}
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    <!-- Fila de Totales -->
+                    <tr class="bg-slate-100 font-bold border-t-2 border-slate-300 text-sm">
+                        <td class="py-3.5 px-6 font-sans uppercase text-slate-800">
+                            Total Líquido a Recibir
+                        </td>
+                        <td class="py-3.5 px-6 text-right text-slate-900 font-black text-base" colspan="2">
+                            Q {{ planilla.total_pagar|floatformat:2 }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Sección de Cargas y Aportes Patronales Institucionales (12.67%) -->
+    {% if planilla.total_cuota_patronal > 0 %}
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                <i data-lucide="building-2" class="w-4 h-4 text-[#1E6532]"></i>
+                Aportes y Pasivo Patronal de la Institución (12.67% de Ley en Guatemala)
+            </h3>
+            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">Costo Patronal (No deducible al trabajador)</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs font-mono">
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <span class="text-slate-500 block text-[10px] font-sans uppercase font-bold">IGSS Patronal (10.67%)</span>
+                <span class="font-extrabold text-slate-900 text-base mt-1 block">Q {{ planilla.cuota_patronal_igss|floatformat:2 }}</span>
+            </div>
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <span class="text-slate-500 block text-[10px] font-sans uppercase font-bold">IRTRA Patronal (1.00%)</span>
+                <span class="font-extrabold text-slate-900 text-base mt-1 block">Q {{ planilla.cuota_patronal_irtra|floatformat:2 }}</span>
+            </div>
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <span class="text-slate-500 block text-[10px] font-sans uppercase font-bold">INTECAP Patronal (1.00%)</span>
+                <span class="font-extrabold text-slate-900 text-base mt-1 block">Q {{ planilla.cuota_patronal_intecap|floatformat:2 }}</span>
+            </div>
+            <div class="bg-emerald-50/70 p-4 rounded-xl border border-emerald-200">
+                <span class="text-emerald-800 block text-[10px] font-sans uppercase font-bold">Total Cuota Patronal (12.67%)</span>
+                <span class="font-black text-emerald-800 text-base mt-1 block">Q {{ planilla.total_cuota_patronal|floatformat:2 }}</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

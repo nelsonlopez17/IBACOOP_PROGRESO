@@ -42,4 +42,4 @@ EXPOSE 8000
 ENTRYPOINT ["/app/entrypoint.sh"]
 
 # Comando por defecto: Servidor WSGI Gunicorn para producción/despliegue
-CMD ["gunicorn", "IBACOOP_PROGRESO.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
+CMD ["gunicorn", "IBACOOP_PROGRESO.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--reload"]

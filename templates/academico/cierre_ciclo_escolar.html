@@ -19,24 +19,12 @@
                 <i data-lucide="award" class="w-7 h-7 text-[#1E6532]"></i>
                 Cierre Anual de Ciclo Lectivo y Promoción MINEDUC
             </h1>
-            <p class="text-xs text-slate-500 mt-1">Evaluación automatizada de notas finales y determinación de alumnos Promovidos y Retenidos.</p>
+            <p class="text-xs text-slate-500 mt-1">Evaluación automatizada de notas finales y determinación de estudiantes Promovidos y Retenidos.</p>
         </div>
     </div>
 
     <!-- Pestañas del Módulo Académico -->
     {% include 'academico/partials/academico_tabs.html' %}
-
-    <!-- Alertas -->
-    {% if messages %}
-    <div class="space-y-3">
-        {% for message in messages %}
-        <div class="p-4 rounded-xl flex items-start gap-3 border shadow-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-900 border-emerald-200{% else %}bg-rose-50 text-rose-900 border-rose-200{% endif %}">
-            <i data-lucide="{% if message.tags == 'success' %}check-circle-2{% else %}alert-triangle{% endif %}" class="w-5 h-5 flex-shrink-0 mt-0.5 {% if message.tags == 'success' %}text-emerald-600{% else %}text-rose-600{% endif %}"></i>
-            <div class="text-sm font-medium leading-relaxed">{{ message }}</div>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
 
     <!-- Resumen del Ciclo Activo -->
     {% if ciclo_activo %}
@@ -55,17 +43,17 @@
         <!-- Métricas de Evaluación Preliminar -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
-                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Matriculados</span>
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Inscritos</span>
                 <span class="text-2xl font-black text-slate-900 mt-1 block">{{ total_inscritos|default:"0" }}</span>
             </div>
 
             <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200">
-                <span class="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block">Alumnos Promovidos (≥ 60 pts)</span>
+                <span class="text-[11px] font-bold text-emerald-800 uppercase tracking-wider block">Estudiantes Promovidos (≥ 60 pts)</span>
                 <span class="text-2xl font-black text-emerald-700 mt-1 block">{{ promovidos_count|default:"0" }}</span>
             </div>
 
             <div class="p-4 rounded-xl bg-amber-50 border border-amber-200">
-                <span class="text-[11px] font-bold text-amber-800 uppercase tracking-wider block">Alumnos Retenidos (En Evaluación)</span>
+                <span class="text-[11px] font-bold text-amber-800 uppercase tracking-wider block">Estudiantes Retenidos (En Evaluación)</span>
                 <span class="text-2xl font-black text-amber-800 mt-1 block">{{ retenidos_count|default:"0" }}</span>
             </div>
         </div>
@@ -74,15 +62,89 @@
         <div class="p-5 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-xs space-y-2">
             <div class="flex items-center gap-2 font-extrabold text-sm">
                 <i data-lucide="info" class="w-5 h-5 text-blue-600"></i>
-                <span>Reglamento de Evaluación de Promoción (MINEDUC Guatemala):</span>
+                <span>Reglamento de Evaluación de los Aprendizajes (MINEDUC Acuerdo Ministerial 1171-2010):</span>
             </div>
             <p class="leading-relaxed">
+                <b>Art. 26:</b> Tienen derecho a examen de recuperación los estudiantes que reprueben hasta un máximo de <b>tres (3) asignaturas</b>.<br>
+                <b>Art. 27:</b> No tienen derecho a examen de recuperación los estudiantes que reprueben <b>cuatro (4) o más asignaturas</b>, debiendo repetir el grado.<br>
                 Al ejecutar el <b>Cierre Anual del Ciclo Lectivo {{ ciclo_activo.anio }}</b>, el sistema calculará las notas definitivas
-                de todos los cursos del pensum (incluyendo pruebas de recuperación si aplicaron).
-                Aquellos estudiantes que hayan aprobado el 100% de asignaturas ($\ge 60$ pts) serán marcados automáticamente como <b>PROMOVIDOS</b>,
-                quedando habilitados para la Reinscripción Rápida al siguiente ciclo.
+                de todos los cursos del pensum. Aquellos estudiantes que hayan aprobado el 100% de asignaturas (&ge; 60 pts) serán promovidos.
             </p>
         </div>
+
+        {% if estudiantes_con_reprobadas %}
+        <!-- Listado de Estudiantes con Asignaturas Pendientes / Recuperación -->
+        <div class="border border-slate-200 rounded-xl overflow-hidden">
+            <div class="bg-slate-50 px-5 py-3 border-b border-slate-200 flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                    <i data-lucide="clipboard-list" class="w-4 h-4 text-amber-600"></i>
+                    Estudiantes con Asignaturas Reprobadas (&lt; 60 pts)
+                </span>
+                <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                    {{ estudiantes_con_reprobadas|length }} Casos
+                </span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50/50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
+                            <th class="py-3 px-4">Estudiante</th>
+                            <th class="py-3 px-4">Sección</th>
+                            <th class="py-3 px-4 text-center">Reprobadas</th>
+                            <th class="py-3 px-4">Estado MINEDUC</th>
+                            <th class="py-3 px-4 text-right">Acciones de Recuperación</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                        {% for item in estudiantes_con_reprobadas %}
+                        <tr class="hover:bg-slate-50/60 transition-colors">
+                            <td class="py-3 px-4 font-bold text-slate-900">
+                                {{ item.asignacion.estudiante.persona.nombre_completo }}
+                                <span class="block text-[11px] font-mono text-slate-400">CUI: {{ item.asignacion.estudiante.persona.cui }}</span>
+                            </td>
+                            <td class="py-3 px-4 font-semibold text-slate-600">
+                                {{ item.asignacion.seccion }}
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                <span class="px-2 py-0.5 rounded-full text-xs font-black {% if item.aplica_recuperacion %}bg-amber-100 text-amber-800{% else %}bg-rose-100 text-rose-800{% endif %}">
+                                    {{ item.total_reprobadas }}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4">
+                                {% if item.aplica_recuperacion %}
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                    <i data-lucide="check" class="w-3.5 h-3.5 text-amber-600"></i>
+                                    Aplica a Recuperación (Art. 26)
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-rose-50 text-rose-800 border border-rose-200">
+                                    <i data-lucide="alert-octagon" class="w-3.5 h-3.5 text-rose-600"></i>
+                                    Sin derecho a recuperación — Repite Grado (Art. 27: 4+ reprobadas)
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-4 text-right">
+                                {% if item.aplica_recuperacion %}
+                                <div class="flex flex-wrap justify-end gap-1.5">
+                                    {% for nr in item.notas_reprobadas %}
+                                    <a href="{% url 'academico:ingreso_recuperacion' nr.pk %}"
+                                       class="inline-flex items-center gap-1 px-2.5 py-1 bg-[#1E6532] hover:bg-[#1E6532]/90 text-white rounded-lg text-[11px] font-bold transition-colors">
+                                        <i data-lucide="edit-3" class="w-3 h-3"></i>
+                                        Recuperar {{ nr.curso.nombre_curso }} ({{ nr.nota_promedio }} pts)
+                                    </a>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <span class="text-xs text-slate-400 font-semibold italic">No habilitado por ley</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
 
         <!-- Acción de Ejecución -->
         <form method="post" class="flex justify-end pt-2">

@@ -34,9 +34,40 @@
             }
         }
     </script>
+    <!-- Tom Select (Busqueda predictiva y filtrado en desplegables) -->
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
+        }
+        /* Estilos corporativos IBACOOP para Tom Select */
+        .ts-control {
+            border-radius: 0.5rem !important;
+            border-color: #cbd5e1 !important;
+            padding: 0.625rem 1rem !important;
+            font-size: 0.875rem !important;
+            line-height: 1.25rem !important;
+            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+            background-color: #ffffff !important;
+        }
+        .ts-control.focus {
+            border-color: #1E6532 !important;
+            box-shadow: 0 0 0 2px rgba(30, 101, 50, 0.2) !important;
+        }
+        .ts-dropdown {
+            border-radius: 0.5rem !important;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+            border-color: #e2e8f0 !important;
+            font-size: 0.875rem !important;
+            z-index: 50 !important;
+        }
+        .ts-dropdown .active {
+            background-color: #1E6532 !important;
+            color: #ffffff !important;
+        }
+        .ts-dropdown .option {
+            padding: 0.5rem 1rem !important;
         }
     </style>
 </head>
@@ -74,84 +105,176 @@
             </div>
 
             <!-- Enlaces del menú principal -->
-            <nav class="flex-1 overflow-y-auto px-4 py-6 space-y-1.5">
-                <div class="px-3 pb-2 text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-                    Navegación Principal
+            <nav class="flex-1 overflow-y-auto px-3.5 py-4 space-y-1 sidebar-scroll">
+                <div class="px-3 pb-1 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                    General
                 </div>
 
                 <!-- Inicio / Dashboard -->
                 <a href="{% url 'core:home' %}"
-                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if request.resolver_match.view_name == 'core:home' %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
+                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if request.resolver_match.app_name == 'core' and request.resolver_match.view_name == 'core:home' %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
                     <i data-lucide="layout-dashboard"
-                        class="w-4 h-4 {% if request.resolver_match.view_name == 'core:home' %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
+                        class="w-4 h-4 {% if request.resolver_match.app_name == 'core' and request.resolver_match.view_name == 'core:home' %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
                     <span>Dashboard</span>
                 </a>
 
-                <!-- Control de usuarios -->
-                {% if perms.usuarios.view_usuario %}
-                <a href="{% url 'usuarios:usuario_list' %}"
-                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if 'usuario' in request.resolver_match.view_name %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
-                    <i data-lucide="users"
-                        class="w-4 h-4 {% if 'usuario' in request.resolver_match.view_name %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
-                    <span>Gestión Usuarios</span>
+                <!-- Autoservicio para Rol ESTUDIANTE -->
+                {% if user.rol == 'ESTUDIANTE' and user.mi_estudiante_id %}
+                <div class="pt-4 px-3 pb-1 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                    Mi Portal Estudiantil
+                </div>
+                <a href="{% url 'estudiantes:estudiante_detail' user.mi_estudiante_id %}"
+                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if request.resolver_match.view_name == 'estudiantes:estudiante_detail' %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
+                    <i data-lucide="folder-user"
+                        class="w-4 h-4 {% if request.resolver_match.view_name == 'estudiantes:estudiante_detail' %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
+                    <span>Mi Expediente</span>
+                </a>
+                <a href="{% url 'financiero:estudiante_cuenta_corriente' user.mi_estudiante_id %}"
+                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if request.resolver_match.view_name == 'financiero:estudiante_cuenta_corriente' %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
+                    <i data-lucide="receipt"
+                        class="w-4 h-4 {% if request.resolver_match.view_name == 'financiero:estudiante_cuenta_corriente' %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
+                    <span>Mi Estado de Cuenta</span>
                 </a>
                 {% endif %}
 
-                <!-- Módulos principales del colegio -->
-                <div class="pt-6 px-3 pb-2 text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-                    Módulos
+                <!-- Bloque: Gestión Escolar -->
+                {% if perms.estudiantes.view_estudiante or perms.academico.add_asignacionestudiante or perms.academico.change_notabloque or perms.academico.view_asignaciondocente %}
+                <div class="pt-4 px-3 pb-1 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                    Gestión Escolar
                 </div>
 
-                <!-- Gestión de Alumnos -->
+                <!-- Control de Estudiantes (Padrón Administrativo) -->
+                {% if perms.estudiantes.view_estudiante %}
                 <a href="{% url 'estudiantes:estudiante_list' %}"
-                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if 'estudiante' in request.resolver_match.view_name or 'encargado' in request.resolver_match.view_name %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
+                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if request.resolver_match.app_name == 'estudiantes' and user.rol != 'ESTUDIANTE' %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
                     <i data-lucide="user-check"
-                        class="w-4 h-4 {% if 'estudiante' in request.resolver_match.view_name %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
-                    <span>Gestión de Alumnos</span>
+                        class="w-4 h-4 {% if request.resolver_match.app_name == 'estudiantes' and user.rol != 'ESTUDIANTE' %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
+                    <span>Control de Estudiantes</span>
                 </a>
+                {% endif %}
 
                 <!-- Gestión Académica (Módulo Unificado) -->
+                {% if perms.academico.add_asignacionestudiante %}
                 <a href="{% url 'academico:asignacion_estudiante_list' %}"
-                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if 'academico' in request.resolver_match.namespace %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
+                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if request.resolver_match.app_name == 'academico' %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
                     <i data-lucide="graduation-cap"
-                        class="w-4 h-4 {% if 'academico' in request.resolver_match.namespace %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
+                        class="w-4 h-4 {% if request.resolver_match.app_name == 'academico' %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
                     <span>Gestión Académica</span>
                 </a>
-
-                <!-- Recursos Humanos -->
-                <a href="{% url 'rrhh:personal_list' %}"
-                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if 'personal' in request.resolver_match.view_name %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
-                    <i data-lucide="briefcase"
-                        class="w-4 h-4 {% if 'personal' in request.resolver_match.view_name %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
-                    <span>Recursos Humanos</span>
+                {% elif perms.academico.change_notabloque or perms.academico.view_asignaciondocente %}
+                <a href="{% url 'academico:docente_mis_cursos' %}"
+                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if request.resolver_match.app_name == 'academico' %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
+                    <i data-lucide="book-open"
+                        class="w-4 h-4 {% if request.resolver_match.app_name == 'academico' %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
+                    <span>Mis Cursos y Notas</span>
                 </a>
+                {% endif %}
+
+                <!-- Disciplina y Convivencia Escolar (MINEDUC 01-2011) -->
+                {% if perms.disciplina.view_incidentedisciplinario %}
+                <a href="{% url 'disciplina:panel' %}"
+                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if request.resolver_match.app_name == 'disciplina' %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
+                    <i data-lucide="shield-alert"
+                        class="w-4 h-4 {% if request.resolver_match.app_name == 'disciplina' %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
+                    <span>Disciplina y Convivencia</span>
+                </a>
+                {% endif %}
+                {% endif %}
+
+                <!-- Bloque: Administración y Finanzas -->
+                {% if perms.financiero.view_cuentaporcobrar or perms.rrhh.view_personal or perms.inventario.view_articuloinventario %}
+                <div class="pt-4 px-3 pb-1 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                    Administración y Finanzas
+                </div>
 
                 <!-- Gestión Financiera (Módulo Unificado) -->
+                {% if perms.financiero.view_cuentaporcobrar %}
                 <a href="{% url 'financiero:cuentaporcobrar_list' %}"
-                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if 'financiero' in request.resolver_match.namespace %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
+                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if request.resolver_match.app_name == 'financiero' and request.resolver_match.view_name != 'financiero:estudiante_cuenta_corriente' %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
                     <i data-lucide="receipt"
-                        class="w-4 h-4 {% if 'financiero' in request.resolver_match.namespace %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
+                        class="w-4 h-4 {% if request.resolver_match.app_name == 'financiero' and request.resolver_match.view_name != 'financiero:estudiante_cuenta_corriente' %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
                     <span>Gestión Financiera</span>
                 </a>
+                {% endif %}
 
+                <!-- Recursos Humanos -->
+                {% if perms.rrhh.view_personal %}
+                <a href="{% url 'rrhh:personal_list' %}"
+                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if request.resolver_match.app_name == 'rrhh' %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
+                    <i data-lucide="briefcase"
+                        class="w-4 h-4 {% if request.resolver_match.app_name == 'rrhh' %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
+                    <span>Recursos Humanos</span>
+                </a>
+                {% endif %}
+
+                <!-- Control de Inventario -->
+                {% if perms.inventario.view_articuloinventario %}
+                <a href="{% url 'inventario:articulo_list' %}"
+                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if request.resolver_match.app_name == 'inventario' %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
+                    <i data-lucide="package"
+                        class="w-4 h-4 {% if request.resolver_match.app_name == 'inventario' %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
+                    <span>Control de Inventario</span>
+                </a>
+                {% endif %}
+                {% endif %}
+
+                <!-- Bloque: Sistema y Control -->
+                {% if user.rol == 'ADMINISTRADOR' or user.rol == 'DIRECTOR' or user.rol == 'SECRETARIA' or user.rol == 'CONTADOR' or user.is_superuser or perms.usuarios.view_usuario or perms.auditoria.view_registroauditoria %}
+                <div class="pt-4 px-3 pb-1 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                    Sistema y Control
+                </div>
+
+                <!-- Centro de Reportes -->
+                {% if user.rol == 'ADMINISTRADOR' or user.rol == 'DIRECTOR' or user.rol == 'SECRETARIA' or user.rol == 'CONTADOR' or user.is_superuser %}
+                <a href="{% url 'reportes:panel' %}"
+                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if request.resolver_match.app_name == 'reportes' %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
+                    <i data-lucide="bar-chart-3"
+                        class="w-4 h-4 {% if request.resolver_match.app_name == 'reportes' %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
+                    <span>Centro de Reportes</span>
+                </a>
+                {% endif %}
+
+                <!-- Auditoría del Sistema -->
+                {% if perms.auditoria.view_registroauditoria or user.is_superuser %}
+                <a href="{% url 'auditoria:panel' %}"
+                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if request.resolver_match.app_name == 'auditoria' %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
+                    <i data-lucide="shield-check"
+                        class="w-4 h-4 {% if request.resolver_match.app_name == 'auditoria' %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
+                    <span>Auditoría del Sistema</span>
+                </a>
+                {% endif %}
+
+                <!-- Control de Usuarios -->
+                {% if perms.usuarios.view_usuario %}
+                <a href="{% url 'usuarios:usuario_list' %}"
+                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if request.resolver_match.app_name == 'usuarios' and request.resolver_match.view_name != 'usuarios:mi_perfil' and request.resolver_match.view_name != 'usuarios:cambiar_mi_password' %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
+                    <i data-lucide="users"
+                        class="w-4 h-4 {% if request.resolver_match.app_name == 'usuarios' and request.resolver_match.view_name != 'usuarios:mi_perfil' and request.resolver_match.view_name != 'usuarios:cambiar_mi_password' %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
+                    <span>Gestión Usuarios</span>
+                </a>
+                {% endif %}
+                {% endif %}
             </nav>
 
-            <!-- Datos del usuario conectado en el menú -->
-            <div class="p-4 border-t border-slate-100 bg-slate-50/60">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-[#1E6532] text-white flex items-center justify-center font-bold text-xs shadow-sm flex-shrink-0">
-                        {{ user.username|slice:":2"|upper }}
+            <!-- Datos del usuario conectado en el pie del menú -->
+            <div class="p-3.5 border-t border-slate-100 bg-slate-50/80">
+                <a href="{% url 'usuarios:mi_perfil' %}"
+                    class="flex items-center gap-3 p-1.5 -m-1.5 rounded-xl transition-all group {% if request.resolver_match.view_name == 'usuarios:mi_perfil' or request.resolver_match.view_name == 'usuarios:cambiar_mi_password' %}bg-[#1E6532]/10 text-[#1E6532]{% else %}hover:bg-slate-100/80{% endif %}"
+                    title="Ver mi perfil y ajustes de cuenta">
+                    <div class="w-9 h-9 rounded-full bg-[#1E6532] text-white flex items-center justify-center font-bold text-xs shadow-sm flex-shrink-0 group-hover:scale-105 transition-transform">
+                        {{ user.iniciales }}
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-bold text-slate-900 truncate leading-tight">
+                        <p class="text-xs font-bold text-slate-900 truncate leading-tight group-hover:text-[#1E6532] transition-colors">
                             {{ user.nombre_completo }}
                         </p>
                         <!-- Indicador del rol -->
-                        <span class="inline-flex items-center px-2 py-0.5 mt-1 rounded text-[10px] font-bold bg-[#1E6532]/10 text-[#1E6532] border border-[#1E6532]/20">
+                        <span class="inline-flex items-center px-1.5 py-0.5 mt-0.5 rounded text-[10px] font-bold bg-[#1E6532]/10 text-[#1E6532] border border-[#1E6532]/20">
                             {{ user.get_rol_display|default:user.username }}
                         </span>
                     </div>
-                </div>
+                    <i data-lucide="settings" class="w-4 h-4 text-slate-400 group-hover:text-[#1E6532] transition-colors"></i>
+                </a>
             </div>
         </aside>
 
@@ -212,9 +335,83 @@
     </main>
     {% endif %}
 
+    {% if messages %}
+    <div id="django-toast-messages" class="hidden" aria-hidden="true">
+        {% for message in messages %}
+        <div class="django-toast-item" data-tags="{{ message.tags|default:'info' }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+    <style>
+        .notyf { padding: 1.25rem !important; }
+        .notyf__toast {
+            border-radius: 0.875rem !important;
+            box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.32), 0 4px 10px -2px rgba(15, 23, 42, 0.15) !important;
+            font-family: 'Inter', sans-serif !important;
+            font-size: 0.8125rem !important;
+            font-weight: 600 !important;
+            max-width: 420px !important;
+            width: auto !important;
+            color: #FFFFFF !important;
+            border: 1px solid rgba(255, 255, 255, 0.18) !important;
+            overflow: hidden !important;
+            padding: 0 !important;
+        }
+        .notyf__toast--success { background-color: #1E6532 !important; }
+        .notyf__toast--error { background-color: #7A1C21 !important; }
+        .notyf__toast--warning { background-color: #D97706 !important; }
+        .notyf__toast--info { background-color: #3C7DA8 !important; }
+        .notyf__ripple { display: none !important; }
+        .notyf__wrapper {
+            padding: 0.875rem 1.125rem !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.75rem !important;
+        }
+        .notyf__icon { margin: 0 !important; flex-shrink: 0 !important; }
+        .notyf__icon--success { background: #FFFFFF !important; color: #1E6532 !important; }
+        .notyf__icon--error { background: #FFFFFF !important; color: #7A1C21 !important; }
+        .notyf__message { color: #FFFFFF !important; line-height: 1.4 !important; font-weight: 600 !important; margin: 0 !important; }
+        .notyf__dismiss { border-left: 1px solid rgba(255, 255, 255, 0.2) !important; }
+        .notyf__dismiss-btn { background-color: transparent !important; opacity: 0.85 !important; }
+        .notyf__dismiss-btn:hover { background-color: rgba(255, 255, 255, 0.15) !important; opacity: 1 !important; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+
     <script>
         // Inicializar iconos de Lucide
         lucide.createIcons();
+
+        // Notificaciones Toast (Notyf)
+        document.addEventListener('DOMContentLoaded', function() {
+            const toastItems = document.querySelectorAll('#django-toast-messages .django-toast-item');
+            if (toastItems.length > 0 && typeof Notyf !== 'undefined') {
+                const notyf = new Notyf({
+                    duration: 5000,
+                    position: { x: 'right', y: 'top' },
+                    dismissible: true,
+                    ripple: false,
+                    types: [
+                        { type: 'success', background: '#1E6532', className: 'notyf__toast--success', duration: 5000, icon: { className: 'notyf__icon--success', tagName: 'i' } },
+                        { type: 'error', background: '#7A1C21', className: 'notyf__toast--error', duration: 6500, icon: { className: 'notyf__icon--error', tagName: 'i' } },
+                        { type: 'warning', background: '#D97706', className: 'notyf__toast--warning', duration: 6000, icon: false },
+                        { type: 'info', background: '#3C7DA8', className: 'notyf__toast--info', duration: 5000, icon: false }
+                    ]
+                });
+                toastItems.forEach(function(item) {
+                    const tags = item.getAttribute('data-tags') || 'info';
+                    const text = item.textContent.trim();
+                    if (!text) return;
+                    let type = 'info';
+                    if (tags.includes('error') || tags.includes('danger')) type = 'error';
+                    else if (tags.includes('warning')) type = 'warning';
+                    else if (tags.includes('success')) type = 'success';
+                    notyf.open({ type: type, message: text });
+                });
+            }
+        });
 
         // Control de Menú Desplegable en Móviles
         document.addEventListener('DOMContentLoaded', function () {
@@ -237,6 +434,28 @@
             if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
             if (overlay) overlay.addEventListener('click', closeSidebar);
         });
+
+        // Inicializar TomSelect en campos con clase .searchable-select
+        function initSearchableSelects() {
+            if (typeof TomSelect === 'undefined') return;
+            document.querySelectorAll('select.searchable-select, select[data-searchable="true"]').forEach(function(el) {
+                if (!el.tomselect) {
+                    new TomSelect(el, {
+                        create: false,
+                        maxOptions: 500,
+                        placeholder: el.getAttribute('data-placeholder') || el.getAttribute('placeholder') || 'Escriba para buscar por nombre, CUI/DPI o código...',
+                        allowEmptyOption: true,
+                        render: {
+                            no_results: function(data, escape) {
+                                return '<div class="no-results p-3 text-sm text-slate-500 text-center">No se encontraron resultados para "' + escape(data.input) + '"</div>';
+                            }
+                        }
+                    });
+                }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', initSearchableSelects);
+        document.body.addEventListener('htmx:afterSwap', initSearchableSelects);
     </script>
 </body>
 

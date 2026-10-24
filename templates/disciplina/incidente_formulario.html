@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if form.instance.pk %}Editar Falta Disciplinaria{% else %}Registrar Falta Disciplinaria{% endif %}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+
+    <!-- Encabezado -->
+    <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+                <a href="{% url 'disciplina:dashboard' %}" class="hover:underline">Disciplina Escolar</a>
+                <span>/</span>
+                <span class="text-slate-500">{% if form.instance.pk %}Editar Caso #{{ form.instance.pk }}{% else %}Nuevo Registro{% endif %}</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+                <i data-lucide="shield-alert" class="w-7 h-7 text-[#1E6532]"></i>
+                {% if form.instance.pk %}Editar Falta Disciplinaria{% else %}Registrar Falta Disciplinaria{% endif %}
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">
+                Garantice el debido proceso legal escolar y el derecho de audiencia conforme al Acuerdo Ministerial 01-2011.
+            </p>
+        </div>
+
+        <a href="{% url 'disciplina:dashboard' %}" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors">
+            Volver a la Bitácora
+        </a>
+    </div>
+
+    <!-- Formulario Principal -->
+    <form method="post" class="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="p-4 bg-rose-50 border-b border-rose-100 text-xs text-rose-700">
+            <p class="font-bold flex items-center gap-1.5 mb-1">
+                <i data-lucide="alert-triangle" class="w-4 h-4"></i> Error de validación:
+            </p>
+            <ul class="list-disc list-inside space-y-0.5">
+                {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="p-6 space-y-6">
+
+            <!-- Sección 1: Estudiante y Ciclo -->
+            <div>
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full bg-[#1E6532] text-white flex items-center justify-center text-[10px]">1</span>
+                    Identificación del Estudiante
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="block text-xs font-bold text-slate-700">Estudiante *</label>
+                            <span class="text-[10px] font-semibold text-[#1E6532] flex items-center gap-1">
+                                <i data-lucide="search" class="w-3 h-3"></i> Búsqueda por DPI / Nombre
+                            </span>
+                        </div>
+                        {{ form.estudiante }}
+                        <p class="text-[11px] text-slate-400 mt-1">Escriba el nombre, DPI/CUI o código MINEDUC del estudiante para buscar.</p>
+                        {% if form.estudiante.errors %}
+                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.estudiante.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Ciclo Escolar *</label>
+                        {{ form.ciclo_escolar }}
+                        {% if form.ciclo_escolar.errors %}
+                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.ciclo_escolar.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <hr class="border-slate-100">
+
+            <!-- Sección 2: Circunstancias de Tiempo y Espacio -->
+            <div>
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full bg-[#1E6532] text-white flex items-center justify-center text-[10px]">2</span>
+                    Momento y Lugar
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Fecha del Suceso *</label>
+                        {{ form.fecha }}
+                        {% if form.fecha.errors %}
+                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.fecha.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Hora aproximada</label>
+                        {{ form.hora }}
+                        {% if form.hora.errors %}
+                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.hora.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Lugar del Incidente *</label>
+                        {{ form.lugar }}
+                        {% if form.lugar.errors %}
+                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.lugar.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <hr class="border-slate-100">
+
+            <!-- Sección 3: Clasificación MINEDUC -->
+            <div>
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full bg-[#1E6532] text-white flex items-center justify-center text-[10px]">3</span>
+                    Tipificación Normativa (Acuerdo 01-2011)
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Clasificación de Falta *</label>
+                        {{ form.tipo_falta }}
+                        {% if form.tipo_falta.errors %}
+                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.tipo_falta.errors.0 }}</p>
+                        {% endif %}
+                        <span class="text-[10px] text-slate-400 block mt-1">Leve (llamada formativa), Grave (afecta convivencia), Muy Grave (violencia o daño).</span>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Categoría Específica *</label>
+                        {{ form.categoria }}
+                        {% if form.categoria.errors %}
+                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.categoria.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <hr class="border-slate-100">
+
+            <!-- Sección 4: Descripción de Hechos y Descargo del Estudiante -->
+            <div>
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full bg-[#1E6532] text-white flex items-center justify-center text-[10px]">4</span>
+                    Relato de los Hechos y Garantía de Audiencia
+                </h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Descripción Objetiva de los Hechos *</label>
+                        {{ form.descripcion_hechos }}
+                        {% if form.descripcion_hechos.errors %}
+                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.descripcion_hechos.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">
+                            Declaración o Descargo del Estudiante (Derecho de Audiencia)
+                        </label>
+                        {{ form.descargo_estudiante }}
+                        {% if form.descargo_estudiante.errors %}
+                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.descargo_estudiante.errors.0 }}</p>
+                        {% endif %}
+                        <span class="text-[10px] text-slate-400 block mt-0.5">El Acuerdo 01-2011 exige escuchar y registrar la versión del estudiante antes de sancionar.</span>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="border-slate-100">
+
+            <!-- Sección 5: Medida Pedagógica y Citación -->
+            <div>
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full bg-[#1E6532] text-white flex items-center justify-center text-[10px]">5</span>
+                    Medidas Correctivas y Citación
+                </h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Medida Formativa o Pedagógica Aplicada</label>
+                        {{ form.medida_formativa }}
+                        {% if form.medida_formativa.errors %}
+                        <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.medida_formativa.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <div>
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                {{ form.requiere_citacion }}
+                                <div>
+                                    <span class="text-xs font-bold text-slate-800 block">¿Requiere Citación al Encargado?</span>
+                                    <span class="text-[10px] text-slate-500">Habilita la emisión del citatorio oficial formal en PDF.</span>
+                                </div>
+                            </label>
+                            {% if form.requiere_citacion.errors %}
+                            <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.requiere_citacion.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                {{ form.esta_resuelto }}
+                                <div>
+                                    <span class="text-xs font-bold text-slate-800 block">¿Caso Resuelto y Cerrado?</span>
+                                    <span class="text-[10px] text-slate-500">Marque cuando se hayan cumplido los compromisos y medidas.</span>
+                                </div>
+                            </label>
+                            {% if form.esta_resuelto.errors %}
+                            <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.esta_resuelto.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Barra Inferior de Guardado -->
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
+            <a href="{% url 'disciplina:dashboard' %}" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-100 transition-colors">
+                Cancelar
+            </a>
+            <button type="submit" class="px-6 py-2 bg-[#1E6532] hover:bg-[#1E6532]/90 text-white rounded-xl text-xs font-bold transition-all shadow-md">
+                Guardar Incidente
+            </button>
+        </div>
+    </form>
+
+</div>
+{% endblock %}

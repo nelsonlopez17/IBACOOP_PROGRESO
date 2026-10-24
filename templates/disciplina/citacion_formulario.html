@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block title %}Programar / Registrar Citación a Padre de Familia{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+
+    <!-- Encabezado -->
+    <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+                <a href="{% url 'disciplina:dashboard' %}" class="hover:underline">Disciplina</a>
+                <span>/</span>
+                <a href="{% url 'disciplina:incidente_detail' incidente.id %}" class="hover:underline">Incidente #{{ incidente.id }}</a>
+                <span>/</span>
+                <span class="text-slate-500">Citación</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-[#7A1C21] tracking-tight flex items-center gap-2.5">
+                <i data-lucide="calendar-plus" class="w-7 h-7 text-[#7A1C21]"></i>
+                {% if form.instance.pk %}Actualizar Citación{% else %}Programar Citación a Padres{% endif %}
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">
+                Estudiante: <strong>{{ incidente.estudiante.persona.nombre_completo }}</strong> — {{ incidente.get_tipo_falta_display }}
+            </p>
+        </div>
+
+        <a href="{% url 'disciplina:incidente_detail' incidente.id %}" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors">
+            Cancelar
+        </a>
+    </div>
+
+    <!-- Formulario -->
+    <form method="post" class="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="p-4 bg-rose-50 border-b border-rose-100 text-xs text-rose-700">
+            <p class="font-bold mb-1">Error de validación:</p>
+            <ul class="list-disc list-inside">
+                {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="p-6 space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Fecha y Hora Programada *</label>
+                {{ form.fecha_hora_citacion }}
+                {% if form.fecha_hora_citacion.errors %}
+                <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.fecha_hora_citacion.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Motivo Formal de la Citación *</label>
+                {{ form.motivo_citacion }}
+                {% if form.motivo_citacion.errors %}
+                <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.motivo_citacion.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Lugar de la Comparecencia</label>
+                    {{ form.lugar }}
+                    {% if form.lugar.errors %}
+                    <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.lugar.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Atendido por</label>
+                    {{ form.atendido_por }}
+                    {% if form.atendido_por.errors %}
+                    <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.atendido_por.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Estado de la Citación</label>
+                {{ form.estado }}
+                {% if form.estado.errors %}
+                <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.estado.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Acuerdos y Compromisos Firmados con los Padres</label>
+                {{ form.acuerdos_alcanzados }}
+                {% if form.acuerdos_alcanzados.errors %}
+                <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.acuerdos_alcanzados.errors.0 }}</p>
+                {% endif %}
+                <span class="text-[10px] text-slate-400 block mt-0.5">Registre los compromisos asumidos en el acta al comparecer el encargado.</span>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Observaciones de Seguimiento Interno</label>
+                {{ form.observaciones_seguimiento }}
+                {% if form.observaciones_seguimiento.errors %}
+                <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.observaciones_seguimiento.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label class="flex items-center gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200 cursor-pointer">
+                    {{ form.notificacion_enviada }}
+                    <div>
+                        <span class="text-xs font-bold text-slate-800 block">¿Notificación entregada al encargado?</span>
+                        <span class="text-[10px] text-slate-500">Marque cuando el estudiante o encargado haya recibido el documento físico.</span>
+                    </div>
+                </label>
+                {% if form.notificacion_enviada.errors %}
+                <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.notificacion_enviada.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
+            <a href="{% url 'disciplina:incidente_detail' incidente.id %}" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-100 transition-colors">
+                Cancelar
+            </a>
+            <button type="submit" class="px-6 py-2 bg-[#7A1C21] hover:bg-[#7A1C21]/90 text-white rounded-xl text-xs font-bold transition-all shadow-md">
+                Guardar Citación
+            </button>
+        </div>
+    </form>
+
+</div>
+{% endblock %}

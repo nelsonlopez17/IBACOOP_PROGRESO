@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load l10n %}
 
 {% block title %}Registrar Pago / Abono{% endblock %}
 
@@ -59,11 +60,28 @@
             {% endif %}
 
             <div class="space-y-4">
+                <!-- Método de Pago -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                        <i data-lucide="wallet" class="w-3.5 h-3.5 text-emerald-700"></i>
+                        {{ form.metodo_pago.label }} <span class="text-rose-500">*</span>
+                    </label>
+                    {{ form.metodo_pago }}
+                    {% if form.metodo_pago.errors %}<p class="text-xs text-rose-600 font-semibold mt-1">{{ form.metodo_pago.errors.0 }}</p>{% endif %}
+                </div>
+
                 <!-- Monto Pagado -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                        {{ form.monto_pagado.label }} <span class="text-rose-500">*</span>
-                    </label>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                            {{ form.monto_pagado.label }} <span class="text-rose-500">*</span>
+                        </label>
+                        <button type="button" id="btn-saldo-completo" data-saldo="{{ cuenta.saldo_pendiente|unlocalize }}"
+                            class="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200 transition-colors inline-flex items-center gap-1 cursor-pointer">
+                            <i data-lucide="check" class="w-3 h-3 text-emerald-600"></i>
+                            <span>Saldo Completo (Q{{ cuenta.saldo_pendiente|floatformat:2 }})</span>
+                        </button>
+                    </div>
                     {{ form.monto_pagado }}
                     {% if form.monto_pagado.errors %}<p class="text-xs text-rose-600 font-semibold mt-1">{{ form.monto_pagado.errors.0 }}</p>{% endif %}
                 </div>
@@ -77,12 +95,15 @@
                     {% if form.fecha_pago.errors %}<p class="text-xs text-rose-600 font-semibold mt-1">{{ form.fecha_pago.errors.0 }}</p>{% endif %}
                 </div>
 
-                <!-- Número de Boleta -->
+                <!-- Número de Boleta / Referencia -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                        {{ form.numero_boleta.label }} <span class="text-rose-500">*</span>
+                    <label id="lbl-numero-boleta" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        <span id="txt-label-boleta">{{ form.numero_boleta.label }}</span>
+                        <span id="asterisco-boleta" class="text-rose-500 hidden">*</span>
+                        <span id="badge-opcional-boleta" class="text-[10px] font-semibold text-slate-400 lowercase ml-1">(opcional en efectivo)</span>
                     </label>
                     {{ form.numero_boleta }}
+                    <p id="help-boleta" class="text-[11px] text-slate-400 mt-1">Si se deja en blanco para cobro en efectivo, el sistema generará automáticamente el número de recibo de caja.</p>
                     {% if form.numero_boleta.errors %}<p class="text-xs text-rose-600 font-semibold mt-1">{{ form.numero_boleta.errors.0 }}</p>{% endif %}
                 </div>
 
@@ -108,4 +129,54 @@
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const metodoSelect = document.getElementById('id_metodo_pago');
+    const boletaInput = document.getElementById('id_numero_boleta');
+    const txtLabel = document.getElementById('txt-label-boleta');
+    const asterisco = document.getElementById('asterisco-boleta');
+    const badgeOpcional = document.getElementById('badge-opcional-boleta');
+    const helpBoleta = document.getElementById('help-boleta');
+    const btnSaldo = document.getElementById('btn-saldo-completo');
+    const montoInput = document.getElementById('id_monto_pagado') || document.querySelector('input[name="monto_pagado"]');
+
+    if (btnSaldo && montoInput) {
+        btnSaldo.addEventListener('click', function(e) {
+            e.preventDefault();
+            const rawSaldo = btnSaldo.getAttribute('data-saldo') || '{{ cuenta.saldo_pendiente|unlocalize }}';
+            const cleanSaldo = String(rawSaldo).replace(',', '.').trim();
+            montoInput.value = cleanSaldo;
+            montoInput.dispatchEvent(new Event('input', { bubbles: true }));
+            montoInput.dispatchEvent(new Event('change', { bubbles: true }));
+            montoInput.focus();
+        });
+    }
+
+    function updateMetodo() {
+        if (!metodoSelect || !boletaInput) return;
+        const val = metodoSelect.value;
+        if (val === 'EFECTIVO') {
+            txtLabel.textContent = 'No. de Recibo / Comprobante';
+            asterisco.classList.add('hidden');
+            badgeOpcional.classList.remove('hidden');
+            boletaInput.placeholder = 'Dejar vacío para generar recibo institucional automático';
+            boletaInput.required = false;
+            helpBoleta.textContent = 'Si se deja en blanco para cobro en efectivo, el sistema generará automáticamente el número correlativo de recibo.';
+        } else {
+            txtLabel.textContent = val === 'DEPOSITO' ? 'No. de Boleta Bancaria' : 'No. de Transferencia / Referencia';
+            asterisco.classList.remove('hidden');
+            badgeOpcional.classList.add('hidden');
+            boletaInput.placeholder = 'Ej. BOL-2026-98765 / No. Transacción Bancaria';
+            boletaInput.required = true;
+            helpBoleta.textContent = 'Ingrese el número de boleta de depósito o comprobante emitido por la entidad bancaria.';
+        }
+    }
+
+    if (metodoSelect) {
+        metodoSelect.addEventListener('change', updateMetodo);
+        updateMetodo();
+    }
+});
+</script>
 {% endblock %}

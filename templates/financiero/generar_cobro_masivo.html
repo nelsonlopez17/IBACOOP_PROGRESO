@@ -16,7 +16,7 @@
             <i data-lucide="users" class="w-7 h-7 text-[#1E6532]"></i>
             Emisión Masiva de Cuentas por Cobrar
         </h1>
-        <p class="text-xs text-slate-500 mt-1">Generación automatizada de deudas por concepto para un Grado, Sección o la totalidad de alumnos activos.</p>
+        <p class="text-xs text-slate-500 mt-1">Generación automatizada de deudas por concepto para un Grado, Sección o la totalidad de estudiantes activos.</p>
     </div>
 
     <!-- Formulario en Tarjeta -->
@@ -113,4 +113,66 @@
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const gradoSelect = document.getElementById('id_grado');
+    const seccionSelect = document.getElementById('id_seccion');
+    if (!gradoSelect || !seccionSelect) return;
+
+    const seccionesData = {{ secciones_json|safe }};
+    const initialSeccionId = seccionSelect.value;
+
+    function updateSecciones() {
+        const selectedGradoId = gradoSelect.value;
+        const currentVal = seccionSelect.value || initialSeccionId;
+
+        seccionSelect.innerHTML = '<option value="">-- Todas las secciones del grado --</option>';
+
+        if (!selectedGradoId) {
+            seccionesData.forEach(function(sec) {
+                const opt = document.createElement('option');
+                opt.value = sec.id;
+                opt.textContent = 'Sección ' + sec.letra;
+                if (String(sec.id) === String(currentVal)) {
+                    opt.selected = true;
+                }
+                seccionSelect.appendChild(opt);
+            });
+            return;
+        }
+
+        const filtered = seccionesData.filter(function(sec) {
+            return String(sec.grado_id) === String(selectedGradoId);
+        });
+
+        if (filtered.length === 0) {
+            const opt = document.createElement('option');
+            opt.value = "";
+            opt.textContent = "(Sin secciones registradas para este grado)";
+            opt.disabled = true;
+            seccionSelect.appendChild(opt);
+        } else {
+            filtered.forEach(function(sec) {
+                const opt = document.createElement('option');
+                opt.value = sec.id;
+                opt.textContent = 'Sección ' + sec.letra;
+                if (String(sec.id) === String(currentVal)) {
+                    opt.selected = true;
+                }
+                seccionSelect.appendChild(opt);
+            });
+        }
+    }
+
+    gradoSelect.addEventListener('change', function() {
+        seccionSelect.value = '';
+        updateSecciones();
+    });
+
+    if (gradoSelect.value) {
+        updateSecciones();
+    }
+});
+</script>
 {% endblock %}

@@ -1,1 +1,1 @@
-# APPS/portal
+# modulo del portal web institucional

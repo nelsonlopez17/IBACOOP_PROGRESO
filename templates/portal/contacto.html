@@ -1,0 +1,219 @@
+{% extends 'portal/base_portal.html' %}
+
+{% block title %}Contacto y Ubicación - IBACOOP Colonia El Progreso{% endblock %}
+
+{% block content %}
+<!-- ENCABEZADO DE PÁGINA -->
+<section class="bg-gradient-to-r from-slate-900 via-slate-800 to-[#144823] text-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl space-y-4">
+            <span class="text-xs font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-400/30">
+                Canales Oficiales
+            </span>
+            <h1 class="text-3xl sm:text-5xl font-black tracking-tight">
+                Contacto y Ubicación
+            </h1>
+            <p class="text-base sm:text-lg text-slate-300 leading-relaxed">
+                Estamos a su completa disposición para resolver cualquier duda respecto a admisiones, horarios, documentación o servicios educativos del instituto.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- SECCIÓN DE CANALES Y FORMULARIO -->
+<section class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            
+            <!-- Columna de Información y Canales -->
+            <div class="lg:col-span-5 space-y-8">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-[#1E6532] bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                        Atención Personalizada
+                    </span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-3 tracking-tight">
+                        Comuníquese con Secretaría
+                    </h2>
+                    <p class="text-slate-600 mt-3 text-sm leading-relaxed">
+                        Puede visitarnos en nuestras instalaciones durante la jornada vespertina o enviarnos un mensaje que responderemos en breve.
+                    </p>
+                </div>
+
+                <!-- Tarjetas de Información -->
+                <div class="space-y-4">
+                    <div class="flex items-start gap-4 p-5 rounded-2xl bg-slate-50 border border-slate-200">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-100 text-[#1E6532] flex items-center justify-center shrink-0">
+                            <i data-lucide="map-pin" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-900 text-sm">Dirección del Instituto</h4>
+                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">
+                                1ª Avenida 10-30, Colonia El Progreso, Escuintla, Guatemala.
+                            </p>
+                            <span class="text-[11px] font-semibold text-emerald-700 mt-1 block">Colonia El Progreso, municipio de Escuintla</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-4 p-5 rounded-2xl bg-slate-50 border border-slate-200">
+                        <div class="w-12 h-12 rounded-xl bg-blue-100 text-[#3C7DA8] flex items-center justify-center shrink-0">
+                            <i data-lucide="phone" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-900 text-sm">Teléfono y WhatsApp</h4>
+                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">
+                                PBX Secretaría: <strong>+(502) 7889-5918</strong><br>
+                                WhatsApp Consultas: <strong>+(502) 7889-5918</strong>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-4 p-5 rounded-2xl bg-slate-50 border border-slate-200">
+                        <div class="w-12 h-12 rounded-xl bg-rose-100 text-[#7A1C21] flex items-center justify-center shrink-0">
+                            <i data-lucide="mail" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-900 text-sm">Correo Institucional</h4>
+                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">
+                                ibacoop.elprogreso@gmail.com
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-4 p-5 rounded-2xl bg-slate-50 border border-slate-200">
+                        <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                            <i data-lucide="clock" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-900 text-sm">Horario de Atención Administrativa</h4>
+                            <p class="text-xs text-slate-600 mt-1 leading-relaxed">
+                                Lunes a Viernes: <strong>13:00 a 18:00 hrs</strong><br>
+                                Sábados y Domingos: Cerrado
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna del Formulario de Contacto -->
+            <div class="lg:col-span-7">
+                <div class="bg-slate-50 border border-slate-200 p-8 sm:p-10 rounded-3xl shadow-sm space-y-6">
+                    <div>
+                        <h3 class="text-2xl font-bold text-slate-900">Envíenos un Mensaje</h3>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Complete el siguiente formulario. Le contactaremos por teléfono o correo electrónico.
+                        </p>
+                    </div>
+
+                    <form method="post" action="{% url 'portal:contacto' %}" class="space-y-4">
+                        {% csrf_token %}
+                        <div style="display:none !important;" aria-hidden="true">
+                            {{ form.website_url }}
+                        </div>
+
+                        {% if form.non_field_errors %}
+                        <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="{{ form.nombre_remitente.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                                    Nombre Completo *
+                                </label>
+                                {{ form.nombre_remitente }}
+                                {% if form.nombre_remitente.errors %}
+                                <p class="text-xs text-rose-600 mt-1">{{ form.nombre_remitente.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <div>
+                                <label for="{{ form.correo.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                                    Correo Electrónico *
+                                </label>
+                                {{ form.correo }}
+                                {% if form.correo.errors %}
+                                <p class="text-xs text-rose-600 mt-1">{{ form.correo.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="{{ form.telefono.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                                    Teléfono o WhatsApp *
+                                </label>
+                                {{ form.telefono }}
+                                {% if form.telefono.errors %}
+                                <p class="text-xs text-rose-600 mt-1">{{ form.telefono.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <div>
+                                <label for="{{ form.asunto.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                                    Motivo o Asunto *
+                                </label>
+                                {{ form.asunto }}
+                                {% if form.asunto.errors %}
+                                <p class="text-xs text-rose-600 mt-1">{{ form.asunto.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="{{ form.mensaje.id_for_label }}" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                                Mensaje o Consulta *
+                            </label>
+                            {{ form.mensaje }}
+                            {% if form.mensaje.errors %}
+                            <p class="text-xs text-rose-600 mt-1">{{ form.mensaje.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="pt-2">
+                            <button type="submit" 
+                                    class="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm bg-[#1E6532] hover:bg-[#164c25] text-white shadow-md shadow-[#1E6532]/25 transition-all cursor-pointer">
+                                <i data-lucide="send" class="w-4 h-4"></i>
+                                <span>Enviar Consulta a Secretaría</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- CROQUIS Y UBICACIÓN -->
+<section class="py-16 bg-slate-50 border-t border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-3xl border border-slate-200 p-8 shadow-xs space-y-6">
+            <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-[#1E6532] flex items-center justify-center">
+                    <i data-lucide="compass" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900">Ubicación y Accesos</h3>
+                    <p class="text-xs text-slate-500">Instituto Básico por Cooperativa de Enseñanza de Colonia El Progreso</p>
+                </div>
+            </div>
+
+            <!-- Mapa / Ilustración de acceso -->
+            <div class="h-64 sm:h-80 w-full rounded-2xl bg-gradient-to-br from-emerald-50 via-slate-100 to-teal-50 border border-slate-200 flex flex-col items-center justify-center text-center p-6 space-y-3">
+                <div class="w-14 h-14 rounded-full bg-white shadow-md text-[#1E6532] flex items-center justify-center">
+                    <i data-lucide="map-pin" class="w-7 h-7 text-[#7A1C21]"></i>
+                </div>
+                <h4 class="font-bold text-slate-900 text-base">Instalaciones Centrales IBACOOP</h4>
+                <p class="text-xs text-slate-600 max-w-md leading-relaxed">
+                    Ubicado en Colonia El Progreso, cabecera de Escuintla, con fácil acceso peatonal y vehicular, rutas de transporte colectivo y zona segura para el descenso estudiantil.
+                </p>
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-100/80 text-emerald-800 text-xs font-semibold">
+                    <i data-lucide="navigation" class="w-3.5 h-3.5"></i>
+                    <span>Referencia: 1ª Avenida 10-30, Colonia El Progreso, Escuintla, Guatemala</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

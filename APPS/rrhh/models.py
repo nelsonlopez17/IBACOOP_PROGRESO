@@ -1,10 +1,13 @@
 """
 rrhh/models.py
 
-Recursos Humanos y Planilla/Nómina del Instituto El Progreso.
-Implementa el subtipo Personal (Persona FK primary_key=True), Puesto, AsistenciaPersonal y Planilla.
+Recursos Humanos y Planilla de Sueldos del Instituto El Progreso.
+Implementa el subtipo Personal (Persona FK primary_key=True), Puesto y Planilla.
 """
+from decimal import Decimal
 from django.db import models
+from django.core.validators import MinValueValidator
+from simple_history.models import HistoricalRecords
 from APPS.core.models import ModeloAuditable, Persona
 
 
@@ -14,13 +17,6 @@ class EstadoLaboralChoices(models.TextChoices):
     RETIRADO   = 'RETIRADO',   'Retirado'
     SUSPENDIDO = 'SUSPENDIDO', 'Suspendido'
 
-
-class EstadoAsistenciaChoices(models.TextChoices):
-    PRESENTE   = 'PRESENTE',   'Presente'
-    AUSENTE    = 'AUSENTE',    'Ausente'
-    TARDANZA   = 'TARDANZA',   'Tardanza'
-    PERMISO    = 'PERMISO',    'Con permiso'
-    VACACIONES = 'VACACIONES', 'En vacaciones'
 
 
 class MesChoices(models.IntegerChoices):
@@ -36,6 +32,14 @@ class MesChoices(models.IntegerChoices):
     OCTUBRE    = 10, 'Octubre'
     NOVIEMBRE  = 11, 'Noviembre'
     DICIEMBRE  = 12, 'Diciembre'
+
+class TipoPlanillaChoices(models.TextChoices):
+    ORDINARIA      = 'ORDINARIA',      'Planilla Mensual Ordinaria'
+    BONO_14        = 'BONO_14',        'Bono 14 (Decreto 42-92)'
+    AGUINALDO      = 'AGUINALDO',      'Aguinaldo (Decreto 76-78)'
+    EXTRAORDINARIA = 'EXTRAORDINARIA', 'Planilla Extraordinaria'
+    LIQUIDACION    = 'LIQUIDACION',    'Liquidación / Finiquito Laboral'
+
 
 
 class Puesto(ModeloAuditable):
@@ -95,6 +99,15 @@ class Personal(ModeloAuditable):
         max_digits=10,
         decimal_places=2,
         verbose_name='Salario base asignado (Q)'
+    )
+    fecha_baja = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name='Fecha de baja o retiro'
+    )
+    motivo_baja = models.TextField(
+        blank=True,
+        verbose_name='Motivo de la baja o retiro'
     )
 
     # Ubicación del Contrato y Resguardo Físico en Secretaría
@@ -161,7 +174,8 @@ class Personal(ModeloAuditable):
         ordering = ['persona__apellidos', 'persona__nombres']
 
     def __str__(self):
-        return f"{self.persona.nombre_completo} - {self.puesto.nombre_puesto}"
+        cui = f" | DPI: {self.persona.cui}" if self.persona and self.persona.cui else ""
+        return f"{self.persona.nombre_completo}{cui} ({self.puesto.nombre_puesto})"
 
     @property
     def expediente_completo(self):
@@ -197,50 +211,14 @@ class Personal(ModeloAuditable):
 
 
 
-class AsistenciaPersonal(ModeloAuditable):
-    """Registro diario de asistencia del personal."""
-    personal = models.ForeignKey(
-        Personal,
-        on_delete=models.RESTRICT,
-        related_name='asistencias',
-        verbose_name='Personal'
-    )
-    fecha = models.DateField(
-        verbose_name='Fecha'
-    )
-    hora_entrada = models.TimeField(
-        null=True,
-        blank=True,
-        verbose_name='Hora de entrada'
-    )
-    hora_salida = models.TimeField(
-        null=True,
-        blank=True,
-        verbose_name='Hora de salida'
-    )
-    estado_asistencia = models.CharField(
-        max_length=20,
-        choices=EstadoAsistenciaChoices.choices,
-        default=EstadoAsistenciaChoices.PRESENTE,
-        verbose_name='Estado de asistencia'
-    )
-    observaciones = models.TextField(
-        blank=True,
-        verbose_name='Observaciones'
-    )
-
-    class Meta:
-        verbose_name = 'Asistencia de Personal'
-        verbose_name_plural = 'Asistencias de Personal'
-        unique_together = [['personal', 'fecha']]
-        ordering = ['-fecha', 'personal']
-
-    def __str__(self):
-        return f"{self.personal.persona.nombre_completo} - {self.fecha} ({self.get_estado_asistencia_display()})"
-
 
 class Planilla(ModeloAuditable):
-    """Registro de pago de planilla mensual de personal."""
+    """
+    Registro de pago de planilla de personal (Normalizado en 3FN/4FN).
+    Soporta Planilla Ordinaria Mensual, Bono 14 (Dec. 42-92), Aguinaldo (Dec. 76-78),
+    Planilla Extraordinaria y Liquidación / Finiquito Laboral.
+    Desglosa deducciones legales (IGSS), anticipos de sueldo, retenciones judiciales y otros descuentos.
+    """
     personal = models.ForeignKey(
         Personal,
         on_delete=models.RESTRICT,
@@ -255,27 +233,131 @@ class Planilla(ModeloAuditable):
         related_name='planillas',
         verbose_name='Ciclo Escolar'
     )
+    tipo_planilla = models.CharField(
+        max_length=20,
+        choices=TipoPlanillaChoices.choices,
+        default=TipoPlanillaChoices.ORDINARIA,
+        verbose_name='Tipo de Planilla'
+    )
     mes_pagado = models.IntegerField(
         choices=MesChoices.choices,
         verbose_name='Mes pagado'
     )
+
+    # --- PERCEPCIONES / INGRESOS ---
+    salario_base = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0.00'))],
+        verbose_name='Salario Base Contratado (Q)',
+        help_text='Salario nominal pactado en el contrato laboral.'
+    )
+    dias_laborados = models.PositiveSmallIntegerField(
+        default=30,
+        verbose_name='Días laborados en el período'
+    )
+    salario_ordinario = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0.00'))],
+        verbose_name='Salario Ordinario Devengado (Q)',
+        help_text='Salario efectivamente devengado según días laborados.'
+    )
+    bonificacion_incentivo = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0.00'))],
+        verbose_name='Bonificación Incentivo de Ley (Q)',
+        help_text='Bonificación decreto 37-2001 (ordinaria Q250.00).'
+    )
     bonificaciones = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        default=0,
-        verbose_name='Bonificaciones (Q)'
+        default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0.00'))],
+        verbose_name='Otras Bonificaciones / Horas Extras (Q)'
+    )
+
+    # --- DEDUCCIONES / DESCUENTOS LABORALES ---
+    descuento_igss = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0.00'))],
+        verbose_name='Cuota Laboral IGSS (4.83%) (Q)'
+    )
+    retencion_isr = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0.00'))],
+        verbose_name='Retención ISR Asalariados (Q)',
+        help_text='Retención mensual s/rentas del trabajo Decreto 10-2012.'
+    )
+    descuento_anticipo = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0.00'))],
+        verbose_name='Anticipo de Sueldo / Vales (Q)'
+    )
+    descuento_judicial = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0.00'))],
+        verbose_name='Retención Judicial / Embargo (Q)'
+    )
+    descuento_otros = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0.00'))],
+        verbose_name='Otros Descuentos (Q)'
+    )
+    motivo_otros_descuentos = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name='Motivo de Otros Descuentos',
+        help_text='Indique la razón específica de otros descuentos o faltas.'
     )
     descuentos = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        default=0,
-        verbose_name='Descuentos (Q)'
+        default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0.00'))],
+        verbose_name='Total Descuentos (Q)'
     )
-    total_pagar = models.DecimalField(
+
+    # --- APORTES Y CARGAS PATRONALES (12.67% LEY DE GUATEMALA) ---
+    cuota_patronal_igss = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        verbose_name='Total a pagar (Q)'
+        default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0.00'))],
+        verbose_name='Cuota Patronal IGSS (10.67%) (Q)',
+        help_text='Aporte patronal IGSS según Decreto 295.'
     )
+    cuota_patronal_irtra = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0.00'))],
+        verbose_name='Cuota Patronal IRTRA (1.00%) (Q)',
+        help_text='Aporte patronal IRTRA según Decreto 1528.'
+    )
+    cuota_patronal_intecap = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        validators=[MinValueValidator(Decimal('0.00'))],
+        verbose_name='Cuota Patronal INTECAP (1.00%) (Q)',
+        help_text='Aporte patronal INTECAP según Decreto 17-72.'
+    )
+
     comprobante_pdf = models.FileField(
         upload_to='planillas/%Y/%m/',
         null=True,
@@ -291,12 +373,101 @@ class Planilla(ModeloAuditable):
         default=False,
         verbose_name='¿Pagado?'
     )
+    history = HistoricalRecords(
+        verbose_name='Auditoría de Planilla'
+    )
 
     class Meta:
         verbose_name = 'Planilla'
         verbose_name_plural = 'Planillas'
-        unique_together = [['personal', 'mes_pagado', 'ciclo_escolar']]
-        ordering = ['-mes_pagado']
+        unique_together = [['personal', 'mes_pagado', 'ciclo_escolar', 'tipo_planilla']]
+        ordering = ['-mes_pagado', 'tipo_planilla']
+
+    @classmethod
+    def obtener_anotaciones_sql(cls) -> dict:
+        from django.db.models import F, Value, DecimalField, Case, When
+        from django.db.models.functions import Greatest
+        sueldo_expr = Case(
+            When(salario_ordinario__gt=Decimal('0.00'), then=F('salario_ordinario')),
+            When(salario_base__gt=Decimal('0.00'), then=F('salario_base')),
+            default=F('personal__salario_base_asignado'),
+            output_field=DecimalField(max_digits=10, decimal_places=2)
+        )
+        ingresos_expr = Case(
+            When(tipo_planilla__in=[TipoPlanillaChoices.BONO_14, TipoPlanillaChoices.AGUINALDO],
+                 then=sueldo_expr + F('bonificaciones')),
+            default=sueldo_expr + F('bonificacion_incentivo') + F('bonificaciones'),
+            output_field=DecimalField(max_digits=10, decimal_places=2)
+        )
+        return {
+            'total_pagar': Greatest(
+                ingresos_expr - F('descuentos'),
+                Value(Decimal('0.00')),
+                output_field=DecimalField(max_digits=10, decimal_places=2),
+            ),
+        }
+
+    @property
+    def total_ingresos(self) -> Decimal:
+        sueldo = Decimal(str(self.salario_ordinario or 0))
+        if sueldo <= Decimal('0.00'):
+            sueldo = Decimal(str(self.salario_base or 0))
+        if sueldo <= Decimal('0.00') and self.personal_id:
+            sueldo = Decimal(str(self.personal.salario_base_asignado or 0))
+        bono_inc = Decimal(str(self.bonificacion_incentivo or 0))
+        bono_extra = Decimal(str(self.bonificaciones or 0))
+        if self.tipo_planilla in (TipoPlanillaChoices.BONO_14, TipoPlanillaChoices.AGUINALDO):
+            return sueldo + bono_extra
+        return sueldo + bono_inc + bono_extra
+
+    @property
+    def total_bonificaciones(self) -> Decimal:
+        b_inc = Decimal(str(self.bonificacion_incentivo or 0))
+        b_ext = Decimal(str(self.bonificaciones or 0))
+        return b_inc + b_ext if (b_inc > Decimal('0.00') or b_ext > Decimal('0.00')) else Decimal('0.00')
+
+    @property
+    def total_descuentos(self) -> Decimal:
+        d_igss = Decimal(str(self.descuento_igss or 0))
+        r_isr = Decimal(str(self.retencion_isr or 0))
+        d_ant = Decimal(str(self.descuento_anticipo or 0))
+        d_jud = Decimal(str(self.descuento_judicial or 0))
+        d_otr = Decimal(str(self.descuento_otros or 0))
+        suma = d_igss + r_isr + d_ant + d_jud + d_otr
+        if suma > Decimal('0.00'):
+            return suma
+        return Decimal(str(self.descuentos or 0))
+
+    @property
+    def total_cuota_patronal(self) -> Decimal:
+        igss = Decimal(str(self.cuota_patronal_igss or 0))
+        irtra = Decimal(str(self.cuota_patronal_irtra or 0))
+        intecap = Decimal(str(self.cuota_patronal_intecap or 0))
+        return round(igss + irtra + intecap, 2)
+
+    @property
+    def total_pagar(self) -> Decimal:
+        return round(max(self.total_ingresos - self.total_descuentos, Decimal('0.00')), 2)
+
+    @total_pagar.setter
+    def total_pagar(self, valor) -> None:
+        # propiedad derivada calculada dinamicamente
+        pass
+
+    def save(self, *args, **kwargs):
+        if not self.salario_base and self.personal_id:
+            self.salario_base = self.personal.salario_base_asignado
+        if not self.salario_ordinario:
+            self.salario_ordinario = self.salario_base
+        d_igss = Decimal(str(self.descuento_igss or 0))
+        r_isr = Decimal(str(self.retencion_isr or 0))
+        d_ant = Decimal(str(self.descuento_anticipo or 0))
+        d_jud = Decimal(str(self.descuento_judicial or 0))
+        d_otr = Decimal(str(self.descuento_otros or 0))
+        suma = d_igss + r_isr + d_ant + d_jud + d_otr
+        if suma > Decimal('0.00') or self.descuentos == Decimal('0.00'):
+            self.descuentos = suma
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Planilla {self.get_mes_pagado_display()} - {self.personal.persona.nombre_completo} (Q{self.total_pagar})"
+        return f"Planilla {self.get_tipo_planilla_display()} - {self.get_mes_pagado_display()} - {self.personal.persona.nombre_completo} (Q{self.total_pagar})"

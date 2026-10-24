@@ -1,1 +1,1 @@
-# Paquete APPS — Contiene todas las aplicaciones del sistema ERP escolar
+# paquete principal con las aplicaciones del sistema escolar

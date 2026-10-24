@@ -4,6 +4,7 @@ inventario/models.py
 Control de Inventario y Bienes del Instituto El Progreso.
 Incluye ArticuloInventario (auditado con simple-history) y MovimientoInventario.
 """
+from django.core.validators import MinValueValidator, MaxValueValidator, MinLengthValidator
 from django.db import models
 from simple_history.models import HistoricalRecords
 
@@ -35,13 +36,16 @@ class ArticuloInventario(ModeloAuditable):
     codigo_unico = models.CharField(
         max_length=30,
         unique=True,
+        validators=[MinLengthValidator(3)],
         verbose_name='Código único'
     )
     nombre = models.CharField(
         max_length=150,
+        validators=[MinLengthValidator(3)],
         verbose_name='Nombre del artículo'
     )
     descripcion = models.TextField(
+        max_length=500,
         blank=True,
         verbose_name='Descripción'
     )
@@ -52,15 +56,18 @@ class ArticuloInventario(ModeloAuditable):
     )
     stock_actual = models.IntegerField(
         default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(999999)],
         verbose_name='Stock actual'
     )
     stock_minimo_alerta = models.IntegerField(
         default=5,
+        validators=[MinValueValidator(0), MaxValueValidator(999999)],
         verbose_name='Stock mínimo de alerta'
     )
     unidad_medida = models.CharField(
         max_length=20,
         default='unidades',
+        validators=[MinLengthValidator(2)],
         verbose_name='Unidad de medida'
     )
     history = HistoricalRecords(
@@ -100,12 +107,15 @@ class MovimientoInventario(ModeloAuditable):
         verbose_name='Tipo de movimiento'
     )
     cantidad = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(999999)],
         verbose_name='Cantidad'
     )
     fecha = models.DateTimeField(
         verbose_name='Fecha y hora del movimiento'
     )
     motivo = models.TextField(
+        max_length=500,
+        validators=[MinLengthValidator(5)],
         verbose_name='Motivo'
     )
     documento_referencia = models.CharField(

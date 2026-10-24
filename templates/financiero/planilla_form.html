@@ -1,0 +1,307 @@
+{% extends 'base.html' %}
+{% load l10n %}
+
+{% block title %}{{ titulo_pagina }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+
+    <!-- Encabezado -->
+    <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+                <a href="{% url 'core:home' %}" class="hover:underline">Dashboard</a>
+                <span>/</span>
+                <a href="{% url 'financiero:cuentaporcobrar_list' %}" class="hover:underline">Gestión Financiera</a>
+                <span>/</span>
+                <a href="{% url 'financiero:planilla_list' %}" class="hover:underline">Planillas</a>
+                <span>/</span>
+                <span class="text-slate-500">Ajuste de Boleta</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+                <i data-lucide="file-edit" class="w-7 h-7 text-[#1E6532]"></i>
+                Ajuste Individual de Boleta de Pago
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">
+                Colaborador: <strong class="text-slate-800">{{ planilla.personal.persona.nombre_completo }}</strong> —
+                <span class="font-semibold text-[#1E6532]">{{ planilla.get_tipo_planilla_display }}</span> ({{ planilla.get_mes_pagado_display }} {{ planilla.ciclo_escolar.anio }})
+            </p>
+        </div>
+
+        <a href="{% url 'financiero:planilla_list' %}"
+            class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors">
+            Cancelar
+        </a>
+    </div>
+
+    <!-- Resumen Fijo del Colaborador -->
+    <div class="p-5 bg-white border border-slate-200 rounded-2xl shadow-xs grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+        <div>
+            <span class="block font-bold text-slate-400 uppercase">Salario Base Asignado</span>
+            <span class="font-mono font-black text-slate-900 text-base">Q {{ planilla.personal.salario_base_asignado|floatformat:2 }}</span>
+        </div>
+        <div>
+            <span class="block font-bold text-slate-400 uppercase">Puesto / Cargo</span>
+            <span class="font-semibold text-slate-700 text-sm">{{ planilla.personal.puesto.nombre_puesto }}</span>
+        </div>
+        <div>
+            <span class="block font-bold text-slate-400 uppercase">DPI / CUI</span>
+            <span class="font-mono font-medium text-slate-600 text-sm">{{ planilla.personal.persona.cui }}</span>
+        </div>
+        <div>
+            <span class="block font-bold text-slate-400 uppercase">Tipo de Planilla</span>
+            <span class="inline-block px-2.5 py-1 rounded-md text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">
+                {{ planilla.get_tipo_planilla_display }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Formulario de Ajuste Desglosado -->
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium space-y-1">
+            {% for error in form.non_field_errors %}
+            <p>⚠️ {{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <!-- Bloque 1: Percepciones / Ingresos (+) -->
+            <div class="bg-white rounded-2xl border border-emerald-200 shadow-xs p-6 space-y-4">
+                <div class="flex items-center gap-2 pb-3 border-b border-emerald-100">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-emerald-950">Ingresos y Bonificaciones (+)</h3>
+                        <p class="text-[11px] text-slate-500">Rubros que aumentan el sueldo del colaborador</p>
+                    </div>
+                </div>
+
+                <!-- Bonificación Incentivo -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        {{ form.bonificacion_incentivo.label }}
+                    </label>
+                    {{ form.bonificacion_incentivo }}
+                    <span class="block text-[11px] text-slate-400 mt-1">Estándar Q250.00 por Decreto 37-2001 (0.00 si es Bono 14 o Aguinaldo).</span>
+                    {% if form.bonificacion_incentivo.errors %}
+                    <p class="text-xs text-rose-600 mt-1 font-medium">{{ form.bonificacion_incentivo.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Otras Bonificaciones / Horas Extras -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        {{ form.bonificaciones.label }}
+                    </label>
+                    {{ form.bonificaciones }}
+                    <span class="block text-[11px] text-slate-400 mt-1">Horas extraordinarias, refuerzos docentes o bonos de aniversario.</span>
+                    {% if form.bonificaciones.errors %}
+                    <p class="text-xs text-rose-600 mt-1 font-medium">{{ form.bonificaciones.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Subtotal Ingresos -->
+                <div class="p-3 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-center justify-between text-xs font-bold text-emerald-900 mt-2">
+                    <span>Subtotal Ingresos Brutos:</span>
+                    <span id="label-subtotal-ingresos" class="font-mono text-sm">Q 0.00</span>
+                </div>
+            </div>
+
+            <!-- Bloque 2: Deducciones y Retenciones (-) -->
+            <div class="bg-white rounded-2xl border border-rose-200 shadow-xs p-6 space-y-4">
+                <div class="flex items-center gap-2 pb-3 border-b border-rose-100">
+                    <div class="w-8 h-8 rounded-lg bg-rose-100 text-rose-800 flex items-center justify-center font-bold">
+                        <i data-lucide="minus" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-rose-950">Deducciones y Retenciones (-)</h3>
+                        <p class="text-[11px] text-slate-500">Descuentos de ley y deducciones autorizadas</p>
+                    </div>
+                </div>
+
+                <!-- Cuota IGSS -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        {{ form.descuento_igss.label }}
+                    </label>
+                    {{ form.descuento_igss }}
+                    <span class="block text-[11px] text-slate-400 mt-1">4.83% sobre el salario base (0.00 en Bono 14 y Aguinaldo por ley).</span>
+                    {% if form.descuento_igss.errors %}
+                    <p class="text-xs text-rose-600 mt-1 font-medium">{{ form.descuento_igss.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Anticipo de Sueldo -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        {{ form.descuento_anticipo.label }}
+                    </label>
+                    {{ form.descuento_anticipo }}
+                    <span class="block text-[11px] text-slate-400 mt-1">Vales de pago a cuenta o anticipos otorgados previamente.</span>
+                    {% if form.descuento_anticipo.errors %}
+                    <p class="text-xs text-rose-600 mt-1 font-medium">{{ form.descuento_anticipo.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Retención Judicial -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        {{ form.descuento_judicial.label }}
+                    </label>
+                    {{ form.descuento_judicial }}
+                    <span class="block text-[11px] text-slate-400 mt-1">Retenciones por orden de juzgado (pensión alimenticia o embargo).</span>
+                    {% if form.descuento_judicial.errors %}
+                    <p class="text-xs text-rose-600 mt-1 font-medium">{{ form.descuento_judicial.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Otros Descuentos y Motivo -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        {{ form.descuento_otros.label }}
+                    </label>
+                    {{ form.descuento_otros }}
+                    {% if form.descuento_otros.errors %}
+                    <p class="text-xs text-rose-600 mt-1 font-medium">{{ form.descuento_otros.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        {{ form.motivo_otros_descuentos.label }}
+                    </label>
+                    {{ form.motivo_otros_descuentos }}
+                    <span class="block text-[11px] text-slate-400 mt-1">Obligatorio si se ingresa un monto en "Otros Descuentos".</span>
+                    {% if form.motivo_otros_descuentos.errors %}
+                    <p class="text-xs text-rose-600 mt-1 font-medium">{{ form.motivo_otros_descuentos.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Subtotal Descuentos -->
+                <div class="p-3 bg-rose-50/70 border border-rose-200 rounded-xl flex items-center justify-between text-xs font-bold text-rose-900 mt-2">
+                    <span>Subtotal Deducciones:</span>
+                    <span id="label-subtotal-descuentos" class="font-mono text-sm">Q 0.00</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Barra Resumen de Liquidación Líquida -->
+        <div class="bg-slate-900 text-white rounded-2xl p-6 shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="space-y-1 text-center sm:text-left">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Cálculo en Tiempo Real</span>
+                <div class="flex items-center gap-4 text-xs">
+                    <span>Ingresos: <strong id="resumen-ingresos" class="text-emerald-400 font-mono">Q 0.00</strong></span>
+                    <span>-</span>
+                    <span>Deducciones: <strong id="resumen-descuentos" class="text-rose-400 font-mono">Q 0.00</strong></span>
+                </div>
+            </div>
+
+            <div class="text-center sm:text-right">
+                <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider block">Total Líquido a Pagar</span>
+                <span id="label-total-liquido" class="text-3xl font-black font-mono text-white">Q 0.00</span>
+            </div>
+        </div>
+
+        <!-- Estado y Fecha de Pago -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                    {{ form.fecha_pago.label }}
+                </label>
+                {{ form.fecha_pago }}
+                {% if form.fecha_pago.errors %}
+                <p class="text-xs text-rose-600 mt-1 font-medium">{{ form.fecha_pago.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div class="flex items-center pt-6">
+                <label class="relative flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer w-full">
+                    <div class="flex items-center h-5">
+                        {{ form.pagado }}
+                    </div>
+                    <div class="text-xs">
+                        <span class="font-bold text-slate-800 block">¿Marcar Boleta como Pagada / Liquidada?</span>
+                        <span class="text-slate-500">Active una vez depositado el sueldo al colaborador.</span>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="pt-4 flex items-center justify-end gap-3">
+            <a href="{% url 'financiero:planilla_list' %}"
+                class="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors">
+                Cancelar
+            </a>
+            <button type="submit"
+                class="px-6 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 shadow-md shadow-[#1E6532]/20 flex items-center gap-2 transition-all">
+                <i data-lucide="save" class="w-4 h-4"></i>
+                <span>Guardar Ajuste de Boleta</span>
+            </button>
+        </div>
+    </form>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const sueldoBase = parseFloat("{{ planilla.personal.salario_base_asignado|unlocalize }}") || 0;
+    const esBonoOAguinaldo = "{{ planilla.tipo_planilla }}" === "BONO_14" || "{{ planilla.tipo_planilla }}" === "AGUINALDO";
+
+    const inputBonoInc = document.getElementById('id_bonificacion_incentivo');
+    const inputBonos = document.getElementById('id_bonificaciones');
+    const inputIgss = document.getElementById('id_descuento_igss');
+    const inputAnticipo = document.getElementById('id_descuento_anticipo');
+    const inputJudicial = document.getElementById('id_descuento_judicial');
+    const inputOtros = document.getElementById('id_descuento_otros');
+
+    const labelSubtotalIngresos = document.getElementById('label-subtotal-ingresos');
+    const labelSubtotalDescuentos = document.getElementById('label-subtotal-descuentos');
+    const resumenIngresos = document.getElementById('resumen-ingresos');
+    const resumenDescuentos = document.getElementById('resumen-descuentos');
+    const labelTotalLiquido = document.getElementById('label-total-liquido');
+
+    function getVal(input) {
+        if (!input) return 0;
+        const val = parseFloat((input.value || '').replace(',', '.'));
+        return isNaN(val) ? 0 : val;
+    }
+
+    function recalcular() {
+        const bonoInc = esBonoOAguinaldo ? 0 : getVal(inputBonoInc);
+        const bonosExtra = getVal(inputBonos);
+        const totalIngresos = sueldoBase + bonoInc + bonosExtra;
+
+        const igss = getVal(inputIgss);
+        const anticipo = getVal(inputAnticipo);
+        const judicial = getVal(inputJudicial);
+        const otros = getVal(inputOtros);
+        const totalDescuentos = igss + anticipo + judicial + otros;
+
+        const totalLiquido = Math.max(totalIngresos - totalDescuentos, 0);
+
+        if (labelSubtotalIngresos) labelSubtotalIngresos.textContent = 'Q ' + totalIngresos.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (labelSubtotalDescuentos) labelSubtotalDescuentos.textContent = 'Q ' + totalDescuentos.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (resumenIngresos) resumenIngresos.textContent = 'Q ' + totalIngresos.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (resumenDescuentos) resumenDescuentos.textContent = 'Q ' + totalDescuentos.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (labelTotalLiquido) labelTotalLiquido.textContent = 'Q ' + totalLiquido.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    const inputs = [inputBonoInc, inputBonos, inputIgss, inputAnticipo, inputJudicial, inputOtros];
+    inputs.forEach(function (inp) {
+        if (inp) {
+            inp.addEventListener('input', recalcular);
+        }
+    });
+
+    recalcular();
+});
+</script>
+{% endblock %}

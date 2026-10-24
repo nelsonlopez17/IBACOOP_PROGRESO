@@ -4,6 +4,7 @@
 {% block page_title %}Mi Perfil de Usuario{% endblock %}
 
 {% block content %}
+<div class="space-y-6">
     <!-- Encabezado de Página & Breadcrumb -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
@@ -18,10 +19,6 @@
             </h1>
             <p class="text-xs text-slate-500 mt-1">Información de la cuenta, expedientes institucionales y configuración de contacto.</p>
         </div>
-        <a href="{% url 'usuarios:cambiar_mi_password' %}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-xs rounded-xl transition-all shadow-sm self-start sm:self-auto">
-            <i data-lucide="key-round" class="w-4 h-4 text-amber-600"></i>
-            <span>Cambiar Mi Contraseña</span>
-        </a>
     </div>
 
     <!-- Tarjeta de Encabezado de Usuario -->
@@ -29,7 +26,7 @@
 
         <div class="flex items-center gap-4">
             <div class="w-16 h-16 rounded-2xl bg-[#1E6532]/10 border-2 border-[#1E6532]/20 flex items-center justify-center font-black text-xl text-[#1E6532]">
-                {{ user.username|slice:":2"|upper }}
+                {{ user.iniciales }}
             </div>
             <div>
                 <div class="flex items-center gap-2">
@@ -116,6 +113,12 @@
             {% if persona %}
                 <form method="post" class="space-y-5">
                     {% csrf_token %}
+
+                    {% if contacto_form.non_field_errors %}
+                    <div class="p-3 bg-rose-50 text-rose-700 rounded-xl text-xs font-semibold border border-rose-200">
+                        {{ contacto_form.non_field_errors.0 }}
+                    </div>
+                    {% endif %}
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <!-- Teléfono Principal -->

@@ -1,20 +1,15 @@
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-^59f-cp@#)$ez20opmvdr@rk%3sr-*az6(9s+a@(3o#$h*8*#)')
 
-DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 't')
+DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 't')
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
-
-
-
-# MODELO DE USUARIO PERSONALIZADO
-
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',') if h.strip()]
 
 AUTH_USER_MODEL = 'usuarios.Usuario'
 
@@ -24,40 +19,29 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
-
-
-# APLICACIONES INSTALADAS
-
-
 INSTALLED_APPS = [
-    # Componentes principales de Django
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    # Apps del Sistema ERP Escolar (Prioridad de plantillas e interfaces)
-    'APPS.core',               # ModeloAuditable, ActivosManager (base del sistema)
-    'APPS.usuarios',           # Usuario personalizado con campo 'rol'
-    'APPS.estudiantes',        # Estudiante, Encargado, EstudianteEncargado
-    'APPS.rrhh',               # Personal, Puesto, Asistencia, Planilla
-    'APPS.academico',          # CicloEscolar, Grado, Seccion, Curso, Notas, Asistencia
-    'APPS.financiero',         # MensualidadCobro, PagoColegiatura
-    'APPS.inventario',         # ArticuloInventario, MovimientoInventario
-    'APPS.portal',             # ContenidoWeb (portal institucional)
-
-    # Librerías de terceros
+    'APPS.core',
+    'APPS.usuarios',
+    'APPS.estudiantes',
+    'APPS.rrhh',
+    'APPS.academico',
+    'APPS.financiero',
+    'APPS.inventario',
+    'APPS.portal',
+    'APPS.auditoria',
+    'APPS.reportes',
+    'APPS.disciplina',
     'tailwind',
     'theme',
-    'simple_history',          # Auditoría de cambios (Notas, Pagos, Inventario)
-    'axes',                    # Control de seguridad y bloqueo temporal por intentos fallidos
+    'simple_history',
+    'axes',
 ]
-
-
-
-# MIDDLEWARE
 
 
 MIDDLEWARE = [
@@ -94,11 +78,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'IBACOOP_PROGRESO.wsgi.application'
 
-
-
-# BASE DE DATOS — PostgreSQL
-
-
 DATABASES = {
     'default': {
         'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.postgresql'),
@@ -109,11 +88,6 @@ DATABASES = {
         'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
-
-
-
-# VALIDACIÓN DE CONTRASEÑAS
-
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -130,20 +104,19 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
-
-# INTERNACIONALIZACIÓN
-
-
 LANGUAGE_CODE = 'es-gt'
 TIME_ZONE = 'America/Guatemala'
 USE_I18N = True
 USE_TZ = True
 
-
-
-# ARCHIVOS ESTÁTICOS — WhiteNoise
-
+# Estandarización de formato numérico y monetario de Guatemala
+USE_THOUSAND_SEPARATOR = False
+DECIMAL_SEPARATOR = '.'
+THOUSAND_SEPARATOR = ','
+NUMBER_GROUPING = 3
+FORMAT_MODULE_PATH = [
+    'IBACOOP_PROGRESO.formats',
+]
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
@@ -157,7 +130,9 @@ STORAGES = {
     },
 }
 
-# Tailwind CSS
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 TAILWIND_APP_NAME = 'theme'
 INTERNAL_IPS = ['127.0.0.1']
 if os.name == 'nt':
@@ -165,23 +140,81 @@ if os.name == 'nt':
 else:
     NPM_BIN_PATH = os.environ.get('NPM_BIN_PATH', '/usr/bin/npm')
 
-# Redirecciones de Autenticación
 LOGIN_URL = 'usuarios:login'
 LOGIN_REDIRECT_URL = 'core:home'
 LOGOUT_REDIRECT_URL = 'usuarios:login'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
-
-# BLOQUEO DE CUENTAS POR INTENTOS FALLIDOS — django-axes
-
 AXES_FAILURE_LIMIT = 3
-AXES_COOLOFF_TIME = timedelta(minutes=0.5)
+# periodo de espera tras superar los intentos permitidos
+AXES_COOLOFF_TIME = timedelta(seconds=10)
 AXES_RESET_ON_SUCCESS = True
 AXES_LOCKOUT_TEMPLATE = 'usuarios/lockout.html'
 AXES_LOCKOUT_CALLABLE = 'APPS.usuarios.views.lockout_view'
 AXES_ENABLE_ADMIN = True
-AXES_ONLY_USER_FAILURES = True #bloquear usuario desde cualquier ip
+AXES_LOCKOUT_PARAMETERS = ['username', 'ip_address']
 
+# duracion maxima de la sesion en segundos
+SESSION_COOKIE_AGE = 3600
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+
+LOGS_DIR = BASE_DIR / 'logs'
+LOGS_DIR.mkdir(parents=True, exist_ok=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name} {module}:{lineno} — {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'security_file': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'security.log',
+            'maxBytes': 1024 * 1024 * 5,
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+        'error_file': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'errors.log',
+            'maxBytes': 1024 * 1024 * 5,
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django.security': {
+            'handlers': ['security_file', 'console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'axes': {
+            'handlers': ['security_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['error_file', 'console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+    },
+}

@@ -1,26 +1,10 @@
 {% extends 'base.html' %}
 
-{% block title %}Dashboard Principal | IBACOOP EL PROGRESO{% endblock %}
-{% block page_title %}Dashboard General{% endblock %}
+{% block title %}{{ titulo_pagina|default:"Dashboard Principal" }} | IBACOOP EL PROGRESO{% endblock %}
+{% block page_title %}{{ titulo_pagina|default:"Dashboard General" }}{% endblock %}
 
 {% block content %}
 <div class="space-y-8">
-
-    <!-- Alertas y Mensajes del Sistema -->
-    {% if messages %}
-    <div class="space-y-3">
-        {% for message in messages %}
-        <div
-            class="p-4 rounded-xl flex items-start gap-3 border shadow-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-900 border-emerald-200{% else %}bg-rose-50 text-rose-900 border-rose-200{% endif %}">
-            <i data-lucide="{% if message.tags == 'success' %}check-circle-2{% else %}alert-triangle{% endif %}"
-                class="w-5 h-5 flex-shrink-0 mt-0.5 {% if message.tags == 'success' %}text-emerald-600{% else %}text-rose-600{% endif %}"></i>
-            <div class="text-sm font-medium leading-relaxed">
-                {{ message }}
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
 
     <!-- Mensaje de bienvenida -->
     <div
@@ -28,14 +12,23 @@
         <div class="relative z-10 max-w-2xl">
             <span
                 class="px-3.5 py-1 text-xs font-bold uppercase tracking-wider bg-white/10 text-emerald-200 border border-white/20 rounded-full inline-block mb-3 backdrop-blur-xs">
-                Plataforma de Gestión Escolar
+                {{ user.get_rol_display }} • Ciclo Escolar {{ ciclo_activo.anio|default:"2026" }}
             </span>
             <h2 class="text-3xl font-extrabold tracking-tight">
                 ¡Bienvenido, {{ user.get_full_name|default:user.username }}!
             </h2>
             <p class="text-emerald-100/90 mt-2 text-sm leading-relaxed font-normal">
-                Panel principal de administración del Instituto <strong>IBACOOP EL PROGRESO</strong>. Gestione los
-                usuarios del sistema, expedientes estudiantiles, encargados legales y contrataciones del personal.
+                {% if user.rol == 'ESTUDIANTE' and not user.is_superuser %}
+                    Consulte su expediente estudiantil, boleta de calificaciones por bimestre, récord de asistencia y estado de solvencia de cuotas escolares.
+                {% elif user.rol == 'ENCARGADO' and not user.is_superuser %}
+                    Portal para Padres de Familia o Encargados de <strong>IBACOOP EL PROGRESO</strong>. Consulte el rendimiento académico, disciplina y convivencia, y estado de cuenta de sus hijos inscritos.
+                {% elif user.rol == 'DOCENTE' and not user.is_superuser %}
+                    Panel Docente del Instituto <strong>IBACOOP EL PROGRESO</strong>. Gestione calificaciones por bimestre, asistencia estudiantil, disciplina y convivencia, y descargue sus boletas de pago.
+                {% elif user.rol == 'PERSONAL' and not user.is_superuser %}
+                    Portal de Personal Operativo de <strong>IBACOOP EL PROGRESO</strong>. Consulte sus boletas de pago de planilla e inventario institucional.
+                {% else %}
+                    Panel de gestión del Instituto <strong>IBACOOP EL PROGRESO</strong>. Acceda a los módulos autorizados para su rol institucional.
+                {% endif %}
             </p>
         </div>
         <div class="absolute -right-6 -bottom-6 opacity-15 text-white pointer-events-none">
@@ -43,158 +36,573 @@
         </div>
     </div>
 
-    <!-- Tarjetas de resumen de datos -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-5">
+    {% if user.rol == 'ESTUDIANTE' and not user.is_superuser %}
+        <!-- ===================================================================== -->
+        <!-- VISTA EXCLUSIVA PARA ROL: ESTUDIANTE                                  -->
+        <!-- ===================================================================== -->
+        {% if mi_estudiante %}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Grado y Sección</p>
+                    <h3 class="text-lg font-extrabold text-slate-900 mt-1">
+                        {% if mi_asignacion %}
+                            {{ mi_asignacion.seccion.grado.nombre_grado }} "{{ mi_asignacion.seccion.nombre_seccion }}"
+                        {% else %}
+                            Pendiente de asignación
+                        {% endif %}
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-2">Código MINEDUC: <strong>{{ mi_estudiante.codigo_mineduc }}</strong></p>
+                </div>
 
-        <!-- Tarjeta total de usuarios -->
-        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs hover:shadow-md transition-shadow">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Cuentas</p>
-                    <h3 class="text-3xl font-extrabold text-slate-900 mt-1">{{ total_usuarios|default:"0" }}</h3>
+                <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Asistencia en Clases</p>
+                    <h3 class="text-2xl font-extrabold text-emerald-700 mt-1">{{ asistencias_presentes }} Presentes</h3>
+                    <p class="text-xs text-slate-500 mt-2">
+                        {{ asistencias_justificadas }} justificadas • {{ asistencias_ausentes }} ausencias
+                    </p>
                 </div>
-                <div
-                    class="w-12 h-12 bg-[#1E6532]/10 border border-[#1E6532]/20 rounded-2xl flex items-center justify-center text-[#1E6532]">
-                    <i data-lucide="users" class="w-6 h-6"></i>
-                </div>
-            </div>
-            <p class="text-xs font-semibold text-[#1E6532] mt-3 flex items-center gap-1">
-                <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
-                <span>{{ usuarios_activos|default:"0" }} cuentas activas</span>
-            </p>
-        </div>
 
-        <!-- Tarjeta de administradores -->
-        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs hover:shadow-md transition-shadow">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Administración</p>
-                    <h3 class="text-3xl font-extrabold text-slate-900 mt-1">{{ admin_count|default:"0" }}</h3>
+                <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Cuotas Escolares</p>
+                    {% if mi_estudiante.es_solvente %}
+                        <h3 class="text-xl font-extrabold text-emerald-700 mt-1 flex items-center gap-1.5">
+                            <i data-lucide="check-circle-2" class="w-5 h-5"></i> Solvente al Día
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-2">Sin cuotas mensuales vencidas</p>
+                    {% else %}
+                        <h3 class="text-xl font-extrabold text-rose-700 mt-1 flex items-center gap-1.5">
+                            <i data-lucide="alert-circle" class="w-5 h-5"></i> Saldo Vencido: Q {{ mi_estudiante.deuda_vencida }}
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-2">Deuda total ciclo: Q {{ mi_estudiante.deuda_total_ciclo }}</p>
+                    {% endif %}
                 </div>
-                <div
-                    class="w-12 h-12 bg-[#7A1C21]/10 border border-[#7A1C21]/20 rounded-2xl flex items-center justify-center text-[#7A1C21]">
-                    <i data-lucide="shield-check" class="w-6 h-6"></i>
-                </div>
-            </div>
-            <p class="text-xs font-medium text-slate-500 mt-3">Gestores de TI y Dirección</p>
-        </div>
 
-        <!-- Tarjeta de docentes -->
-        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs hover:shadow-md transition-shadow">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Docentes</p>
-                    <h3 class="text-3xl font-extrabold text-slate-900 mt-1">{{ docente_count|default:"0" }}</h3>
-                </div>
-                <div
-                    class="w-12 h-12 bg-[#3C7DA8]/10 border border-[#3C7DA8]/20 rounded-2xl flex items-center justify-center text-[#3C7DA8]">
-                    <i data-lucide="book-open" class="w-6 h-6"></i>
-                </div>
-            </div>
-            <p class="text-xs font-medium text-slate-500 mt-3">Catedráticos e Instructores</p>
-        </div>
-
-        <!-- Tarjeta de estudiantes -->
-        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs hover:shadow-md transition-shadow">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Estudiantes</p>
-                    <h3 class="text-3xl font-extrabold text-slate-900 mt-1">{{ estudiante_count|default:"0" }}</h3>
-                </div>
-                <div
-                    class="w-12 h-12 bg-[#42A855]/10 border border-[#42A855]/20 rounded-2xl flex items-center justify-center text-[#42A855]">
-                    <i data-lucide="user-check" class="w-6 h-6"></i>
+                <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Disciplina y Convivencia</p>
+                    <div class="mt-2">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border {{ mi_estudiante.semaforo_disciplina.class }}">
+                            <i data-lucide="{{ mi_estudiante.semaforo_disciplina.icono }}" class="w-3.5 h-3.5 mr-1.5"></i>
+                            {{ mi_estudiante.semaforo_disciplina.label }}
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-2">Acuerdo Ministerial 01-2011</p>
                 </div>
             </div>
-            <p class="text-xs font-medium text-slate-500 mt-3">Alumnos matriculados</p>
+
+            <!-- Botones de Acceso Rápido del Estudiante -->
+            <div class="flex flex-wrap items-center gap-3">
+                <a href="{% url 'estudiantes:estudiante_detail' mi_estudiante.pk %}"
+                   class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-sm">
+                    <i data-lucide="id-card" class="w-4 h-4"></i>
+                    Ver Mi Expediente Completo
+                </a>
+                <a href="{% url 'financiero:estudiante_cuenta_corriente' mi_estudiante.pk %}"
+                   class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#3C7DA8] text-white rounded-xl text-xs font-bold hover:bg-[#3C7DA8]/90 transition-all shadow-sm">
+                    <i data-lucide="wallet" class="w-4 h-4"></i>
+                    Estado de Cuenta y Recibos
+                </a>
+                {% if mi_asignacion %}
+                <a href="{% url 'academico:boleta_pdf' mi_asignacion.pk %}" target="_blank"
+                   class="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-700 transition-all shadow-sm">
+                    <i data-lucide="file-text" class="w-4 h-4"></i>
+                    Descargar Boleta de Calificaciones (PDF)
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- Tabla de Calificaciones del Estudiante -->
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <i data-lucide="award" class="w-4 h-4 text-[#1E6532]"></i>
+                        Mis Calificaciones por Bimestre
+                    </h3>
+                    {% if mi_asignacion %}
+                    <span class="text-xs font-semibold text-slate-500">
+                        {{ mi_asignacion.seccion.grado.nombre_grado }} "{{ mi_asignacion.seccion.nombre_seccion }}" • Ciclo {{ mi_asignacion.ciclo_escolar.anio }}
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-700">
+                        <thead class="bg-slate-50 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                            <tr>
+                                <th class="py-3 px-4">Curso / Área Curricular</th>
+                                <th class="py-3 px-4 text-center">Bimestre I</th>
+                                <th class="py-3 px-4 text-center">Bimestre II</th>
+                                <th class="py-3 px-4 text-center">Bimestre III</th>
+                                <th class="py-3 px-4 text-center">Bimestre IV</th>
+                                <th class="py-3 px-4 text-center">Promedio</th>
+                                <th class="py-3 px-4 text-center">Resultado</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            {% for fila in mis_notas_tabla %}
+                            <tr class="hover:bg-slate-50/60">
+                                <td class="py-3 px-4 font-bold text-slate-900">{{ fila.curso }}</td>
+                                <td class="py-3 px-4 text-center">{{ fila.b1|default:"—" }}</td>
+                                <td class="py-3 px-4 text-center">{{ fila.b2|default:"—" }}</td>
+                                <td class="py-3 px-4 text-center">{{ fila.b3|default:"—" }}</td>
+                                <td class="py-3 px-4 text-center">{{ fila.b4|default:"—" }}</td>
+                                <td class="py-3 px-4 text-center font-extrabold text-slate-900">{{ fila.promedio }}</td>
+                                <td class="py-3 px-4 text-center">
+                                    {% if fila.aprobado %}
+                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Aprobado</span>
+                                    {% else %}
+                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">Requiere Mejora</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="py-8 text-center text-slate-400">
+                                    Aún no hay calificaciones registradas para el ciclo escolar activo.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% else %}
+            <div class="bg-white border border-slate-200 rounded-2xl p-8 text-center">
+                <p class="text-sm font-bold text-slate-700">No se encontró un expediente de estudiante vinculado a su usuario.</p>
+            </div>
+        {% endif %}
+
+    {% elif user.rol == 'ENCARGADO' and not user.is_superuser %}
+        <!-- ===================================================================== -->
+        <!-- VISTA EXCLUSIVA PARA ROL: PADRE DE FAMILIA O ENCARGADO                -->
+        <!-- ===================================================================== -->
+        <div class="space-y-6">
+            <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="users" class="w-5 h-5 text-[#1E6532]"></i>
+                <span>Estudiantes bajo su Representación Familiar</span>
+            </h3>
+
+            {% for item in tarjetas_hijos %}
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-5">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-2xl bg-[#1E6532]/10 border border-[#1E6532]/20 text-[#1E6532] flex items-center justify-center font-extrabold text-lg">
+                            {{ item.estudiante.persona.nombres|slice:":1" }}{{ item.estudiante.persona.apellidos|slice:":1" }}
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-extrabold text-slate-900">{{ item.estudiante.persona.nombre_completo }}</h4>
+                            <p class="text-xs text-slate-500 mt-0.5">
+                                Código MINEDUC: <strong>{{ item.estudiante.codigo_mineduc }}</strong> •
+                                {% if item.asignacion %}
+                                    Grado: <strong>{{ item.asignacion.seccion.grado.nombre_grado }} "{{ item.asignacion.seccion.nombre_seccion }}"</strong>
+                                {% else %}
+                                    Sin sección asignada
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        <a href="{% url 'estudiantes:estudiante_detail' item.estudiante.pk %}"
+                           class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all">
+                            <i data-lucide="id-card" class="w-3.5 h-3.5"></i>
+                            Expediente Estudiantil
+                        </a>
+                        <a href="{% url 'financiero:estudiante_cuenta_corriente' item.estudiante.pk %}"
+                           class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#3C7DA8] text-white rounded-xl text-xs font-bold hover:bg-[#3C7DA8]/90 transition-all">
+                            <i data-lucide="wallet" class="w-3.5 h-3.5"></i>
+                            Cuotas Escolares
+                        </a>
+                        {% if item.asignacion %}
+                        <a href="{% url 'academico:boleta_pdf' item.asignacion.pk %}" target="_blank"
+                           class="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-700 transition-all">
+                            <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                            Boleta de Calificaciones PDF
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Asistencia Escolar</span>
+                        <p class="text-sm font-extrabold text-slate-900 mt-1">
+                            {{ item.presentes }} asistencias • <span class="text-rose-600">{{ item.ausentes }} inasistencias</span>
+                        </p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Estado de Cuotas Escolares</span>
+                        {% if item.estudiante.es_solvente %}
+                            <p class="text-sm font-extrabold text-emerald-700 mt-1">Solvente al día</p>
+                        {% else %}
+                            <p class="text-sm font-extrabold text-rose-700 mt-1">Saldo vencido: Q {{ item.estudiante.deuda_vencida }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Disciplina y Convivencia</span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 mt-1 rounded-full text-xs font-bold border {{ item.estudiante.semaforo_disciplina.class }}">
+                            {{ item.estudiante.semaforo_disciplina.label }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="bg-white border border-slate-200 rounded-2xl p-8 text-center">
+                <p class="text-sm font-bold text-slate-700">No se encontraron estudiantes asociados a su cuenta de Padre de Familia o Encargado.</p>
+            </div>
+            {% endfor %}
         </div>
 
-    </div>
+    {% elif user.rol == 'DOCENTE' and not user.is_superuser %}
+        <!-- ===================================================================== -->
+        <!-- VISTA EXCLUSIVA PARA ROL: DOCENTE                                     -->
+        <!-- ===================================================================== -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Cursos Asignados</p>
+                <h3 class="text-3xl font-extrabold text-slate-900 mt-1">{{ cursos_count|default:"0" }}</h3>
+                <p class="text-xs text-[#1E6532] font-semibold mt-2">Carga académica activa</p>
+            </div>
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Secciones Atendidas</p>
+                <h3 class="text-3xl font-extrabold text-slate-900 mt-1">{{ secciones_count|default:"0" }}</h3>
+                <p class="text-xs text-slate-500 mt-2">Grados y secciones a cargo</p>
+            </div>
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Estudiantes en mis Secciones</p>
+                <h3 class="text-3xl font-extrabold text-slate-900 mt-1">{{ estudiantes_a_cargo|default:"0" }}</h3>
+                <p class="text-xs text-slate-500 mt-2">Inscritos en el ciclo actual</p>
+            </div>
+        </div>
 
-    <!-- Módulos principales del sistema -->
-    <div class="space-y-4">
-        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
-            <i data-lucide="layout-grid" class="w-5 h-5 text-[#1E6532]"></i>
-            <span>Módulos de Administración Activos</span>
-        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <a href="{% url 'academico:asignacion_estudiante_list' %}"
+               class="group bg-white border border-[#1E6532]/30 rounded-3xl p-6 hover:border-[#1E6532] transition-all shadow-xs hover:shadow-md block">
+                <div class="w-11 h-11 rounded-2xl bg-[#1E6532]/10 text-[#1E6532] flex items-center justify-center mb-3">
+                    <i data-lucide="check-square" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-base font-bold text-slate-900 group-hover:text-[#1E6532]">Calificaciones y Asistencia</h4>
+                <p class="text-xs text-slate-500 mt-1">Registro de notas por bimestre, asistencia diaria y boletas de calificaciones.</p>
+            </a>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <a href="{% url 'academico:asignacion_docente_list' %}"
+               class="group bg-white border border-[#3C7DA8]/30 rounded-3xl p-6 hover:border-[#3C7DA8] transition-all shadow-xs hover:shadow-md block">
+                <div class="w-11 h-11 rounded-2xl bg-[#3C7DA8]/10 text-[#3C7DA8] flex items-center justify-center mb-3">
+                    <i data-lucide="book-open" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-base font-bold text-slate-900 group-hover:text-[#3C7DA8]">Mi Carga Académica</h4>
+                <p class="text-xs text-slate-500 mt-1">Consulte sus cursos, grados y secciones asignadas en el ciclo escolar.</p>
+            </a>
 
-            <!-- Acceso a la gestión de usuarios -->
-            <a href="{% url 'usuarios:usuario_list' %}"
-                class="group relative bg-white border border-[#1E6532]/30 rounded-3xl p-6 hover:border-[#1E6532] transition-all duration-300 shadow-sm hover:shadow-xl block">
-                <div class="flex items-center justify-between mb-4">
-                    <div
-                        class="w-12 h-12 rounded-2xl bg-[#1E6532]/10 border border-[#1E6532]/20 flex items-center justify-center text-[#1E6532] group-hover:scale-110 transition-transform">
+            {% comment "Oculto temporalmente" %}
+            <a href="{% url 'disciplina:dashboard' %}"
+               class="group bg-white border border-[#7A1C21]/30 rounded-3xl p-6 hover:border-[#7A1C21] transition-all shadow-xs hover:shadow-md block">
+                <div class="w-11 h-11 rounded-2xl bg-[#7A1C21]/10 text-[#7A1C21] flex items-center justify-center mb-3">
+                    <i data-lucide="shield-alert" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-base font-bold text-slate-900 group-hover:text-[#7A1C21]">Disciplina y Convivencia</h4>
+                <p class="text-xs text-slate-500 mt-1">Bitácora de incidentes disciplinarios y seguimiento formativo MINEDUC.</p>
+            </a>
+            {% endcomment %}
+        </div>
+
+        {% if mis_planillas %}
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4 text-[#1E6532]"></i>
+                    Mis Boletas de Pago Recientes (Planilla de Sueldos)
+                </h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-700">
+                    <thead class="bg-slate-50 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase">
+                        <tr>
+                            <th class="py-3 px-4">Mes / Ciclo</th>
+                            <th class="py-3 px-4">Fecha de Pago</th>
+                            <th class="py-3 px-4 text-right">Salario Líquido</th>
+                            <th class="py-3 px-4 text-right">Boleta de Pago</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        {% for pl in mis_planillas %}
+                        <tr>
+                            <td class="py-3 px-4 font-bold text-slate-900">{{ pl.get_mes_pagado_display }} {{ pl.ciclo_escolar.anio }}</td>
+                            <td class="py-3 px-4">{{ pl.fecha_pago|date:"d/m/Y" }}</td>
+                            <td class="py-3 px-4 text-right font-extrabold text-emerald-700">Q {{ pl.salario_liquido }}</td>
+                            <td class="py-3 px-4 text-right">
+                                <a href="{% url 'rrhh:planilla_pdf' pl.pk %}" target="_blank"
+                                   class="inline-flex items-center gap-1 px-3 py-1 bg-[#1E6532]/10 text-[#1E6532] rounded-lg font-bold hover:bg-[#1E6532] hover:text-white transition-colors">
+                                    <i data-lucide="download" class="w-3.5 h-3.5"></i> Descargar Boleta PDF
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+    {% elif user.rol == 'PERSONAL' and not user.is_superuser %}
+        <!-- ===================================================================== -->
+        <!-- VISTA EXCLUSIVA PARA ROL: PERSONAL OPERATIVO                          -->
+        <!-- ===================================================================== -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-3">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="briefcase" class="w-4 h-4 text-[#1E6532]"></i>
+                    Mi Ficha Laboral
+                </h3>
+                {% if mi_personal %}
+                    <p class="text-xs text-slate-600">Puesto: <strong class="text-slate-900">{{ mi_personal.puesto.nombre_puesto }}</strong></p>
+                    <p class="text-xs text-slate-600">Contrato: <strong class="text-slate-900">{{ mi_personal.get_tipo_contrato_display }}</strong></p>
+                    <p class="text-xs text-slate-600">Fecha de Contratación: <strong class="text-slate-900">{{ mi_personal.fecha_contratacion|date:"d/m/Y" }}</strong></p>
+                {% else %}
+                    <p class="text-xs text-slate-400">Sin ficha de personal vinculada.</p>
+                {% endif %}
+            </div>
+
+            {% if perms.inventario.view_articulo %}
+            <a href="{% url 'inventario:articulo_list' %}"
+               class="group bg-white border border-[#3C7DA8]/30 rounded-2xl p-6 hover:border-[#3C7DA8] transition-all shadow-xs flex items-center justify-between">
+                <div>
+                    <h4 class="text-base font-bold text-slate-900 group-hover:text-[#3C7DA8]">Inventario y Activos</h4>
+                    <p class="text-xs text-slate-500 mt-1">Consulta de mobiliario, equipo e insumos en bodega.</p>
+                </div>
+                <i data-lucide="arrow-right" class="w-5 h-5 text-[#3C7DA8]"></i>
+            </a>
+            {% endif %}
+        </div>
+
+        {% if mis_planillas %}
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4 text-[#1E6532]"></i>
+                    Mis Boletas de Pago (Planilla de Sueldos)
+                </h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-700">
+                    <thead class="bg-slate-50 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase">
+                        <tr>
+                            <th class="py-3 px-4">Mes / Ciclo</th>
+                            <th class="py-3 px-4">Fecha de Pago</th>
+                            <th class="py-3 px-4 text-right">Salario Líquido</th>
+                            <th class="py-3 px-4 text-right">Boleta de Pago</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        {% for pl in mis_planillas %}
+                        <tr>
+                            <td class="py-3 px-4 font-bold text-slate-900">{{ pl.get_mes_pagado_display }} {{ pl.ciclo_escolar.anio }}</td>
+                            <td class="py-3 px-4">{{ pl.fecha_pago|date:"d/m/Y" }}</td>
+                            <td class="py-3 px-4 text-right font-extrabold text-emerald-700">Q {{ pl.salario_liquido }}</td>
+                            <td class="py-3 px-4 text-right">
+                                <a href="{% url 'rrhh:planilla_pdf' pl.pk %}" target="_blank"
+                                   class="inline-flex items-center gap-1 px-3 py-1 bg-[#1E6532]/10 text-[#1E6532] rounded-lg font-bold hover:bg-[#1E6532] hover:text-white transition-colors">
+                                    <i data-lucide="download" class="w-3.5 h-3.5"></i> Descargar Boleta PDF
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+    {% else %}
+        <!-- ===================================================================== -->
+        <!-- VISTA ADMINISTRATIVA FILTRADA POR PERMISOS (ADMIN, DIRECTOR,          -->
+        <!-- SECRETARIA, CONTADOR)                                                 -->
+        <!-- ===================================================================== -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Cuentas</p>
+                        <h3 class="text-3xl font-extrabold text-slate-900 mt-1">{{ total_usuarios|default:"0" }}</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-[#1E6532]/10 border border-[#1E6532]/20 rounded-2xl flex items-center justify-center text-[#1E6532]">
                         <i data-lucide="users" class="w-6 h-6"></i>
                     </div>
-                    <span
-                        class="text-xs font-bold px-3 py-1 rounded-full bg-[#1E6532]/10 text-[#1E6532] border border-[#1E6532]/20">
-                        Módulo Activo
-                    </span>
                 </div>
-                <h4
-                    class="text-lg font-bold text-slate-900 group-hover:text-[#1E6532] transition-colors flex items-center justify-between">
-                    <span>Gestión de Usuarios</span>
-                    <i data-lucide="arrow-right"
-                        class="w-5 h-5 text-[#1E6532] group-hover:translate-x-1 transition-transform"></i>
-                </h4>
-                <p class="text-xs text-slate-500 mt-2 leading-relaxed font-normal">
-                    Directorio de cuentas IAM, roles de acceso, grupos de permisos nativos de Django y restablecimiento
-                    seguro de credenciales con PDF.
-                </p>
-            </a>
+                <p class="text-xs font-semibold text-[#1E6532] mt-3">{{ usuarios_activos|default:"0" }} cuentas activas</p>
+            </div>
 
-            <!-- Acceso a Estudiantes y Encargados -->
-            <a href="{% url 'estudiantes:estudiante_list' %}"
-                class="group relative bg-white border border-[#3C7DA8]/30 rounded-3xl p-6 hover:border-[#3C7DA8] transition-all duration-300 shadow-sm hover:shadow-xl block">
-                <div class="flex items-center justify-between mb-4">
-                    <div
-                        class="w-12 h-12 rounded-2xl bg-[#3C7DA8]/10 border border-[#3C7DA8]/20 flex items-center justify-center text-[#3C7DA8] group-hover:scale-110 transition-transform">
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Estudiantes</p>
+                        <h3 class="text-3xl font-extrabold text-slate-900 mt-1">{{ estudiante_count|default:"0" }}</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-[#42A855]/10 border border-[#42A855]/20 rounded-2xl flex items-center justify-center text-[#42A855]">
                         <i data-lucide="graduation-cap" class="w-6 h-6"></i>
                     </div>
-                    <span
-                        class="text-xs font-bold px-3 py-1 rounded-full bg-[#3C7DA8]/10 text-[#3C7DA8] border border-[#3C7DA8]/20">
-                        Módulo Activo
-                    </span>
                 </div>
-                <h4
-                    class="text-lg font-bold text-slate-900 group-hover:text-[#3C7DA8] transition-colors flex items-center justify-between">
-                    <span>Gestión de Alumnos</span>
-                    <i data-lucide="arrow-right"
-                        class="w-5 h-5 text-[#3C7DA8] group-hover:translate-x-1 transition-transform"></i>
-                </h4>
-                <p class="text-xs text-slate-500 mt-2 leading-relaxed font-normal">
-                    Gestión de alumnos y encargados/tutores.
-                </p>
-            </a>
+                <p class="text-xs font-medium text-slate-500 mt-3">Estudiantes inscritos activos</p>
+            </div>
 
-            <!-- Acceso a Recursos Humanos (Personal) -->
-            <a href="{% url 'rrhh:personal_list' %}"
-                class="group relative bg-white border border-[#7A1C21]/30 rounded-3xl p-6 hover:border-[#7A1C21] transition-all duration-300 shadow-sm hover:shadow-xl block">
-                <div class="flex items-center justify-between mb-4">
-                    <div
-                        class="w-12 h-12 rounded-2xl bg-[#7A1C21]/10 border border-[#7A1C21]/20 flex items-center justify-center text-[#7A1C21] group-hover:scale-110 transition-transform">
-                        <i data-lucide="briefcase" class="w-6 h-6"></i>
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Docentes</p>
+                        <h3 class="text-3xl font-extrabold text-slate-900 mt-1">{{ docente_count|default:"0" }}</h3>
                     </div>
-                    <span
-                        class="text-xs font-bold px-3 py-1 rounded-full bg-[#7A1C21]/10 text-[#7A1C21] border border-[#7A1C21]/20">
-                        Módulo Activo
-                    </span>
+                    <div class="w-12 h-12 bg-[#3C7DA8]/10 border border-[#3C7DA8]/20 rounded-2xl flex items-center justify-center text-[#3C7DA8]">
+                        <i data-lucide="book-open" class="w-6 h-6"></i>
+                    </div>
                 </div>
-                <h4
-                    class="text-lg font-bold text-slate-900 group-hover:text-[#7A1C21] transition-colors flex items-center justify-between">
-                    <span>Recursos Humanos</span>
-                    <i data-lucide="arrow-right"
-                        class="w-5 h-5 text-[#7A1C21] group-hover:translate-x-1 transition-transform"></i>
-                </h4>
-                <p class="text-xs text-slate-500 mt-2 leading-relaxed font-normal">
-                    Gestión de personal.
-                </p>
-            </a>
+                <p class="text-xs font-medium text-slate-500 mt-3">Claustro de catedráticos</p>
+            </div>
 
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Encargados</p>
+                        <h3 class="text-3xl font-extrabold text-slate-900 mt-1">{{ encargado_count|default:"0" }}</h3>
+                    </div>
+                    <div class="w-12 h-12 bg-[#7A1C21]/10 border border-[#7A1C21]/20 rounded-2xl flex items-center justify-center text-[#7A1C21]">
+                        <i data-lucide="user-check" class="w-6 h-6"></i>
+                    </div>
+                </div>
+                <p class="text-xs font-medium text-slate-500 mt-3">Padres de Familia o Encargados</p>
+            </div>
         </div>
-    </div>
+
+        <!-- Módulos autorizados según Grupo de Permisos -->
+        <div class="space-y-4">
+            <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="layout-grid" class="w-5 h-5 text-[#1E6532]"></i>
+                <span>Módulos Autorizados para su Rol</span>
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                {% if perms.usuarios.view_usuario %}
+                <a href="{% url 'usuarios:usuario_list' %}"
+                    class="group relative bg-white border border-[#1E6532]/30 rounded-3xl p-6 hover:border-[#1E6532] transition-all duration-300 shadow-sm hover:shadow-xl block">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-[#1E6532]/10 border border-[#1E6532]/20 flex items-center justify-center text-[#1E6532]">
+                            <i data-lucide="users" class="w-6 h-6"></i>
+                        </div>
+                        <span class="text-xs font-bold px-3 py-1 rounded-full bg-[#1E6532]/10 text-[#1E6532]">IAM y Roles</span>
+                    </div>
+                    <h4 class="text-lg font-bold text-slate-900 group-hover:text-[#1E6532] flex items-center justify-between">
+                        <span>Gestión de Usuarios</span>
+                        <i data-lucide="arrow-right" class="w-5 h-5 text-[#1E6532]"></i>
+                    </h4>
+                    <p class="text-xs text-slate-500 mt-2">Directorio de cuentas, grupos de permisos por rol y credenciales en PDF.</p>
+                </a>
+                {% endif %}
+
+                {% if perms.estudiantes.view_estudiante %}
+                <a href="{% url 'estudiantes:estudiante_list' %}"
+                    class="group relative bg-white border border-[#3C7DA8]/30 rounded-3xl p-6 hover:border-[#3C7DA8] transition-all duration-300 shadow-sm hover:shadow-xl block">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-[#3C7DA8]/10 border border-[#3C7DA8]/20 flex items-center justify-center text-[#3C7DA8]">
+                            <i data-lucide="graduation-cap" class="w-6 h-6"></i>
+                        </div>
+                        <span class="text-xs font-bold px-3 py-1 rounded-full bg-[#3C7DA8]/10 text-[#3C7DA8]">Inscripciones</span>
+                    </div>
+                    <h4 class="text-lg font-bold text-slate-900 group-hover:text-[#3C7DA8] flex items-center justify-between">
+                        <span>Listado de Estudiantes</span>
+                        <i data-lucide="arrow-right" class="w-5 h-5 text-[#3C7DA8]"></i>
+                    </h4>
+                    <p class="text-xs text-slate-500 mt-2">Expedientes de estudiantes y directorio de Padres de Familia o Encargados.</p>
+                </a>
+                {% endif %}
+
+                {% if perms.academico.view_cicloescolar or perms.academico.view_asignacionestudiante %}
+                <a href="{% url 'academico:asignacion_estudiante_list' %}"
+                    class="group relative bg-white border border-emerald-600/30 rounded-3xl p-6 hover:border-emerald-600 transition-all duration-300 shadow-sm hover:shadow-xl block">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
+                            <i data-lucide="book-open" class="w-6 h-6"></i>
+                        </div>
+                        <span class="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700">Académico</span>
+                    </div>
+                    <h4 class="text-lg font-bold text-slate-900 group-hover:text-emerald-700 flex items-center justify-between">
+                        <span>Gestión Académica</span>
+                        <i data-lucide="arrow-right" class="w-5 h-5 text-emerald-700"></i>
+                    </h4>
+                    <p class="text-xs text-slate-500 mt-2">Ciclos, grados, secciones, cursos, asistencia y boletas de calificaciones.</p>
+                </a>
+                {% endif %}
+
+                {% comment "Oculto temporalmente" %}
+                {% if perms.disciplina.view_incidentedisciplinario %}
+                <a href="{% url 'disciplina:dashboard' %}"
+                    class="group relative bg-white border border-purple-600/30 rounded-3xl p-6 hover:border-purple-600 transition-all duration-300 shadow-sm hover:shadow-xl block">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-700">
+                            <i data-lucide="shield-alert" class="w-6 h-6"></i>
+                        </div>
+                        <span class="text-xs font-bold px-3 py-1 rounded-full bg-purple-50 text-purple-700">MINEDUC 01-2011</span>
+                    </div>
+                    <h4 class="text-lg font-bold text-slate-900 group-hover:text-purple-700 flex items-center justify-between">
+                        <span>Disciplina y Convivencia</span>
+                        <i data-lucide="arrow-right" class="w-5 h-5 text-purple-700"></i>
+                    </h4>
+                    <p class="text-xs text-slate-500 mt-2">Incidentes disciplinarios, citaciones a encargados y actas de compromiso.</p>
+                </a>
+                {% endif %}
+                {% endcomment %}
+
+                {% if perms.rrhh.view_personal %}
+                <a href="{% url 'rrhh:personal_list' %}"
+                    class="group relative bg-white border border-[#7A1C21]/30 rounded-3xl p-6 hover:border-[#7A1C21] transition-all duration-300 shadow-sm hover:shadow-xl block">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-[#7A1C21]/10 border border-[#7A1C21]/20 flex items-center justify-center text-[#7A1C21]">
+                            <i data-lucide="briefcase" class="w-6 h-6"></i>
+                        </div>
+                        <span class="text-xs font-bold px-3 py-1 rounded-full bg-[#7A1C21]/10 text-[#7A1C21]">Talento Humano</span>
+                    </div>
+                    <h4 class="text-lg font-bold text-slate-900 group-hover:text-[#7A1C21] flex items-center justify-between">
+                        <span>Recursos Humanos</span>
+                        <i data-lucide="arrow-right" class="w-5 h-5 text-[#7A1C21]"></i>
+                    </h4>
+                    <p class="text-xs text-slate-500 mt-2">Expedientes de personal, puestos de trabajo y contratos laborales.</p>
+                </a>
+                {% endif %}
+
+                {% if perms.financiero.view_cuentaporcobrar or perms.financiero.view_pagorecibo or perms.rrhh.view_planilla %}
+                <a href="{% if perms.financiero.view_cuentaporcobrar %}{% url 'financiero:cuentaporcobrar_list' %}{% else %}{% url 'financiero:planilla_list' %}{% endif %}"
+                    class="group relative bg-white border border-amber-600/30 rounded-3xl p-6 hover:border-amber-600 transition-all duration-300 shadow-sm hover:shadow-xl block">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700">
+                            <i data-lucide="wallet" class="w-6 h-6"></i>
+                        </div>
+                        <span class="text-xs font-bold px-3 py-1 rounded-full bg-amber-50 text-amber-700">Tesorería</span>
+                    </div>
+                    <h4 class="text-lg font-bold text-slate-900 group-hover:text-amber-700 flex items-center justify-between">
+                        <span>Finanzas y Pagos</span>
+                        <i data-lucide="arrow-right" class="w-5 h-5 text-amber-700"></i>
+                    </h4>
+                    <p class="text-xs text-slate-500 mt-2">Cuotas mensuales, recibos de caja, solvencias y planillas de sueldos.</p>
+                </a>
+                {% endif %}
+
+                {% if perms.inventario.view_articulo %}
+                <a href="{% url 'inventario:articulo_list' %}"
+                    class="group relative bg-white border border-slate-400/40 rounded-3xl p-6 hover:border-slate-700 transition-all duration-300 shadow-sm hover:shadow-xl block">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
+                            <i data-lucide="package" class="w-6 h-6"></i>
+                        </div>
+                        <span class="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-700">Bodega</span>
+                    </div>
+                    <h4 class="text-lg font-bold text-slate-900 group-hover:text-slate-700 flex items-center justify-between">
+                        <span>Inventario y Activos</span>
+                        <i data-lucide="arrow-right" class="w-5 h-5 text-slate-700"></i>
+                    </h4>
+                    <p class="text-xs text-slate-500 mt-2">Control de categorías, artículos y movimientos de entradas/salidas.</p>
+                </a>
+                {% endif %}
+
+            </div>
+        </div>
+    {% endif %}
 
 </div>
 {% endblock %}

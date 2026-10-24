@@ -34,7 +34,6 @@ def generar_pdf_recibo_pago(abono):
     story = []
     styles = getSampleStyleSheet()
 
-    # Estilos Corporativos IBACOOP EL PROGRESO
     COLOR_VERDE = colors.HexColor('#1E6532')
     COLOR_ROJO = colors.HexColor('#7A1C21')
     COLOR_AZUL = colors.HexColor('#3C7DA8')
@@ -104,7 +103,6 @@ def generar_pdf_recibo_pago(abono):
     estudiante = cuenta.estudiante
     persona = estudiante.persona
 
-    # 1. Encabezado Oficial
     header_data = [
         [
             Paragraph("INSTITUTO DE EDUCACIÓN BÁSICA<br/><font color='#7A1C21'>'EL PROGRESO'</font><br/><font size=8 color='#64748B'>SISTEMA DE GESTIÓN ESCOLAR (ERP)</font>", style_title),
@@ -119,7 +117,6 @@ def generar_pdf_recibo_pago(abono):
     story.append(t_header)
     story.append(HRFlowable(width="100%", thickness=2, color=COLOR_VERDE, spaceBefore=4, spaceAfter=12))
 
-    # 2. Datos del Estudiante
     story.append(Paragraph("1. DATOS DEL ESTUDIANTE", style_sec_header))
     story.append(Spacer(1, 4))
 
@@ -139,13 +136,14 @@ def generar_pdf_recibo_pago(abono):
     story.append(t_est)
     story.append(Spacer(1, 12))
 
-    # 3. Detalle del Abono / Pago
     story.append(Paragraph("2. DETALLE DE LA TRANSACCIÓN FINANCIERA", style_sec_header))
     story.append(Spacer(1, 4))
 
+    tipo_comprobante_label = "No. de Boleta Bancaria:" if abono.metodo_pago in ['DEPOSITO', 'TRANSFERENCIA'] else "No. de Recibo / Comprobante:"
     datos_pago = [
         [Paragraph("Concepto de Cobro:", style_label), Paragraph(cuenta.concepto.nombre, style_val_bold)],
-        [Paragraph("Número de Boleta / Referencia:", style_label), Paragraph(f"<b>{abono.numero_boleta}</b>", style_val_bold)],
+        [Paragraph("Método de Pago:", style_label), Paragraph(f"<b>{abono.get_metodo_pago_display()}</b>", style_val_bold)],
+        [Paragraph(tipo_comprobante_label, style_label), Paragraph(f"<b>{abono.numero_boleta}</b>", style_val_bold)],
         [Paragraph("Monto Original de la Cuota:", style_label), Paragraph(f"Q{cuenta.monto_total:,.2f}", style_val)],
         [Paragraph("MONTO ABONADO EN ESTE RECIBO:", style_label), Paragraph(f"<b>Q{abono.monto_pagado:,.2f}</b>", style_monto)],
         [Paragraph("Saldo Pendiente Restante:", style_label), Paragraph(f"Q{cuenta.saldo_pendiente:,.2f}", style_val_bold)],
@@ -162,7 +160,6 @@ def generar_pdf_recibo_pago(abono):
     story.append(t_pago)
     story.append(Spacer(1, 24))
 
-    # 4. Nota de Validez Contable
     style_nota = ParagraphStyle(
         'NotaContable',
         parent=styles['Normal'],
@@ -178,10 +175,9 @@ def generar_pdf_recibo_pago(abono):
     ))
     story.append(Spacer(1, 36))
 
-    # 5. Sección de Firmas
     datos_firmas = [
         [Paragraph("_______________________________________<br/>Firma y Sello de Receptoría / Caja", ParagraphStyle('Ctr', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, alignment=1)),
-         Paragraph("_______________________________________<br/>Firma de Conformidad del Estudiante / Tutor", ParagraphStyle('Ctr2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, alignment=1))]
+         Paragraph("_______________________________________<br/>Firma de Conformidad del Estudiante / Encargado", ParagraphStyle('Ctr2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, alignment=1))]
     ]
     t_firmas = Table(datos_firmas, colWidths=[270, 270])
     t_firmas.setStyle(TableStyle([
@@ -260,13 +256,11 @@ def generar_pdf_solvencia_estudiante(estudiante, ciclo_escolar):
 
     persona = estudiante.persona
 
-    # 1. Encabezado
     story.append(Paragraph("INSTITUTO DE EDUCACIÓN BÁSICA 'EL PROGRESO'", style_title))
     story.append(Spacer(1, 4))
     story.append(Paragraph("DEPARTAMENTO DE CONTABILIDAD Y FINANZAS", style_subtitle))
     story.append(HRFlowable(width="100%", thickness=2, color=COLOR_VERDE, spaceBefore=8, spaceAfter=20))
 
-    # 2. Título del Documento
     style_doc_header = ParagraphStyle(
         'HeaderSolvencia',
         parent=styles['Normal'],
@@ -279,7 +273,6 @@ def generar_pdf_solvencia_estudiante(estudiante, ciclo_escolar):
     story.append(Paragraph("<b>CONSTANCIA DE SOLVENCIA FINANCIERA</b>", style_doc_header))
     story.append(Spacer(1, 20))
 
-    # 3. Texto Oficial de Solvencia
     texto_constancia = (
         f"La Dirección General y el Departamento de Contabilidad del <b>Instituto de Educación Básica 'El Progreso'</b>, "
         f"hacen constar por este medio que el/la estudiante: "
@@ -287,7 +280,7 @@ def generar_pdf_solvencia_estudiante(estudiante, ciclo_escolar):
     story.append(Paragraph(texto_constancia, style_body))
     story.append(Spacer(1, 10))
 
-    datos_alumno = [
+    datos_estudiante = [
         [Paragraph("Nombre Completo:", ParagraphStyle('L1', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, textColor=COLOR_GRIS)),
          Paragraph(persona.nombre_completo, style_val_bold)],
         [Paragraph("CUI / DPI:", ParagraphStyle('L2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, textColor=COLOR_GRIS)),
@@ -299,7 +292,7 @@ def generar_pdf_solvencia_estudiante(estudiante, ciclo_escolar):
         [Paragraph("Estado Financiero:", ParagraphStyle('L5', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, textColor=COLOR_GRIS)),
          Paragraph("<font color='#1E6532'><b>SOLVENTE (SIN DEUDAS PENDIENTES)</b></font>", style_val_bold)]
     ]
-    t_sol = Table(datos_alumno, colWidths=[140, 400])
+    t_sol = Table(datos_estudiante, colWidths=[140, 400])
     t_sol.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,-1), COLOR_BG_SLATE),
         ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#CBD5E1')),
@@ -317,7 +310,6 @@ def generar_pdf_solvencia_estudiante(estudiante, ciclo_escolar):
     story.append(Paragraph(texto_cierre, style_body))
     story.append(Spacer(1, 40))
 
-    # 4. Firmas Oficiales
     datos_firmas = [
         [Paragraph("_______________________________________<br/><b>Licda. Receptoría y Contabilidad</b><br/>Instituto El Progreso", ParagraphStyle('Ctr', parent=styles['Normal'], fontName='Helvetica', fontSize=9, alignment=1)),
          Paragraph("_______________________________________<br/><b>Director General</b><br/>Instituto El Progreso", ParagraphStyle('Ctr2', parent=styles['Normal'], fontName='Helvetica', fontSize=9, alignment=1))]

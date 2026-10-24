@@ -20,25 +20,16 @@
             <p class="text-xs text-slate-500 mt-1">Colaboradores, docentes y personal administrativo registrados.</p>
         </div>
         
+        {% if perms.rrhh.add_personal %}
         <a href="{% url 'rrhh:personal_create' %}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20 self-start sm:self-auto">
             <i data-lucide="user-plus" class="w-4 h-4"></i>
             Registrar Empleado
         </a>
+        {% endif %}
     </div>
 
-    <!-- Alertas del Sistema -->
-    {% if messages %}
-        <div class="space-y-3">
-            {% for message in messages %}
-                <div class="p-4 rounded-xl flex items-start gap-3 border shadow-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-900 border-emerald-200{% else %}bg-rose-50 text-rose-900 border-rose-200{% endif %}">
-                    <i data-lucide="{% if message.tags == 'success' %}check-circle-2{% else %}alert-triangle{% endif %}" class="w-5 h-5 flex-shrink-0 mt-0.5 {% if message.tags == 'success' %}text-emerald-600{% else %}text-rose-600{% endif %}"></i>
-                    <div class="text-sm font-medium leading-relaxed">
-                        {{ message }}
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
+    <!-- Pestañas de Navegación de RRHH -->
+    {% include 'rrhh/partials/rrhh_tabs.html' %}
 
     <!-- Tarjetas Métricas Rápidas -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -73,6 +64,30 @@
         </div>
     </div>
 
+    <!-- Pestañas de Estado: Personal Activo vs Personal Retirado -->
+    <div class="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
+        <a href="?estado=ACTIVO{% if q %}&q={{ q }}{% endif %}"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex-shrink-0 {% if estado_filtro == 'ACTIVO' %}bg-[#1E6532] text-white shadow-md shadow-[#1E6532]/20{% else %}bg-white text-slate-600 hover:bg-slate-100 border border-slate-200{% endif %}">
+            <i data-lucide="user-check" class="w-4 h-4"></i>
+            <span>Personal Activo</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black {% if estado_filtro == 'ACTIVO' %}bg-white/20 text-white{% else %}bg-slate-100 text-slate-600{% endif %}">{{ activos_count|default:"0" }}</span>
+        </a>
+
+        <a href="?estado=RETIRADO{% if q %}&q={{ q }}{% endif %}"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex-shrink-0 {% if estado_filtro == 'RETIRADO' %}bg-[#7A1C21] text-white shadow-md shadow-[#7A1C21]/20{% else %}bg-white text-slate-600 hover:bg-slate-100 border border-slate-200{% endif %}">
+            <i data-lucide="user-x" class="w-4 h-4"></i>
+            <span>Personal Retirado</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black {% if estado_filtro == 'RETIRADO' %}bg-white/20 text-white{% else %}bg-rose-50 text-rose-700{% endif %}">{{ retirados_count|default:"0" }}</span>
+        </a>
+
+        <a href="?estado=TODOS{% if q %}&q={{ q }}{% endif %}"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex-shrink-0 {% if estado_filtro == 'TODOS' %}bg-slate-800 text-white shadow-md{% else %}bg-white text-slate-600 hover:bg-slate-100 border border-slate-200{% endif %}">
+            <i data-lucide="users" class="w-4 h-4"></i>
+            <span>Todo el Personal</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black {% if estado_filtro == 'TODOS' %}bg-white/20 text-white{% else %}bg-slate-100 text-slate-600{% endif %}">{{ total_empleados|default:"0" }}</span>
+        </a>
+    </div>
+
     <!-- Barra de Búsqueda y Filtros -->
     <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
         <form method="get" class="flex flex-col sm:flex-row gap-3 items-center justify-between">
@@ -89,7 +104,7 @@
 
             <div class="flex items-center gap-2 w-full sm:w-auto">
                 <select name="estado" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#1E6532]">
-                    <option value="">-- Todos los Estados --</option>
+                    <option value="TODOS" {% if estado_filtro == 'TODOS' %}selected{% endif %}>-- Todos los Estados --</option>
                     {% for val, label in estados_laborales %}
                         <option value="{{ val }}" {% if estado_filtro == val %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
@@ -99,7 +114,7 @@
                     Filtrar
                 </button>
                 
-                {% if q or estado_filtro %}
+                {% if q or estado_filtro != 'ACTIVO' %}
                     <a href="{% url 'rrhh:personal_list' %}" class="px-3 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors">
                         Limpiar
                     </a>
@@ -187,6 +202,11 @@
                                 <a href="{% url 'rrhh:personal_update' empleado.pk %}" title="Modificar Empleado" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-slate-700 hover:bg-[#3C7DA8] hover:text-white transition-colors">
                                     <i data-lucide="edit" class="w-4 h-4"></i>
                                 </a>
+                                {% if empleado.estado_laboral == 'ACTIVO' %}
+                                <a href="{% url 'rrhh:personal_baja' empleado.pk %}" title="Dar de Baja al Colaborador" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-rose-600 hover:bg-rose-600 hover:text-white transition-colors">
+                                    <i data-lucide="user-x" class="w-4 h-4"></i>
+                                </a>
+                                {% endif %}
                                 <a href="{% url 'rrhh:personal_pdf_expediente' empleado.pk %}" target="_blank" title="Ficha Expediente PDF" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-100 text-slate-700 hover:bg-emerald-700 hover:text-white transition-colors">
                                     <i data-lucide="file-text" class="w-4 h-4"></i>
                                 </a>

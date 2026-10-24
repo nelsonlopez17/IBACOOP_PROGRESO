@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+
+{% block title %}Auditoría y Trazabilidad Empresarial{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Encabezado de la Sección -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+                <a href="{% url 'core:home' %}" class="hover:underline">Dashboard</a>
+                <span>/</span>
+                <span class="text-slate-500">Auditoría y Control</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+                <i data-lucide="shield-check" class="w-7 h-7 text-[#1E6532]"></i>
+                Centro de Auditoría y Trazabilidad
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">
+                Registro inmutable de transacciones, modificaciones de calificaciones, pagos, planillas e inventario.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <a href="{% url 'auditoria:exportar_csv' %}?{{ request.GET.urlencode }}" 
+               class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-700 transition-all shadow-md self-start sm:self-auto"
+               title="Descargar pista de auditoría en formato CSV compatible con Excel">
+                <i data-lucide="download" class="w-4 h-4 text-emerald-400"></i>
+                Exportar CSV / Excel
+            </a>
+        </div>
+    </div>
+
+    <!-- Pestañas de Navegación -->
+    {% include 'auditoria/partials/auditoria_tabs.html' %}
+
+    <!-- Tarjetas Métricas de Actividad (Últimas 24 Horas) -->
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Actividad 24h</span>
+                <i data-lucide="activity" class="w-4 h-4 text-[#1E6532]"></i>
+            </div>
+            <h3 class="text-2xl font-extrabold text-slate-900 mt-2">{{ metrics.total_24h }}</h3>
+            <p class="text-[10px] text-slate-500">operaciones registradas</p>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Creaciones</span>
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+            </div>
+            <h3 class="text-2xl font-extrabold text-emerald-700 mt-2">+{{ metrics.creaciones_24h }}</h3>
+            <p class="text-[10px] text-slate-500">nuevos registros</p>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-amber-600 uppercase tracking-wider">Modificaciones</span>
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+            </div>
+            <h3 class="text-2xl font-extrabold text-amber-700 mt-2">~{{ metrics.modificaciones_24h }}</h3>
+            <p class="text-[10px] text-slate-500">cambios de valores</p>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-rose-600 uppercase tracking-wider">Eliminaciones</span>
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+            </div>
+            <h3 class="text-2xl font-extrabold text-rose-700 mt-2">-{{ metrics.eliminaciones_24h }}</h3>
+            <p class="text-[10px] text-slate-500">bajas lógicas</p>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs col-span-2 sm:col-span-1">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-[#3C7DA8] uppercase tracking-wider">Operadores</span>
+                <i data-lucide="users" class="w-4 h-4 text-[#3C7DA8]"></i>
+            </div>
+            <h3 class="text-2xl font-extrabold text-slate-900 mt-2">{{ metrics.usuarios_activos_count }}</h3>
+            <p class="text-[10px] text-slate-500">usuarios activos hoy</p>
+        </div>
+    </div>
+
+    <!-- Barra de Filtros Parametrizados -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+        <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
+            <!-- Modelo / Entidad -->
+            <div>
+                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Entidad / Módulo</label>
+                <select name="modelo" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 focus:ring-2 focus:ring-[#1E6532] focus:outline-none">
+                    <option value="">Todas las Entidades</option>
+                    {% for key, info in modelos_auditados.items %}
+                    <option value="{{ key }}" {% if filtros.modelo == key %}selected{% endif %}>
+                        {{ info.nombre }} ({{ info.modulo }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Usuario Responsable -->
+            <div>
+                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Usuario</label>
+                <select name="usuario" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 focus:ring-2 focus:ring-[#1E6532] focus:outline-none">
+                    <option value="">Todos los Usuarios</option>
+                    {% for u in usuarios %}
+                    <option value="{{ u.id }}" {% if filtros.usuario == u.id|stringformat:"s" %}selected{% endif %}>
+                        {{ u.username }} ({{ u.get_rol_display }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Tipo de Acción -->
+            <div>
+                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Tipo de Acción</label>
+                <select name="accion" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 focus:ring-2 focus:ring-[#1E6532] focus:outline-none">
+                    <option value="">Cualquier Acción</option>
+                    <option value="+" {% if filtros.accion == '+' %}selected{% endif %}>Creación (+)</option>
+                    <option value="~" {% if filtros.accion == '~' %}selected{% endif %}>Modificación (~)</option>
+                    <option value="-" {% if filtros.accion == '-' %}selected{% endif %}>Eliminación (-)</option>
+                </select>
+            </div>
+
+            <!-- Fecha Desde -->
+            <div>
+                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Fecha Desde</label>
+                <input type="date" name="fecha_inicio" value="{{ filtros.fecha_inicio }}" 
+                       class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 focus:ring-2 focus:ring-[#1E6532] focus:outline-none">
+            </div>
+
+            <!-- Fecha Hasta -->
+            <div>
+                <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Fecha Hasta</label>
+                <input type="date" name="fecha_fin" value="{{ filtros.fecha_fin }}" 
+                       class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800 focus:ring-2 focus:ring-[#1E6532] focus:outline-none">
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="flex items-center gap-2">
+                <button type="submit" 
+                        class="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-sm">
+                    <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+                    Filtrar
+                </button>
+                <a href="{% url 'auditoria:dashboard' %}" 
+                   class="inline-flex items-center justify-center p-2 text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all"
+                   title="Limpiar filtros">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabla Principal de Pista de Auditoría -->
+    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="font-extrabold text-sm text-slate-800 flex items-center gap-2">
+                <i data-lucide="list" class="w-4 h-4 text-emerald-600"></i>
+                Eventos Registrados en la Pista Inmutable
+            </h3>
+            <span class="text-xs text-slate-500">Mostrando {{ records|length }} eventos</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                    <tr>
+                        <th class="py-3 px-4">Fecha y Hora</th>
+                        <th class="py-3 px-4">Entidad / Módulo</th>
+                        <th class="py-3 px-4 text-center">Acción</th>
+                        <th class="py-3 px-4">Usuario Responsable</th>
+                        <th class="py-3 px-4">Registro Afectado</th>
+                        <th class="py-3 px-4 text-right">Inspección</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                    {% for r in records %}
+                    <tr class="hover:bg-slate-50/70 transition-colors">
+                        <!-- Fecha y Hora -->
+                        <td class="py-3.5 px-4 whitespace-nowrap text-slate-800 font-semibold">
+                            <div class="flex items-center gap-1.5">
+                                <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i>
+                                <span>{{ r.history_date|date:"d/m/Y H:i:s" }}</span>
+                            </div>
+                        </td>
+
+                        <!-- Entidad y Módulo -->
+                        <td class="py-3.5 px-4 whitespace-nowrap">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border {{ r.badge_color }}">
+                                <i data-lucide="{{ r.icono }}" class="w-3.5 h-3.5"></i>
+                                <span>{{ r.modelo_nombre }}</span>
+                            </span>
+                            <span class="text-[10px] text-slate-400 block mt-0.5 ml-1">{{ r.modulo }}</span>
+                        </td>
+
+                        <!-- Acción -->
+                        <td class="py-3.5 px-4 whitespace-nowrap text-center">
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-extrabold border {{ r.history_type_badge.class }}">
+                                {{ r.history_type_badge.label }}
+                            </span>
+                        </td>
+
+                        <!-- Usuario -->
+                        <td class="py-3.5 px-4 whitespace-nowrap">
+                            {% if r.history_user %}
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-6 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] font-bold">
+                                    {{ r.history_user.username|slice:":1"|upper }}
+                                </div>
+                                <div>
+                                    <span class="font-bold text-slate-800 block leading-tight">{{ r.history_user.username }}</span>
+                                    <span class="text-[10px] text-slate-400">{{ r.history_user.get_rol_display|default:"Usuario" }}</span>
+                                </div>
+                            </div>
+                            {% else %}
+                            <span class="text-slate-400 italic flex items-center gap-1">
+                                <i data-lucide="server" class="w-3.5 h-3.5"></i>
+                                Sistema
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Registro Afectado -->
+                        <td class="py-3.5 px-4 text-slate-700 max-w-xs truncate" title="{{ r.instance_repr }}">
+                            {{ r.instance_repr }}
+                        </td>
+
+                        <!-- Botón de Inspección de Diff -->
+                        <td class="py-3.5 px-4 whitespace-nowrap text-right">
+                            <a href="{% url 'auditoria:diff_detail' r.model_key r.history_id %}" 
+                               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-[#1E6532] hover:bg-emerald-100 font-bold border border-emerald-200 transition-colors"
+                               title="Ver valores modificados campo por campo">
+                                <i data-lucide="git-commit" class="w-3.5 h-3.5"></i>
+                                <span>Ver Diff</span>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="py-12 text-center text-slate-400">
+                            <i data-lucide="history" class="w-10 h-10 mx-auto text-slate-300 mb-2"></i>
+                            <p class="font-semibold text-sm">No se encontraron eventos de auditoría con los filtros seleccionados.</p>
+                            <p class="text-xs mt-1">Intente ampliar el rango de fechas o seleccionar otra entidad.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginador -->
+        {% if page_obj.has_other_pages %}
+        <div class="px-4 py-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+            <div class="flex items-center gap-1">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold">Anterior</a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 font-bold">Siguiente</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

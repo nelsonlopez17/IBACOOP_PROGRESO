@@ -19,7 +19,7 @@
                 <i data-lucide="calendar-check" class="w-7 h-7 text-[#1E6532]"></i>
                 Control Diario de Asistencia Estudiantil
             </h1>
-            <p class="text-xs text-slate-500 mt-1">Registro y seguimiento de presencias y faltas justificadas por sección.</p>
+            <p class="text-xs text-slate-500 mt-1">Registro y seguimiento de presencias, inasistencias y faltas justificadas por sección.</p>
         </div>
 
         <div class="flex items-center gap-3">
@@ -34,84 +34,205 @@
     <!-- Pestañas del Módulo Académico -->
     {% include 'academico/partials/academico_tabs.html' %}
 
-    <!-- Alertas -->
-    {% if messages %}
-    <div class="space-y-3">
-        {% for message in messages %}
-        <div class="p-4 rounded-xl flex items-start gap-3 border shadow-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-900 border-emerald-200{% else %}bg-rose-50 text-rose-900 border-rose-200{% endif %}">
-            <i data-lucide="{% if message.tags == 'success' %}check-circle-2{% else %}alert-triangle{% endif %}" class="w-5 h-5 flex-shrink-0 mt-0.5 {% if message.tags == 'success' %}text-emerald-600{% else %}text-rose-600{% endif %}"></i>
-            <div class="text-sm font-medium leading-relaxed">{{ message }}</div>
-        </div>
-        {% endfor %}
+    {% if not ciclo_activo %}
+    <div class="p-8 text-center bg-white rounded-2xl border border-slate-200 shadow-sm">
+        <i data-lucide="calendar-x" class="w-12 h-12 mx-auto text-slate-300 mb-2"></i>
+        <p class="text-sm font-bold text-slate-700">No hay un Ciclo Escolar activo configurado en el sistema.</p>
     </div>
-    {% endif %}
+    {% elif not grados %}
+    <div class="p-8 text-center bg-white rounded-2xl border border-slate-200 shadow-sm">
+        <i data-lucide="briefcase" class="w-12 h-12 mx-auto text-slate-300 mb-2"></i>
+        <p class="text-sm font-bold text-slate-700">No se encontraron grados ni cursos asignados a su usuario.</p>
+        <p class="text-xs text-slate-400 mt-1">Si es Docente, contacte a Dirección o Secretaría para que le asignen su carga académica en el ciclo activo.</p>
+    </div>
+    {% else %}
 
-    <!-- Filtro / Selector de Clase -->
+    <!-- Filtro Jerárquico: Grado -> Sección -> Curso -> Fecha -->
     <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-        <form method="get" class="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+        <form method="get" id="filtroAsistenciaForm" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+            <!-- Grado -->
             <div>
-                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Sección</label>
-                {{ form.seccion }}
+                <label for="gradoSelect" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                    <i data-lucide="graduation-cap" class="w-3.5 h-3.5 text-slate-400"></i>
+                    Grado Escolar
+                </label>
+                <select name="grado" id="gradoSelect" onchange="limpiarSeccionYCurso(); this.form.submit();"
+                    class="w-full text-xs font-semibold rounded-xl border-slate-300 focus:border-[#1E6532] focus:ring-[#1E6532] bg-slate-50/50 py-2.5 px-3">
+                    {% for g in grados %}
+                    <option value="{{ g.id }}" {% if grado_sel and grado_sel.id == g.id %}selected{% endif %}>
+                        {{ g.nombre }}
+                    </option>
+                    {% empty %}
+                    <option value="">No hay grados disponibles</option>
+                    {% endfor %}
+                </select>
             </div>
+
+            <!-- Sección -->
             <div>
-                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Curso / Asignatura</label>
-                {{ form.curso }}
+                <label for="seccionSelect" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                    <i data-lucide="users" class="w-3.5 h-3.5 text-slate-400"></i>
+                    Sección
+                </label>
+                <select name="seccion" id="seccionSelect" onchange="limpiarCurso(); this.form.submit();"
+                    class="w-full text-xs font-semibold rounded-xl border-slate-300 focus:border-[#1E6532] focus:ring-[#1E6532] bg-slate-50/50 py-2.5 px-3">
+                    {% for sec in secciones %}
+                    <option value="{{ sec.id }}" {% if seccion_sel and seccion_sel.id == sec.id %}selected{% endif %}>
+                        Sección {{ sec.letra }}
+                    </option>
+                    {% empty %}
+                    <option value="">No hay secciones en este grado</option>
+                    {% endfor %}
+                </select>
             </div>
+
+            <!-- Curso -->
             <div>
-                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Fecha</label>
-                {{ form.fecha }}
+                <label for="cursoSelect" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                    <i data-lucide="book" class="w-3.5 h-3.5 text-slate-400"></i>
+                    Asignatura / Curso
+                </label>
+                <select name="curso" id="cursoSelect" onchange="this.form.submit();"
+                    class="w-full text-xs font-semibold rounded-xl border-slate-300 focus:border-[#1E6532] focus:ring-[#1E6532] bg-slate-50/50 py-2.5 px-3">
+                    {% for c in cursos %}
+                    <option value="{{ c.id }}" {% if curso_sel and curso_sel.id == c.id %}selected{% endif %}>
+                        {{ c.nombre_curso }}
+                    </option>
+                    {% empty %}
+                    <option value="">No hay cursos para esta sección</option>
+                    {% endfor %}
+                </select>
             </div>
+
+            <!-- Fecha -->
             <div>
-                <button type="submit" class="w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-colors">
-                    Cargar Alumnos
-                </button>
+                <label for="fechaInput" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400"></i>
+                    Fecha de Asistencia
+                </label>
+                <input type="date" name="fecha" id="fechaInput" value="{{ fecha_sel }}" onchange="this.form.submit();"
+                    class="w-full text-xs font-semibold rounded-xl border-slate-300 focus:border-[#1E6532] focus:ring-[#1E6532] bg-slate-50/50 py-2 px-3">
             </div>
         </form>
     </div>
 
+    {% if seccion_sel and curso_sel %}
+    <!-- Resumen de Asistencia -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Estudiantes</span>
+            <span class="text-xl font-black text-slate-900 mt-1 block">{{ total_estudiantes|default:"0" }}</span>
+        </div>
+        <div class="bg-emerald-50/60 p-4 rounded-xl border border-emerald-200/80 shadow-xs">
+            <span class="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">Presentes</span>
+            <span class="text-xl font-black text-emerald-700 mt-1 block" id="counterPresentes">{{ presentes_count|default:"0" }}</span>
+        </div>
+        <div class="bg-rose-50/60 p-4 rounded-xl border border-rose-200/80 shadow-xs">
+            <span class="text-[10px] font-bold text-rose-800 uppercase tracking-wider block">Faltas Injustificadas</span>
+            <span class="text-xl font-black text-rose-700 mt-1 block" id="counterAusentes">{{ ausentes_count|default:"0" }}</span>
+        </div>
+        <div class="bg-blue-50/60 p-4 rounded-xl border border-blue-200/80 shadow-xs">
+            <span class="text-[10px] font-bold text-blue-800 uppercase tracking-wider block">Faltas Justificadas</span>
+            <span class="text-xl font-black text-blue-800 mt-1 block" id="counterJustificados">{{ justificados_count|default:"0" }}</span>
+        </div>
+    </div>
+
     <!-- Formulario Masivo de Asistencia -->
-    {% if inscritos %}
     <form method="post" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden space-y-0">
         {% csrf_token %}
-        <input type="hidden" name="seccion" value="{{ seccion_obj.pk }}">
-        <input type="hidden" name="curso" value="{{ curso_obj.pk }}">
+        <input type="hidden" name="grado" value="{{ grado_sel.id }}">
+        <input type="hidden" name="seccion" value="{{ seccion_sel.id }}">
+        <input type="hidden" name="curso" value="{{ curso_sel.id }}">
         <input type="hidden" name="fecha" value="{{ fecha_sel }}">
 
-        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+        <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/70">
             <div>
-                <h3 class="text-sm font-extrabold text-slate-900">Tomar Asistencia — {{ seccion_obj }} / {{ curso_obj.nombre_curso }}</h3>
-                <p class="text-xs text-slate-500">Fecha: <strong>{{ fecha_sel }}</strong></p>
+                <h3 class="text-sm font-extrabold text-slate-900">
+                    Tomar Asistencia — {{ grado_sel.nombre }} Sección "{{ seccion_sel.letra }}" / {{ curso_sel.nombre_curso }}
+                </h3>
+                <p class="text-xs text-slate-500 mt-0.5">Fecha: <strong>{{ fecha_sel }}</strong></p>
             </div>
-            <span class="text-xs font-bold text-slate-400">Total: {{ inscritos|length }} alumnos</span>
+            <div class="flex items-center gap-3">
+                <button type="button" onclick="marcarTodosPresentes();"
+                    class="px-3.5 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shadow-xs">
+                    <i data-lucide="check-check" class="w-4 h-4 text-[#1E6532]"></i>
+                    Marcar Todos Presentes
+                </button>
+                <button type="submit"
+                    class="px-5 py-2 bg-[#1E6532] hover:bg-[#1E6532]/90 text-white rounded-xl text-xs font-black transition-all shadow-md shadow-[#1E6532]/20 flex items-center gap-2">
+                    <i data-lucide="save" class="w-4 h-4"></i>
+                    Guardar Asistencia
+                </button>
+            </div>
         </div>
 
         <div class="overflow-x-auto">
             <table class="w-full text-left text-xs border-collapse">
                 <thead>
                     <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
-                        <th class="py-3.5 px-6">Alumno / CUI</th>
-                        <th class="py-3.5 px-6 text-center">¿Presente?</th>
-                        <th class="py-3.5 px-6 text-center">¿Falta Justificada?</th>
+                        <th class="py-3.5 px-6 w-12 text-center">No.</th>
+                        <th class="py-3.5 px-6">Estudiante</th>
+                        <th class="py-3.5 px-6 text-center w-80">Estado de Asistencia (Excluyente)</th>
                         <th class="py-3.5 px-6">Observaciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
-                    {% for asig in inscritos %}
-                    <tr class="hover:bg-slate-50/60 transition-colors">
+                    {% for item in listado_estudiantes %}
+                    <tr class="hover:bg-slate-50/60 transition-colors fila-asistencia">
+                        <td class="py-4 px-6 text-center font-bold text-slate-400">{{ forloop.counter }}</td>
                         <td class="py-4 px-6">
-                            <input type="hidden" name="asig_ids" value="{{ asig.pk }}">
-                            <span class="font-bold text-slate-900 text-sm block">{{ asig.estudiante.persona.nombre_completo }}</span>
-                            <span class="font-mono text-[11px] text-slate-400">CUI: {{ asig.estudiante.persona.cui }}</span>
+                            <input type="hidden" name="asig_ids" value="{{ item.asignacion.pk }}">
+                            <span class="font-bold text-slate-900 text-sm block">{{ item.asignacion.estudiante.persona.nombre_completo }}</span>
+                            <span class="font-mono text-[11px] text-slate-400">CUI: {{ item.asignacion.estudiante.persona.cui|default:"—" }}</span>
                         </td>
                         <td class="py-4 px-6 text-center">
-                            <input type="checkbox" name="presente_{{ asig.pk }}" checked class="h-5 w-5 rounded border-slate-300 text-[#1E6532] focus:ring-[#1E6532] cursor-pointer">
-                        </td>
-                        <td class="py-4 px-6 text-center">
-                            <input type="checkbox" name="justificado_{{ asig.pk }}" class="h-5 w-5 rounded border-slate-300 text-[#3C7DA8] focus:ring-[#3C7DA8] cursor-pointer">
+                            <!-- Selector Excluyente de Estado -->
+                            <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
+                                <!-- Opción Presente -->
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="estado_{{ item.asignacion.pk }}" value="presente"
+                                        {% if item.estado == 'presente' %}checked{% endif %}
+                                        onchange="actualizarContadoresAsistencia();"
+                                        class="peer sr-only radio-presente">
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 transition-all peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:shadow-xs hover:bg-slate-200/60">
+                                        <i data-lucide="check" class="w-3.5 h-3.5"></i> Presente
+                                    </span>
+                                </label>
+
+                                <!-- Opción Falta Injustificada / Ausente -->
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="estado_{{ item.asignacion.pk }}" value="ausente"
+                                        {% if item.estado == 'ausente' %}checked{% endif %}
+                                        onchange="actualizarContadoresAsistencia();"
+                                        class="peer sr-only radio-ausente">
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 transition-all peer-checked:bg-rose-600 peer-checked:text-white peer-checked:shadow-xs hover:bg-slate-200/60">
+                                        <i data-lucide="x" class="w-3.5 h-3.5"></i> Ausente
+                                    </span>
+                                </label>
+
+                                <!-- Opción Falta Justificada -->
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="estado_{{ item.asignacion.pk }}" value="justificado"
+                                        {% if item.estado == 'justificado' %}checked{% endif %}
+                                        onchange="actualizarContadoresAsistencia();"
+                                        class="peer sr-only radio-justificado">
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 transition-all peer-checked:bg-blue-600 peer-checked:text-white peer-checked:shadow-xs hover:bg-slate-200/60">
+                                        <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Justificada
+                                    </span>
+                                </label>
+                            </div>
                         </td>
                         <td class="py-4 px-6">
-                            <input type="text" name="obs_{{ asig.pk }}" placeholder="Observación opcional..."
+                            <input type="text" name="obs_{{ item.asignacion.pk }}" value="{{ item.observaciones }}" maxlength="255"
+                                placeholder="Observación opcional (justificación, motivo)..."
                                 class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-[#1E6532]">
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="py-12 text-center text-slate-400">
+                            <i data-lucide="users" class="w-10 h-10 mx-auto mb-2 text-slate-300"></i>
+                            <p class="text-sm font-semibold">No hay estudiantes inscritos en esta sección.</p>
                         </td>
                     </tr>
                     {% endfor %}
@@ -119,14 +240,56 @@
             </table>
         </div>
 
-        <div class="p-5 border-t border-slate-100 bg-slate-50/50 flex justify-end">
+        {% if listado_estudiantes %}
+        <div class="p-5 border-t border-slate-100 bg-slate-50/50 flex justify-between items-center">
+            <span class="text-xs text-slate-500 font-medium">Total: {{ listado_estudiantes|length }} estudiantes</span>
             <button type="submit" class="px-6 py-2.5 bg-[#1E6532] hover:bg-[#1E6532]/90 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-[#1E6532]/20 flex items-center gap-2">
-                <i data-lucide="check" class="w-4 h-4"></i>
+                <i data-lucide="save" class="w-4 h-4"></i>
                 Guardar Registro de Asistencia
             </button>
         </div>
+        {% endif %}
     </form>
     {% endif %}
 
+    {% endif %}
+
 </div>
+
+<script>
+function limpiarSeccionYCurso() {
+    const s = document.getElementById('seccionSelect');
+    const c = document.getElementById('cursoSelect');
+    if (s) s.removeAttribute('name');
+    if (c) c.removeAttribute('name');
+}
+
+function limpiarCurso() {
+    const c = document.getElementById('cursoSelect');
+    if (c) c.removeAttribute('name');
+}
+
+function marcarTodosPresentes() {
+    const radios = document.querySelectorAll('.radio-presente');
+    radios.forEach(r => { r.checked = true; });
+    actualizarContadoresAsistencia();
+}
+
+function actualizarContadoresAsistencia() {
+    let presentes = 0;
+    let ausentes = 0;
+    let justificados = 0;
+
+    document.querySelectorAll('.radio-presente').forEach(r => { if (r.checked) presentes++; });
+    document.querySelectorAll('.radio-ausente').forEach(r => { if (r.checked) ausentes++; });
+    document.querySelectorAll('.radio-justificado').forEach(r => { if (r.checked) justificados++; });
+
+    const elP = document.getElementById('counterPresentes');
+    const elA = document.getElementById('counterAusentes');
+    const elJ = document.getElementById('counterJustificados');
+    if (elP) elP.textContent = presentes;
+    if (elA) elA.textContent = ausentes;
+    if (elJ) elJ.textContent = justificados;
+}
+</script>
 {% endblock %}

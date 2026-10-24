@@ -29,20 +29,6 @@
         {% endif %}
     </div>
 
-    <!-- Alertas y Mensajes del Sistema -->
-    {% if messages %}
-        <div class="space-y-3">
-            {% for message in messages %}
-                <div class="p-4 rounded-xl flex items-start gap-3 border shadow-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-900 border-emerald-200{% else %}bg-rose-50 text-rose-900 border-rose-200{% endif %}">
-                    <i data-lucide="{% if message.tags == 'success' %}check-circle-2{% else %}alert-triangle{% endif %}" class="w-5 h-5 flex-shrink-0 mt-0.5 {% if message.tags == 'success' %}text-emerald-600{% else %}text-rose-600{% endif %}"></i>
-                    <div class="text-sm font-medium leading-relaxed">
-                        {{ message }}
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-
     <!-- Tarjetas Métricas Rápidas -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 shadow-xs">
@@ -80,15 +66,40 @@
                 <i data-lucide="graduation-cap" class="w-5 h-5"></i>
             </div>
             <div>
-                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Alumnos & Encargados</p>
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Estudiantes y Encargados</p>
                 <h3 class="text-xl font-extrabold text-[#3C7DA8]">{{ estudiantes_count|add:encargados_count }}</h3>
             </div>
         </div>
     </div>
 
+    <!-- Pestañas de Navegación: Activos vs Dados de Baja -->
+    <div class="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
+        <a href="?estado=activo{% if q_actual %}&q={{ q_actual }}{% endif %}{% if rol_actual %}&rol={{ rol_actual }}{% endif %}"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex-shrink-0 {% if estado_actual == 'activo' %}bg-[#1E6532] text-white shadow-md shadow-[#1E6532]/20{% else %}bg-white text-slate-600 hover:bg-slate-100 border border-slate-200{% endif %}">
+            <i data-lucide="user-check" class="w-4 h-4"></i>
+            <span>Usuarios Activos</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black {% if estado_actual == 'activo' %}bg-white/20 text-white{% else %}bg-slate-100 text-slate-600{% endif %}">{{ activos_count }}</span>
+        </a>
+
+        <a href="?estado=inactivo{% if q_actual %}&q={{ q_actual }}{% endif %}{% if rol_actual %}&rol={{ rol_actual }}{% endif %}"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex-shrink-0 {% if estado_actual == 'inactivo' %}bg-[#7A1C21] text-white shadow-md shadow-[#7A1C21]/20{% else %}bg-white text-slate-600 hover:bg-slate-100 border border-slate-200{% endif %}">
+            <i data-lucide="user-x" class="w-4 h-4"></i>
+            <span>Usuarios Dados de Baja</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black {% if estado_actual == 'inactivo' %}bg-white/20 text-white{% else %}bg-rose-50 text-rose-700{% endif %}">{{ inactivos_count }}</span>
+        </a>
+
+        <a href="?estado=todos{% if q_actual %}&q={{ q_actual }}{% endif %}{% if rol_actual %}&rol={{ rol_actual }}{% endif %}"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex-shrink-0 {% if estado_actual == 'todos' %}bg-slate-800 text-white shadow-md{% else %}bg-white text-slate-600 hover:bg-slate-100 border border-slate-200{% endif %}">
+            <i data-lucide="users" class="w-4 h-4"></i>
+            <span>Todas las Cuentas</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black {% if estado_actual == 'todos' %}bg-white/20 text-white{% else %}bg-slate-100 text-slate-600{% endif %}">{{ total_usuarios }}</span>
+        </a>
+    </div>
+
     <!-- Barra de Filtros y Búsqueda -->
     <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
         <form method="get" class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <input type="hidden" name="estado" value="{{ estado_actual }}">
             <!-- Búsqueda textual -->
             <div class="sm:col-span-2 relative">
                 <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
@@ -111,17 +122,16 @@
                 </select>
             </div>
 
-            <!-- Filtro por Estado y Botón -->
+            <!-- Botón Filtrar y Limpiar -->
             <div class="flex items-center gap-2">
-                <select name="estado" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#1E6532]">
-                    <option value="">-- Todos los Estados --</option>
-                    <option value="activo" {% if estado_actual == 'activo' %}selected{% endif %}>Activos</option>
-                    <option value="inactivo" {% if estado_actual == 'inactivo' %}selected{% endif %}>Inactivos / Bloqueados</option>
-                </select>
-
-                <button type="submit" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-colors">
+                <button type="submit" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-colors w-full">
                     Filtrar
                 </button>
+                {% if q_actual or rol_actual or estado_actual != 'activo' %}
+                    <a href="{% url 'usuarios:usuario_list' %}" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-colors">
+                        Limpiar
+                    </a>
+                {% endif %}
             </div>
         </form>
     </div>
@@ -148,7 +158,7 @@
                             <td class="py-4 px-5">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 rounded-full bg-[#1E6532]/10 border border-[#1E6532]/20 flex items-center justify-center font-black text-xs text-[#1E6532]">
-                                        {{ u.username|slice:":2"|upper }}
+                                        {{ u.iniciales }}
                                     </div>
                                     <div>
                                         <div class="font-bold text-slate-900 text-sm flex items-center gap-1.5">

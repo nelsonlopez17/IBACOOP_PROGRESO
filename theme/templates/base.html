@@ -87,41 +87,51 @@
                 </div>
 
                 <!-- Estudiantes -->
+                {% if perms.estudiantes.view_estudiante %}
                 <a href="{% url 'estudiantes:estudiante_list' %}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if 'estudiante' in request.resolver_match.view_name or 'encargado' in request.resolver_match.view_name %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
                     <i data-lucide="user-check" class="w-4 h-4 {% if 'estudiante' in request.resolver_match.view_name %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
-                    <span>Estudiantes</span>
+                    <span>Control de Estudiantes</span>
                 </a>
+                {% endif %}
 
                 <!-- Recursos Humanos -->
+                {% if perms.rrhh.view_personal %}
                 <a href="{% url 'rrhh:personal_list' %}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if 'personal' in request.resolver_match.view_name %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
                     <i data-lucide="briefcase" class="w-4 h-4 {% if 'personal' in request.resolver_match.view_name %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
                     <span>Recursos Humanos</span>
                 </a>
+                {% endif %}
 
                 <!-- Académico -->
-                <a href="#" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors">
+                {% if perms.academico.view_asignacionestudiante %}
+                <a href="{% url 'academico:asignacion_estudiante_list' %}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if 'academico' in request.resolver_match.namespace %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
                     <i data-lucide="book-open" class="w-4 h-4 text-slate-400"></i>
                     <span>Académico</span>
                 </a>
+                {% endif %}
 
                 <!-- Financiero -->
-                <a href="#" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors">
+                {% if perms.financiero.view_cuentaporcobrar %}
+                <a href="{% url 'financiero:cuentaporcobrar_list' %}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if 'financiero' in request.resolver_match.namespace %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
                     <i data-lucide="wallet" class="w-4 h-4 text-slate-400"></i>
                     <span>Financiero</span>
                 </a>
+                {% endif %}
 
                 <!-- Inventario -->
-                <a href="#" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors">
+                {% if perms.inventario.view_articuloinventario %}
+                <a href="{% url 'inventario:articulo_list' %}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if 'inventario' in request.resolver_match.namespace %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
                     <i data-lucide="package" class="w-4 h-4 text-slate-400"></i>
                     <span>Inventario</span>
                 </a>
+                {% endif %}
             </nav>
 
             <!-- Datos del usuario conectado en el menú -->
             <div class="p-4 border-t border-slate-100 bg-slate-50/60">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 rounded-full bg-[#1E6532] text-white flex items-center justify-center font-bold text-xs shadow-sm">
-                        {{ user.username|slice:":2"|upper }}
+                        {{ user.iniciales }}
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-bold text-slate-900 truncate leading-tight">

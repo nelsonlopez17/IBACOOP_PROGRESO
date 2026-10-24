@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Tablero de Alertas Tempranas y Riesgo Academicó{% endblock %}
+{% block title %}Tablero de Alertas Tempranas y Riesgo Académico{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
@@ -41,12 +41,12 @@
                     <i data-lucide="book-x" class="w-5 h-5"></i>
                 </div>
                 <div>
-                    <h3 class="text-sm font-extrabold text-slate-900">Alumnos en Riesgo por Rendimiento Academicó (2+ Materias Reprobadas)</h3>
+                    <h3 class="text-sm font-extrabold text-slate-900">Estudiantes en Riesgo por Rendimiento Académico (2+ Materias Reprobadas)</h3>
                     <p class="text-xs text-slate-500">Estudiantes con 2 o más cursos por debajo de 60 puntos acumulados.</p>
                 </div>
             </div>
             <span class="px-3 py-1 rounded-full text-xs font-black bg-rose-100 text-rose-800 border border-rose-200">
-                {{ alumnos_riesgo_notas|length }} Alumnos Detectados
+                {{ alumnos_riesgo_notas|length }} Estudiantes Detectados
             </span>
         </div>
 
@@ -96,7 +96,7 @@
                     <tr>
                         <td colspan="5" class="py-8 text-center text-slate-400">
                             <i data-lucide="check-circle-2" class="w-8 h-8 mx-auto mb-2 text-emerald-500"></i>
-                            <p class="text-xs font-semibold">¡Excelente! Ningún alumno posee 2 o más materias reprobadas en este momento.</p>
+                            <p class="text-xs font-semibold">¡Excelente! Ningún estudiante posee 2 o más materias reprobadas en este momento.</p>
                         </td>
                     </tr>
                     {% endfor %}
@@ -113,12 +113,12 @@
                     <i data-lucide="user-x" class="w-5 h-5"></i>
                 </div>
                 <div>
-                    <h3 class="text-sm font-extrabold text-slate-900">Alumnos en Riesgo por Inasistencias (≥ 15% Ausencias Injustificadas)</h3>
+                    <h3 class="text-sm font-extrabold text-slate-900">Estudiantes en Riesgo por Inasistencias (≥ 15% Ausencias Injustificadas)</h3>
                     <p class="text-xs text-slate-500">Estudiantes con alto porcentaje de faltas sin justificar acumuladas en el ciclo.</p>
                 </div>
             </div>
             <span class="px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-800 border border-amber-200">
-                {{ alumnos_riesgo_asistencia|length }} Alumnos Detectados
+                {{ alumnos_riesgo_asistencia|length }} Estudiantes Detectados
             </span>
         </div>
 
@@ -162,7 +162,7 @@
                     <tr>
                         <td colspan="5" class="py-8 text-center text-slate-400">
                             <i data-lucide="check-circle-2" class="w-8 h-8 mx-auto mb-2 text-emerald-500"></i>
-                            <p class="text-xs font-semibold">¡Excelente! Ningún alumno supera el límite del 15% de inasistencias en este momento.</p>
+                            <p class="text-xs font-semibold">¡Excelente! Ningún estudiante supera el límite del 15% de inasistencias en este momento.</p>
                         </td>
                     </tr>
                     {% endfor %}

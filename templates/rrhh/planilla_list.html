@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Planillas de Sueldos{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Encabezado de la Sección -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+                <a href="{% url 'core:home' %}" class="hover:underline">Dashboard</a>
+                <span>/</span>
+                <span class="text-slate-500">Recursos Humanos</span>
+                <span>/</span>
+                <span class="text-slate-500">Planillas</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+                <i data-lucide="banknote" class="w-7 h-7 text-[#1E6532]"></i>
+                Gestión de Planillas de Sueldos
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">Cálculo salarial, bonificaciones de ley (Dec. 37-2001), retenciones y emisión de boletas de pago.</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <a href="{% url 'rrhh:planilla_generar' %}"
+                class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
+                <i data-lucide="calculator" class="w-4 h-4"></i>
+                Generar Planilla del Mes
+            </a>
+        </div>
+    </div>
+
+    <!-- Pestañas de Navegación de RRHH -->
+    {% include 'rrhh/partials/rrhh_tabs.html' %}
+
+    <!-- Tarjetas de Métricas Financieras -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-[#1E6532]/10 text-[#1E6532] flex items-center justify-center font-bold">
+                <i data-lucide="wallet" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Líquido Planilla</span>
+                <span class="text-2xl font-black text-slate-900">Q {{ total_nomina|floatformat:2 }}</span>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+                <i data-lucide="building-2" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Cargas Patronales (12.67%)</span>
+                <span class="text-2xl font-black text-emerald-800">Q {{ total_patronal|floatformat:2 }}</span>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-700 flex items-center justify-center font-bold">
+                <i data-lucide="receipt" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Retenciones (IGSS + ISR)</span>
+                <span class="text-2xl font-black text-rose-700">Q {{ total_igss_laboral|add:total_isr|floatformat:2 }}</span>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-[#3C7DA8]/10 text-[#3C7DA8] flex items-center justify-center font-bold">
+                <i data-lucide="check-check" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Boletas Liquidadas</span>
+                <span class="text-2xl font-black text-[#3C7DA8]">{{ total_pagados }} / {{ total_empleados_planilla }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros y Búsqueda -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <form method="get" class="flex flex-col md:flex-row items-center gap-3">
+            <div class="w-full md:w-44">
+                <select name="tipo" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1E6532] focus:bg-white">
+                    <option value="">-- Todos los Tipos --</option>
+                    {% for val, label in tipos_planilla %}
+                    <option value="{{ val }}" {% if tipo_filtro == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="w-full md:w-40">
+                <select name="mes" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1E6532] focus:bg-white">
+                    <option value="">-- Todos los Meses --</option>
+                    {% for val, label in meses %}
+                    <option value="{{ val }}" {% if mes_filtro == val|stringformat:"i" %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="w-full md:w-36">
+                <select name="ciclo" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1E6532] focus:bg-white">
+                    <option value="">-- Ciclo Escolar --</option>
+                    {% for c in ciclos %}
+                    <option value="{{ c.pk }}" {% if ciclo_filtro == c.pk|stringformat:"i" %}selected{% endif %}>Ciclo {{ c.anio }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="relative flex-1 w-full">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                <input type="text" name="q" value="{{ q }}" placeholder="Buscar colaborador por nombre o CUI..."
+                    class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1E6532] focus:bg-white transition-all">
+            </div>
+
+            <div class="w-full md:w-36">
+                <select name="pagado" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1E6532] focus:bg-white">
+                    <option value="">-- Estado Pago --</option>
+                    <option value="1" {% if pagado_filtro == '1' %}selected{% endif %}>Pagado / Liquidado</option>
+                    <option value="0" {% if pagado_filtro == '0' %}selected{% endif %}>Pendiente</option>
+                </select>
+            </div>
+
+            <div class="flex items-center gap-2 w-full md:w-auto">
+                <button type="submit" class="px-4 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-900 transition-colors shadow-sm w-full md:w-auto">
+                    Filtrar
+                </button>
+                {% if mes_filtro or tipo_filtro or ciclo_filtro or pagado_filtro or q %}
+                <a href="{% url 'rrhh:planilla_list' %}" class="px-3 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors text-center w-full md:w-auto">
+                    Limpiar
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabla de Planilla -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
+                        <th class="py-3.5 px-6">Mes / Ciclo</th>
+                        <th class="py-3.5 px-6">Colaborador</th>
+                        <th class="py-3.5 px-6">Puesto</th>
+                        <th class="py-3.5 px-6 text-right">Sueldo Base</th>
+                        <th class="py-3.5 px-6 text-right">Bonificación</th>
+                        <th class="py-3.5 px-6 text-right">Descuentos</th>
+                        <th class="py-3.5 px-6 text-right">Total Líquido</th>
+                        <th class="py-3.5 px-6 text-center">Estado</th>
+                        <th class="py-3.5 px-6 text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for pl in planillas %}
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-3.5 px-6 font-bold text-slate-800 whitespace-nowrap">
+                            <div>{{ pl.get_mes_pagado_display }}</div>
+                            <span class="block text-[10px] font-normal text-slate-400">Ciclo {{ pl.ciclo_escolar.anio|default:"--" }}</span>
+                            {% if pl.tipo_planilla == 'BONO_14' %}
+                            <span class="inline-block mt-1 px-2 py-0.5 rounded-md text-[9px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200">Bono 14</span>
+                            {% elif pl.tipo_planilla == 'AGUINALDO' %}
+                            <span class="inline-block mt-1 px-2 py-0.5 rounded-md text-[9px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">Aguinaldo</span>
+                            {% elif pl.tipo_planilla == 'EXTRAORDINARIA' %}
+                            <span class="inline-block mt-1 px-2 py-0.5 rounded-md text-[9px] font-extrabold bg-purple-100 text-purple-800 border border-purple-200">Extraordinaria</span>
+                            {% elif pl.tipo_planilla == 'LIQUIDACION' %}
+                            <span class="inline-block mt-1 px-2 py-0.5 rounded-md text-[9px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200">Liquidación</span>
+                            {% else %}
+                            <span class="inline-block mt-1 px-2 py-0.5 rounded-md text-[9px] font-medium bg-slate-100 text-slate-600">Ordinaria</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3.5 px-6">
+                            <a href="{% url 'rrhh:personal_detail' pl.personal.pk %}" class="font-bold text-[#1E6532] hover:underline">
+                                {{ pl.personal.persona.nombre_completo }}
+                            </a>
+                            <span class="block font-mono text-[10px] text-slate-400">CUI: {{ pl.personal.persona.cui }}</span>
+                        </td>
+                        <td class="py-3.5 px-6 font-medium text-slate-600">
+                            {{ pl.personal.puesto.nombre_puesto }}
+                        </td>
+                        <td class="py-3.5 px-6 text-right font-mono font-semibold text-slate-700">
+                            Q {{ pl.personal.salario_base_asignado|floatformat:2 }}
+                        </td>
+                        <td class="py-3.5 px-6 text-right font-mono text-emerald-700 font-semibold">
+                            +Q {{ pl.total_bonificaciones|floatformat:2 }}
+                        </td>
+                        <td class="py-3.5 px-6 text-right font-mono text-rose-600 font-semibold">
+                            -Q {{ pl.descuentos|floatformat:2 }}
+                        </td>
+                        <td class="py-3.5 px-6 text-right font-mono font-black text-slate-900 text-sm">
+                            Q {{ pl.total_pagar|floatformat:2 }}
+                        </td>
+                        <td class="py-3.5 px-6 text-center">
+                            {% if pl.pagado %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                Pagado
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                Pendiente
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3.5 px-6 text-right">
+                            <div class="flex items-center justify-end gap-1.5">
+                                <a href="{% url 'rrhh:planilla_detail' pl.pk %}"
+                                    class="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                    title="Ver Detalle de Boleta">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </a>
+                                <a href="{% url 'rrhh:planilla_pdf' pl.pk %}" target="_blank"
+                                    class="p-2 text-[#3C7DA8] hover:bg-[#3C7DA8]/10 rounded-lg transition-colors"
+                                    title="Descargar Boleta de Pago PDF">
+                                    <i data-lucide="file-text" class="w-4 h-4"></i>
+                                </a>
+                                {% if not pl.pagado %}
+                                <a href="{% url 'rrhh:planilla_update' pl.pk %}"
+                                    class="p-2 text-[#1E6532] hover:bg-[#1E6532]/10 rounded-lg transition-colors"
+                                    title="Ajustar Boleta">
+                                    <i data-lucide="edit" class="w-4 h-4"></i>
+                                </a>
+                                {% else %}
+                                <span class="p-2 text-slate-300 cursor-not-allowed" title="Boleta pagada (no modificable)">
+                                    <i data-lucide="lock" class="w-4 h-4"></i>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="py-12 px-6 text-center text-slate-400">
+                            <i data-lucide="banknote" class="w-12 h-12 mx-auto mb-3 stroke-1 text-slate-300"></i>
+                            <p class="font-medium text-sm">No se encontraron boletas de planilla para el mes o ciclo seleccionado.</p>
+                            <p class="text-xs mt-1">Presiona "Generar Planilla del Mes" para procesar la planilla de sueldos de los colaboradores activos.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        {% if is_paginated %}
+        <div class="p-4 border-t border-slate-200 flex items-center justify-between text-xs font-medium text-slate-600">
+            <div>
+                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </div>
+            <div class="flex items-center gap-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&tipo={{ tipo_filtro }}&mes={{ mes_filtro }}&ciclo={{ ciclo_filtro }}&pagado={{ pagado_filtro }}&q={{ q }}"
+                    class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors">
+                    Anterior
+                </a>
+                {% endif %}
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&tipo={{ tipo_filtro }}&mes={{ mes_filtro }}&ciclo={{ ciclo_filtro }}&pagado={{ pagado_filtro }}&q={{ q }}"
+                    class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors">
+                    Siguiente
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

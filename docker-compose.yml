@@ -34,6 +34,7 @@ services:
       dockerfile: Dockerfile
     container_name: ibacoop_web
     restart: always
+    command: gunicorn IBACOOP_PROGRESO.wsgi:application --bind 0.0.0.0:8000 --workers 3 --reload
     ports:
       - "8000:8000"
     environment:
@@ -64,3 +65,4 @@ volumes:
     driver: local
   media_data:
     driver: local
+

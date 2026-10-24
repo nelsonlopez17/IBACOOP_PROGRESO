@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+
+{% block title %}Expediente de {{ encargado.persona.nombre_completo }} | Control de Estudiantes{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6">
+
+    <!-- Encabezado & Breadcrumbs -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+                <a href="{% url 'core:home' %}" class="hover:underline">Dashboard</a>
+                <span>/</span>
+                <a href="{% url 'estudiantes:estudiante_list' %}" class="hover:underline">Control de Estudiantes</a>
+                <span>/</span>
+                <a href="{% url 'estudiantes:encargado_list' %}" class="hover:underline">Padres de Familia o Encargados</a>
+                <span>/</span>
+                <span class="text-slate-500">Expediente</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight">
+                    {{ encargado.persona.nombre_completo }}
+                </h1>
+                {% if encargado.persona.usuario and encargado.persona.usuario.is_active %}
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        Cuenta Activa
+                    </span>
+                {% elif encargado.persona.usuario %}
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                        <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                        Dado de Baja
+                    </span>
+                {% else %}
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600">
+                        Sin Cuenta
+                    </span>
+                {% endif %}
+            </div>
+            <p class="text-xs text-slate-500 mt-1">Expediente oficial de Padre de Familia o Encargado registrado en IBACOOP.</p>
+        </div>
+
+        <div class="flex items-center gap-2.5 flex-wrap">
+            <a href="{% url 'estudiantes:encargado_list' %}"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
+                <i data-lucide="arrow-left" class="w-4 h-4 text-slate-500"></i>
+                Volver al Directorio
+            </a>
+            {% if perms.estudiantes.change_encargado %}
+            <a href="{% url 'estudiantes:encargado_update' encargado.pk %}"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
+                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                Editar Encargado
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Contenido en 2 Columnas -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Columna Izquierda: Datos Personales y de Contacto -->
+        <div class="lg:col-span-1 space-y-6">
+
+            <!-- Tarjeta Resumen Persona -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-5">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#1E6532] to-[#3C7DA8] text-white flex items-center justify-center font-extrabold text-2xl shadow-md">
+                        {{ encargado.persona.nombres|slice:":1" }}{{ encargado.persona.apellidos|slice:":1" }}
+                    </div>
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900 leading-tight">{{ encargado.persona.nombre_completo }}</h2>
+                        <span class="text-xs font-semibold text-[#3C7DA8] block mt-0.5">Padre de Familia o Encargado</span>
+                        <span class="text-[11px] font-mono text-slate-500 mt-1 block">CUI: {{ encargado.persona.cui|default:"No consignado" }}</span>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-100 pt-4 space-y-3 text-xs">
+                    <div>
+                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Lugar de Trabajo</span>
+                        <p class="font-semibold text-slate-800 mt-0.5">{{ encargado.lugar_de_trabajo|default:"No especificado" }}</p>
+                    </div>
+
+                    <div>
+                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Fecha de Nacimiento</span>
+                        <p class="font-semibold text-slate-800 mt-0.5">
+                            {% if encargado.persona.fecha_nacimiento %}
+                                {{ encargado.persona.fecha_nacimiento|date:"d/m/Y" }}
+                                <span class="text-slate-400 font-normal">({{ encargado.persona.edad }} años)</span>
+                            {% else %}
+                                No registrada
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <div>
+                        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Género</span>
+                        <p class="font-semibold text-slate-800 mt-0.5">{{ encargado.persona.get_genero_display|default:"No indicado" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Datos de Contacto -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                    <i data-lucide="phone-call" class="w-4 h-4 text-[#3C7DA8]"></i>
+                    Canales de Comunicación
+                </h3>
+
+                <div class="space-y-3 text-xs">
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="phone" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <span class="text-[11px] text-slate-400 block font-semibold">Teléfono Principal</span>
+                            <span class="font-bold text-slate-800">{{ encargado.persona.telefono_principal|default:"No registrado" }}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="mail" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <span class="text-[11px] text-slate-400 block font-semibold">Correo Electrónico</span>
+                            <span class="font-bold text-slate-800 break-all">{{ encargado.persona.correo|default:"No registrado" }}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="map-pin" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <span class="text-[11px] text-slate-400 block font-semibold">Dirección Domiciliar</span>
+                            <span class="font-medium text-slate-700">{{ encargado.persona.direccion|default:"No registrada" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cuenta de Usuario -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                    <i data-lucide="shield" class="w-4 h-4 text-[#1E6532]"></i>
+                    Acceso al Portal Familiar
+                </h3>
+
+                {% if encargado.persona.usuario %}
+                <div class="space-y-2 text-xs">
+                    <div class="flex justify-between items-center py-1 border-b border-slate-100">
+                        <span class="text-slate-500">Usuario (DPI)</span>
+                        <span class="font-mono font-bold text-slate-900">{{ encargado.persona.usuario.username }}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-1 border-b border-slate-100">
+                        <span class="text-slate-500">Estado</span>
+                        {% if encargado.persona.usuario.is_active %}
+                            <span class="text-emerald-700 font-bold">Activo</span>
+                        {% else %}
+                            <span class="text-rose-700 font-bold">Inactivo</span>
+                        {% endif %}
+                    </div>
+                    <div class="flex justify-between items-center py-1 border-b border-slate-100">
+                        <span class="text-slate-500">Último Inicio de Sesión</span>
+                        <span class="text-slate-700">{{ encargado.persona.usuario.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-1">
+                        <span class="text-slate-500">Fecha de Alta</span>
+                        <span class="text-slate-700">{{ encargado.creado_en|date:"d/m/Y" }}</span>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-xs text-slate-500 italic">Este encargado no cuenta con usuario de acceso al portal.</p>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- Columna Derecha: Estudiantes a su Cargo -->
+        <div class="lg:col-span-2 space-y-6">
+
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+                <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                            <i data-lucide="graduation-cap" class="w-4 h-4 text-[#1E6532]"></i>
+                            Estudiantes a su Cargo
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Expedientes estudiantiles donde este usuario es el encargado oficial.</p>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-full text-xs font-black bg-[#1E6532]/10 text-[#1E6532]">
+                        {{ encargado.estudiantes.count }} estudiante{{ encargado.estudiantes.count|pluralize:"s" }}
+                    </span>
+                </div>
+
+                <div class="divide-y divide-slate-100">
+                    {% for est in encargado.estudiantes.all %}
+                    <div class="p-5 hover:bg-slate-50/70 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex items-start gap-3.5">
+                            <div class="w-10 h-10 rounded-xl bg-[#1E6532]/10 text-[#1E6532] flex items-center justify-center font-bold text-xs flex-shrink-0">
+                                {{ est.persona.nombres|slice:":1" }}{{ est.persona.apellidos|slice:":1" }}
+                            </div>
+                            <div class="space-y-1">
+                                <a href="{% url 'estudiantes:estudiante_detail' est.pk %}"
+                                   class="text-sm font-bold text-slate-900 hover:text-[#1E6532] hover:underline flex items-center gap-1.5">
+                                    <span>{{ est.persona.nombre_completo }}</span>
+                                    <i data-lucide="external-link" class="w-3.5 h-3.5 text-slate-400"></i>
+                                </a>
+                                <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                                    <span>Código MINEDUC: <strong class="text-slate-700 font-mono">{{ est.codigo_mineduc }}</strong></span>
+                                    <span class="text-slate-300">•</span>
+                                    <span>CUI: <strong class="text-slate-700 font-mono">{{ est.persona.cui }}</strong></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 self-end sm:self-center">
+                            {% if est.estado_estudiante == 'ACTIVO' %}
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                    Activo
+                                </span>
+                            {% elif est.estado_estudiante == 'RETIRADO' %}
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                    Retirado
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600">
+                                    {{ est.get_estado_estudiante_display }}
+                                </span>
+                            {% endif %}
+
+                            <a href="{% url 'estudiantes:estudiante_detail' est.pk %}"
+                               class="p-2 text-slate-400 hover:text-[#1E6532] hover:bg-slate-100 rounded-xl transition-all"
+                               title="Ver Ficha Digital 360°">
+                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="p-8 text-center text-slate-400 space-y-2">
+                        <i data-lucide="user-x" class="w-8 h-8 mx-auto text-slate-300"></i>
+                        <p class="text-xs font-semibold text-slate-600">Este encargado no tiene estudiantes asignados actualmente.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

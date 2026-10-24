@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+
+{% block title %}Control de Inventario y Bienes{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Encabezado de la Sección -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+                <a href="{% url 'core:home' %}" class="hover:underline">Dashboard</a>
+                <span>/</span>
+                <span class="text-slate-500">Administración</span>
+                <span>/</span>
+                <span class="text-slate-500">Control de Inventario</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+                <i data-lucide="package" class="w-7 h-7 text-[#1E6532]"></i>
+                Control de Inventario y Bienes
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">Administración de suministros, activos y resguardos del Instituto El Progreso.</p>
+        </div>
+
+        <div class="flex items-center gap-3 flex-wrap">
+            <a href="{% url 'inventario:inventario_pdf' %}?q={{ q }}&categoria={{ categoria_actual }}" target="_blank"
+                class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-900 transition-all shadow-md">
+                <i data-lucide="file-text" class="w-4 h-4"></i>
+                Descargar Reporte PDF
+            </a>
+            {% if perms.inventario.add_movimientoinventario %}
+            <a href="{% url 'inventario:movimiento_create' %}"
+                class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#3C7DA8] text-white rounded-xl text-xs font-bold hover:bg-[#3C7DA8]/90 transition-all shadow-md">
+                <i data-lucide="arrow-left-right" class="w-4 h-4"></i>
+                Registrar Movimiento
+            </a>
+            {% endif %}
+            {% if perms.inventario.add_articuloinventario %}
+            <a href="{% url 'inventario:articulo_create' %}"
+                class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                Nuevo Artículo
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Tarjetas de Métricas -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-[#1E6532]/10 text-[#1E6532] flex items-center justify-center font-bold">
+                <i data-lucide="boxes" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Total de Artículos</span>
+                <span class="text-2xl font-black text-slate-800">{{ total_articulos }}</span>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Alertas de Stock Bajo</span>
+                <span class="text-2xl font-black text-amber-600">{{ articulos_alerta_count }}</span>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-[#3C7DA8]/10 text-[#3C7DA8] flex items-center justify-center font-bold">
+                <i data-lucide="history" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Auditoría Activa</span>
+                <span class="text-xs font-semibold text-slate-600">Historial Inmutable ON</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros y Búsqueda -->
+    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <form method="get" class="flex flex-col md:flex-row items-center gap-3">
+            <div class="relative flex-1 w-full">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                <input type="text" name="q" value="{{ q }}" placeholder="Buscar por código, nombre o descripción..."
+                    class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1E6532] focus:bg-white transition-all">
+            </div>
+
+            <div class="w-full md:w-56">
+                <select name="categoria" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1E6532] focus:bg-white">
+                    <option value="">-- Todas las Categorías --</option>
+                    {% for val, label in categorias %}
+                    <option value="{{ val }}" {% if categoria_actual == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="flex items-center gap-2 w-full md:w-auto">
+                <label class="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 cursor-pointer">
+                    <input type="checkbox" name="alerta" value="1" {% if alerta_filtro == '1' %}checked{% endif %} class="rounded border-slate-300 text-[#1E6532] focus:ring-[#1E6532]">
+                    <span>Solo Stock Bajo</span>
+                </label>
+
+                <button type="submit" class="px-4 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-900 transition-colors shadow-sm">
+                    Filtrar
+                </button>
+                {% if q or categoria_actual or alerta_filtro %}
+                <a href="{% url 'inventario:articulo_list' %}" class="px-3 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors text-center">
+                    Limpiar
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabla de Artículos -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
+                        <th class="py-3.5 px-6">Código</th>
+                        <th class="py-3.5 px-6">Artículo / Bien</th>
+                        <th class="py-3.5 px-6">Categoría</th>
+                        <th class="py-3.5 px-6">Stock Actual</th>
+                        <th class="py-3.5 px-6">Stock Mínimo</th>
+                        <th class="py-3.5 px-6">Estado</th>
+                        <th class="py-3.5 px-6 text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for art in articulos %}
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-3.5 px-6 font-mono font-bold text-slate-900">
+                            {{ art.codigo_unico }}
+                        </td>
+                        <td class="py-3.5 px-6">
+                            <a href="{% url 'inventario:articulo_detail' art.pk %}" class="font-bold text-[#1E6532] hover:underline">
+                                {{ art.nombre }}
+                            </a>
+                            {% if art.descripcion %}
+                            <p class="text-[11px] text-slate-400 truncate max-w-xs">{{ art.descripcion }}</p>
+                            {% endif %}
+                        </td>
+                        <td class="py-3.5 px-6 font-medium text-slate-600">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-100 text-slate-700">
+                                {{ art.get_categoria_display }}
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-6 font-bold text-slate-900 text-sm">
+                            {{ art.stock_actual }} <span class="text-xs font-normal text-slate-400">{{ art.unidad_medida }}</span>
+                        </td>
+                        <td class="py-3.5 px-6 font-medium text-slate-500">
+                            {{ art.stock_minimo_alerta }}
+                        </td>
+                        <td class="py-3.5 px-6">
+                            {% if art.alerta_stock_bajo %}
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></span>
+                                Stock Bajo
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                Normal
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3.5 px-6 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <a href="{% url 'inventario:movimiento_create' %}?articulo={{ art.pk }}" title="Registrar Movimiento"
+                                    class="p-2 text-[#3C7DA8] hover:bg-[#3C7DA8]/10 rounded-lg transition-colors">
+                                    <i data-lucide="arrow-left-right" class="w-4 h-4"></i>
+                                </a>
+                                <a href="{% url 'inventario:articulo_detail' art.pk %}" title="Ver Ficha 360°"
+                                    class="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </a>
+                                <a href="{% url 'inventario:articulo_update' art.pk %}" title="Editar Artículo"
+                                    class="p-2 text-[#1E6532] hover:bg-[#1E6532]/10 rounded-lg transition-colors">
+                                    <i data-lucide="edit" class="w-4 h-4"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="py-12 px-6 text-center text-slate-400">
+                            <i data-lucide="package-open" class="w-12 h-12 mx-auto mb-3 stroke-1 text-slate-300"></i>
+                            <p class="font-medium text-sm">No se encontraron artículos registrados en el inventario.</p>
+                            <p class="text-xs mt-1">Intenta cambiar los parámetros de búsqueda o registra un nuevo bien.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        {% if is_paginated %}
+        <div class="p-4 border-t border-slate-200 flex items-center justify-between text-xs font-medium text-slate-600">
+            <div>
+                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </div>
+            <div class="flex items-center gap-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&categoria={{ categoria_actual }}&alerta={{ alerta_filtro }}"
+                    class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors">
+                    Anterior
+                </a>
+                {% endif %}
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&q={{ q }}&categoria={{ categoria_actual }}&alerta={{ alerta_filtro }}"
+                    class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors">
+                    Siguiente
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

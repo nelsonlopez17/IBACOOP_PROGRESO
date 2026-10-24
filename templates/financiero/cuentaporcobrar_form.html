@@ -62,10 +62,19 @@
 
                 <!-- Monto Total (Q) -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                        {{ form.monto_total.label }} <span class="text-rose-500">*</span>
-                    </label>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                            {{ form.monto_total.label }}
+                        </label>
+                        <span class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                            Opcional
+                        </span>
+                    </div>
                     {{ form.monto_total }}
+                    <p id="monto_hint" class="text-xs text-slate-500 mt-1.5 flex items-center gap-1.5">
+                        <i data-lucide="info" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+                        <span id="monto_hint_text">Si deja este campo vacío, se asignará automáticamente el monto estándar del concepto seleccionado.</span>
+                    </p>
                     {% if form.monto_total.errors %}<p class="text-xs text-rose-600 font-semibold mt-1">{{ form.monto_total.errors.0 }}</p>{% endif %}
                 </div>
 
@@ -91,4 +100,49 @@
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const preciosMap = {{ conceptos_precios_json|safe|default:'{}' }};
+    const conceptoSelect = document.getElementById('id_concepto');
+    const montoInput = document.getElementById('id_monto_total');
+    const hintSpan = document.getElementById('monto_hint_text');
+
+    function actualizarMontoEstandar() {
+        if (!conceptoSelect || !montoInput) return;
+        const conceptoId = conceptoSelect.value;
+        if (conceptoId && preciosMap[conceptoId] !== undefined) {
+            const valNum = parseFloat(preciosMap[conceptoId]);
+            const montoFormateado = valNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            montoInput.placeholder = 'Estándar: Q ' + montoFormateado + ' (dejar en blanco para aplicar)';
+            if (hintSpan) {
+                hintSpan.innerHTML = '<strong class="text-[#1E6532]">Monto estándar del concepto: Q ' + montoFormateado + '.</strong> Si deja el campo vacío, se cobrará automáticamente esta cantidad.';
+            }
+        } else {
+            montoInput.placeholder = 'Dejar vacío para usar monto estándar';
+            if (hintSpan) {
+                hintSpan.textContent = 'Si deja este campo vacío, se asignará automáticamente el monto estándar del concepto seleccionado.';
+            }
+        }
+    }
+
+    if (conceptoSelect) {
+        conceptoSelect.addEventListener('change', actualizarMontoEstandar);
+        // Si TomSelect está activo
+        if (conceptoSelect.tomselect) {
+            conceptoSelect.tomselect.on('change', actualizarMontoEstandar);
+        } else {
+            // Observar si tomselect se inicializa más tarde
+            const interval = setInterval(function () {
+                if (conceptoSelect.tomselect) {
+                    conceptoSelect.tomselect.on('change', actualizarMontoEstandar);
+                    clearInterval(interval);
+                }
+            }, 100);
+            setTimeout(function () { clearInterval(interval); }, 3000);
+        }
+        actualizarMontoEstandar();
+    }
+});
+</script>
 {% endblock %}

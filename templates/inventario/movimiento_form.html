@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrar Transacción de Inventario{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+
+    <!-- Encabezado -->
+    <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+                <a href="{% url 'inventario:articulo_list' %}" class="hover:underline">Inventario</a>
+                <span>/</span>
+                <span class="text-slate-500">Movimientos</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+                <i data-lucide="arrow-left-right" class="w-7 h-7 text-[#1E6532]"></i>
+                Registrar Transacción de Inventario
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">Regístrese la entrada, asignación, salida o consumo de bienes institucionales.</p>
+        </div>
+
+        <a href="{% url 'inventario:articulo_list' %}"
+            class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors">
+            Cancelar
+        </a>
+    </div>
+
+    <!-- Formulario -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium space-y-1">
+                {% for error in form.non_field_errors %}
+                <p>âš ï¸ {{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="space-y-6">
+
+                <!-- Artículo -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                        {{ form.articulo.label }} <span class="text-rose-500">*</span>
+                    </label>
+                    {{ form.articulo }}
+                    {% if form.articulo.errors %}
+                    <p class="text-xs text-rose-600 mt-1 font-medium">{{ form.articulo.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Tipo de Movimiento & Cantidad -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                            {{ form.tipo_movimiento.label }} <span class="text-rose-500">*</span>
+                        </label>
+                        {{ form.tipo_movimiento }}
+                        {% if form.tipo_movimiento.errors %}
+                        <p class="text-xs text-rose-600 mt-1 font-medium">{{ form.tipo_movimiento.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                            {{ form.cantidad.label }} <span class="text-rose-500">*</span>
+                        </label>
+                        {{ form.cantidad }}
+                        {% if form.cantidad.errors %}
+                        <p class="text-xs text-rose-600 mt-1 font-medium">{{ form.cantidad.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Personal Responsable -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                            {{ form.personal_responsable.label }} <span class="text-rose-500">*</span>
+                        </label>
+                        <span class="text-[11px] font-semibold text-[#1E6532] flex items-center gap-1">
+                            <i data-lucide="search" class="w-3 h-3"></i> Búsqueda por DPI / Nombre
+                        </span>
+                    </div>
+                    {{ form.personal_responsable }}
+                    <p class="text-[11px] text-slate-400 mt-1">Escriba el nombre o DPI/CUI del personal para filtrar.</p>
+                    {% if form.personal_responsable.errors %}
+                    <p class="text-xs text-rose-600 mt-1 font-medium">{{ form.personal_responsable.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Documento de Referencia -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                        {{ form.documento_referencia.label }}
+                    </label>
+                    {{ form.documento_referencia }}
+                    {% if form.documento_referencia.errors %}
+                    <p class="text-xs text-rose-600 mt-1 font-medium">{{ form.documento_referencia.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Motivo -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                        {{ form.motivo.label }} <span class="text-rose-500">*</span>
+                    </label>
+                    {{ form.motivo }}
+                    {% if form.motivo.errors %}
+                    <p class="text-xs text-rose-600 mt-1 font-medium">{{ form.motivo.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="pt-6 border-t border-slate-200 flex items-center justify-end gap-3">
+                <a href="{% url 'inventario:articulo_list' %}"
+                    class="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors">
+                    Cancelar
+                </a>
+                <button type="submit"
+                    class="px-6 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
+                    Procesar Transacción
+                </button>
+            </div>
+        </form>
+    </div>
+
+</div>
+{% endblock %}

@@ -10,8 +10,8 @@ class EstudianteEncargadoInline(admin.TabularInline):
 
 @admin.register(Estudiante)
 class EstudianteAdmin(admin.ModelAdmin):
-    list_display = ['codigo_mineduc', 'get_nombre_completo', 'estado_activo', 'creado_en']
-    list_filter = ['estado_activo', 'persona__genero']
+    list_display = ['codigo_mineduc', 'get_nombre_completo', 'estado_estudiante', 'estado_activo', 'creado_en']
+    list_filter = ['estado_estudiante', 'persona__genero']
     search_fields = ['codigo_mineduc', 'persona__nombres', 'persona__apellidos', 'persona__cui']
     readonly_fields = ['creado_en', 'actualizado_en']
     inlines = [EstudianteEncargadoInline]

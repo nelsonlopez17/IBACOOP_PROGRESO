@@ -55,10 +55,15 @@
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <i data-lucide="user" class="w-4 h-4"></i>
                     </div>
-                    <input type="text" name="username" id="id_username" required autofocus
-                        class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1E6532] focus:border-[#1E6532] focus:bg-white transition shadow-xs text-sm font-medium"
+                    <input type="text" name="username" id="id_username" minlength="3" maxlength="150" required autofocus
+                        value="{{ form.username.value|default:'' }}"
+                        {% if form.errors %}aria-invalid="true"{% endif %}
+                        class="w-full pl-10 pr-4 py-3 bg-slate-50 border {% if form.errors %}border-rose-500 bg-rose-50/30 focus:ring-rose-500 focus:border-rose-500{% else %}border-slate-300 focus:ring-[#1E6532] focus:border-[#1E6532]{% endif %} rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:bg-white transition shadow-xs text-sm font-medium"
                         placeholder="Ingrese CUI (13 dígitos) o correo">
                 </div>
+                {% if form.username.errors %}
+                <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.username.errors.0 }}</p>
+                {% endif %}
             </div>
 
             <!-- Campo de contraseña -->
@@ -70,10 +75,21 @@
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <i data-lucide="lock" class="w-4 h-4"></i>
                     </div>
-                    <input type="password" name="password" id="id_password" required
-                        class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1E6532] focus:border-[#1E6532] focus:bg-white transition shadow-xs text-sm font-medium"
+                    <input type="password" name="password" id="id_password" minlength="4" maxlength="128" required
+                        {% if form.errors %}aria-invalid="true"{% endif %}
+                        class="w-full pl-10 pr-11 py-3 bg-slate-50 border {% if form.errors %}border-rose-500 bg-rose-50/30 focus:ring-rose-500 focus:border-rose-500{% else %}border-slate-300 focus:ring-[#1E6532] focus:border-[#1E6532]{% endif %} rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:bg-white transition shadow-xs text-sm font-medium"
                         placeholder="••••••••••••">
+                    <button type="button" id="toggle-password-btn"
+                        aria-label="Mostrar u ocultar contraseña"
+                        title="Mostrar contraseña"
+                        class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none transition-colors cursor-pointer">
+                        <i data-lucide="eye" id="icon-eye" class="w-4 h-4"></i>
+                        <i data-lucide="eye-off" id="icon-eye-off" class="w-4 h-4 hidden"></i>
+                    </button>
                 </div>
+                {% if form.password.errors %}
+                <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.password.errors.0 }}</p>
+                {% endif %}
             </div>
 
             <!-- Botón para entrar al sistema -->
@@ -84,6 +100,53 @@
             </button>
         </form>
 
+        <!-- Contacto de Soporte TI en caso de olvido de contraseña -->
+        <div class="mt-6 pt-5 border-t border-slate-100 text-center">
+            <p class="text-xs text-slate-500 font-medium">
+                ¿Olvidó su contraseña o tiene problemas de acceso?
+            </p>
+            <div class="mt-2.5 inline-flex flex-col items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-600">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="mail" class="w-3.5 h-3.5 text-[#3C7DA8] flex-shrink-0"></i>
+                    <span>Soporte TI:</span>
+                    <a href="mailto:soporte.ti@ibacoop.edu.gt?subject=Solicitud%20de%20restablecimiento%20de%20contrase%C3%B1a"
+                        class="font-bold text-[#3C7DA8] hover:text-[#1E6532] hover:underline transition-colors">
+                        soporte.ti@ibacoop.edu.gt
+                    </a>
+                </div>
+                <div class="flex items-center gap-2">
+                    <i data-lucide="phone" class="w-3.5 h-3.5 text-[#1E6532] flex-shrink-0"></i>
+                    <span>Teléfono:</span>
+                    <a href="tel:+50279451234"
+                        class="font-bold text-slate-700 hover:text-[#1E6532] hover:underline transition-colors">
+                        +502 7945-1234
+                    </a>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const passwordInput = document.getElementById('id_password');
+        const toggleBtn = document.getElementById('toggle-password-btn');
+
+        if (toggleBtn && passwordInput) {
+            toggleBtn.addEventListener('click', function () {
+                const isPassword = passwordInput.getAttribute('type') === 'password';
+                passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+                toggleBtn.setAttribute('title', isPassword ? 'Ocultar contraseña' : 'Mostrar contraseña');
+
+                const iconEye = document.getElementById('icon-eye');
+                const iconEyeOff = document.getElementById('icon-eye-off');
+                if (iconEye && iconEyeOff) {
+                    iconEye.classList.toggle('hidden', isPassword);
+                    iconEyeOff.classList.toggle('hidden', !isPassword);
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}

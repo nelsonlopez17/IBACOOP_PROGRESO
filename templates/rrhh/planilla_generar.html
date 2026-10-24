@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+
+{% block title %}Generar Planilla Masiva{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+
+    <!-- Encabezado -->
+    <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+                <a href="{% url 'rrhh:planilla_list' %}" class="hover:underline">Planillas</a>
+                <span>/</span>
+                <span class="text-slate-500">Emisión Masiva</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+                <i data-lucide="calculator" class="w-7 h-7 text-[#1E6532]"></i>
+                Generación Masiva de Planilla de Sueldos
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">Cálculo automatizado para todos los colaboradores con estado laboral ACTIVO.</p>
+        </div>
+
+        <a href="{% url 'rrhh:planilla_list' %}"
+            class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors">
+            Cancelar
+        </a>
+    </div>
+
+    <!-- Alerta Informativa -->
+    <div class="p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-950 text-xs flex items-start gap-3">
+        <i data-lucide="info" class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5"></i>
+        <div class="space-y-1">
+            <p class="font-bold">Colaboradores activos a procesar: {{ total_activos }}</p>
+            <p class="text-slate-600">Este proceso creará o actualizará las boletas de pago individuales tomando el salario base asignado a cada colaborador, sumando la bonificación de ley y deduciendo el IGSS si se activa la casilla.</p>
+        </div>
+    </div>
+
+    <!-- Formulario -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium space-y-1">
+                {% for error in form.non_field_errors %}
+                <p>âš ï¸ {{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="space-y-5">
+                <!-- Tipo de Planilla -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                        {{ form.tipo_planilla.label }} <span class="text-rose-500">*</span>
+                    </label>
+                    {{ form.tipo_planilla }}
+                    {% if form.tipo_planilla.errors %}
+                    <p class="text-xs text-rose-600 mt-1 font-medium">{{ form.tipo_planilla.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Aviso de Ley Dinámico para Prestaciones -->
+                <div id="aviso-prestacion-ley" class="hidden p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center gap-2.5">
+                    <i data-lucide="shield-alert" class="w-4 h-4 text-amber-600 flex-shrink-0"></i>
+                    <span id="texto-aviso-ley" class="font-medium"></span>
+                </div>
+
+                <!-- Ciclo Escolar & Mes -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                            {{ form.ciclo_escolar.label }} <span class="text-rose-500">*</span>
+                        </label>
+                        {{ form.ciclo_escolar }}
+                        {% if form.ciclo_escolar.errors %}
+                        <p class="text-xs text-rose-600 mt-1 font-medium">{{ form.ciclo_escolar.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div id="contenedor-mes">
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                            {{ form.mes_pagado.label }} <span class="text-rose-500">*</span>
+                        </label>
+                        {{ form.mes_pagado }}
+                        {% if form.mes_pagado.errors %}
+                        <p class="text-xs text-rose-600 mt-1 font-medium">{{ form.mes_pagado.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Bonificación de Ley -->
+                <div id="contenedor-bono-ley">
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        {{ form.bonificacion_ley.label }} <span class="text-rose-500">*</span>
+                    </label>
+                    <p class="text-[11px] text-slate-400 mb-2">{{ form.bonificacion_ley.help_text }}</p>
+                    {{ form.bonificacion_ley }}
+                    {% if form.bonificacion_ley.errors %}
+                    <p class="text-xs text-rose-600 mt-1 font-medium">{{ form.bonificacion_ley.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Descontar IGSS Checkbox -->
+                <div id="contenedor-igss" class="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                    <label class="flex items-start gap-3 cursor-pointer">
+                        {{ form.descontar_igss }}
+                        <div>
+                            <span class="text-xs font-bold text-slate-800 block">{{ form.descontar_igss.label }}</span>
+                            <span class="text-[11px] text-slate-500 block mt-0.5">{{ form.descontar_igss.help_text }}</span>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Cargas Patronales 12.67% -->
+                <div id="contenedor-patronal" class="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                    <label class="flex items-start gap-3 cursor-pointer">
+                        {{ form.calcular_cuota_patronal }}
+                        <div>
+                            <span class="text-xs font-bold text-slate-800 block">{{ form.calcular_cuota_patronal.label }}</span>
+                            <span class="text-[11px] text-slate-500 block mt-0.5">{{ form.calcular_cuota_patronal.help_text }}</span>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Retención ISR Asalariados Decreto 10-2012 -->
+                <div id="contenedor-isr" class="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                    <label class="flex items-start gap-3 cursor-pointer">
+                        {{ form.calcular_retencion_isr }}
+                        <div>
+                            <span class="text-xs font-bold text-slate-800 block">{{ form.calcular_retencion_isr.label }}</span>
+                            <span class="text-[11px] text-slate-500 block mt-0.5">{{ form.calcular_retencion_isr.help_text }}</span>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Prorrateo Nuevos Ingresos -->
+                <div id="contenedor-prorrateo" class="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                    <label class="flex items-start gap-3 cursor-pointer">
+                        {{ form.prorratear_altas }}
+                        <div>
+                            <span class="text-xs font-bold text-slate-800 block">{{ form.prorratear_altas.label }}</span>
+                            <span class="text-[11px] text-slate-500 block mt-0.5">{{ form.prorratear_altas.help_text }}</span>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Fecha de Pago -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                        {{ form.fecha_pago.label }} <span class="text-rose-500">*</span>
+                    </label>
+                    {{ form.fecha_pago }}
+                    {% if form.fecha_pago.errors %}
+                    <p class="text-xs text-rose-600 mt-1 font-medium">{{ form.fecha_pago.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="pt-6 border-t border-slate-200 flex items-center justify-end gap-3">
+                <a href="{% url 'rrhh:planilla_list' %}"
+                    class="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition-colors">
+                    Cancelar
+                </a>
+                <button type="submit"
+                    class="px-6 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
+                    Procesar y Emitir Planilla
+                </button>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const tipoSelect = document.getElementById('id_tipo_planilla');
+    const mesSelect = document.getElementById('id_mes_pagado');
+    const bonoInput = document.getElementById('id_bonificacion_ley');
+    const igssCheck = document.getElementById('id_descontar_igss');
+    const avisoBox = document.getElementById('aviso-prestacion-ley');
+    const avisoTexto = document.getElementById('texto-aviso-ley');
+    const bonoContenedor = document.getElementById('contenedor-bono-ley');
+    const igssContenedor = document.getElementById('contenedor-igss');
+
+    function actualizarSegunTipo() {
+        if (!tipoSelect) return;
+        const tipo = tipoSelect.value;
+
+        if (tipo === 'BONO_14') {
+            if (mesSelect) mesSelect.value = '7'; // Julio
+            if (bonoInput) bonoInput.value = '0.00';
+            if (igssCheck) igssCheck.checked = false;
+            bonoContenedor.style.opacity = '0.4';
+            igssContenedor.style.opacity = '0.4';
+            avisoBox.classList.remove('hidden');
+            avisoTexto.textContent = 'Bono 14 (Decreto 42-92): Fijado en Julio. Por ley está 100% exento de retención laboral del IGSS y no tributa Bonificación Incentivo.';
+        } else if (tipo === 'AGUINALDO') {
+            if (mesSelect) mesSelect.value = '12'; // Diciembre
+            if (bonoInput) bonoInput.value = '0.00';
+            if (igssCheck) igssCheck.checked = false;
+            bonoContenedor.style.opacity = '0.4';
+            igssContenedor.style.opacity = '0.4';
+            avisoBox.classList.remove('hidden');
+            avisoTexto.textContent = 'Aguinaldo (Decreto 76-78): Fijado en Diciembre. Por ley está 100% exento de retención laboral del IGSS y no tributa Bonificación Incentivo.';
+        } else if (tipo === 'EXTRAORDINARIA') {
+            if (bonoInput) bonoInput.value = '0.00';
+            if (igssCheck) igssCheck.checked = false;
+            bonoContenedor.style.opacity = '0.4';
+            igssContenedor.style.opacity = '0.4';
+            avisoBox.classList.remove('hidden');
+            avisoTexto.textContent = 'Planilla Extraordinaria: Para pagos y ajustes especiales.';
+        } else {
+            // Ordinaria
+            if (bonoInput && bonoInput.value === '0.00') bonoInput.value = '250.00';
+            bonoContenedor.style.opacity = '1';
+            igssContenedor.style.opacity = '1';
+            avisoBox.classList.add('hidden');
+        }
+    }
+
+    if (tipoSelect) {
+        tipoSelect.addEventListener('change', actualizarSegunTipo);
+        actualizarSegunTipo();
+    }
+});
+</script>
+{% endblock %}

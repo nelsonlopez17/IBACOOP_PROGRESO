@@ -19,3 +19,9 @@ npm-debug.log*
 # Archivos del sistema operativo
 Thumbs.db
 .DS_Store
+
+# Archivos multimedia y registros de seguridad
+media/
+logs/
+*.log
+*.pdf

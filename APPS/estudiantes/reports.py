@@ -3,8 +3,8 @@ APPS/estudiantes/reports.py
 
 Generación de reportes oficiales en PDF con ReportLab para el Instituto El Progreso.
 Incluye:
-  1. Ficha Única del Expediente del Alumno (Secretaría / Archivo Físico)
-  2. Constancia de Credenciales de Acceso al Sistema (Tutor / Estudiante)
+  1. Ficha Única del Expediente del Estudiante (Secretaría / Archivo Físico)
+  2. Constancia de Credenciales de Acceso al Sistema (Encargado / Estudiante)
 """
 import io
 import random
@@ -32,7 +32,7 @@ def generar_password_temporal(longitud=10):
 
 def generar_pdf_expediente_estudiante(estudiante):
     """
-    Genera la Ficha Única de Registro y Expediente Oficial del Alumno en PDF.
+    Genera la Ficha Única de Registro y Expediente Oficial del Estudiante en PDF.
     Documento oficial para folder físico en Secretaría.
     """
     buffer = io.BytesIO()
@@ -48,7 +48,6 @@ def generar_pdf_expediente_estudiante(estudiante):
     story = []
     styles = getSampleStyleSheet()
 
-    # Estilos Corporativos IBACOOP EL PROGRESO
     COLOR_VERDE = colors.HexColor('#1E6532')
     COLOR_ROJO = colors.HexColor('#7A1C21')
     COLOR_AZUL = colors.HexColor('#3C7DA8')
@@ -115,7 +114,6 @@ def generar_pdf_expediente_estudiante(estudiante):
         textColor=colors.HexColor('#0F172A')
     )
 
-    # 1. Encabezado Oficial Institucional
     header_data = [
         [
             Paragraph("INSTITUTO DE EDUCACIÓN BÁSICA<br/><font color='#7A1C21'>'EL PROGRESO'</font>", style_title),
@@ -130,7 +128,6 @@ def generar_pdf_expediente_estudiante(estudiante):
     story.append(t_header)
     story.append(HRFlowable(width="100%", thickness=2, color=COLOR_VERDE, spaceBefore=4, spaceAfter=12))
 
-    # 2. Datos Personales del Estudiante
     story.append(Paragraph("1. DATOS PERSONALES DEL ESTUDIANTE", style_sec_header))
     story.append(Spacer(1, 4))
 
@@ -155,8 +152,7 @@ def generar_pdf_expediente_estudiante(estudiante):
     story.append(t_pers)
     story.append(Spacer(1, 12))
 
-    # 3. Tutor Legal y Datos de Padres (SIRE)
-    story.append(Paragraph("2. TUTOR LEGAL Y NÚCLEO FAMILIAR (SIRE MINEDUC)", style_sec_header))
+    story.append(Paragraph("2. PADRE DE FAMILIA O ENCARGADO Y NÚCLEO FAMILIAR (SIRE MINEDUC)", style_sec_header))
     story.append(Spacer(1, 4))
 
     encargado = estudiante.encargado
@@ -166,9 +162,9 @@ def generar_pdf_expediente_estudiante(estudiante):
     enc_trabajo = encargado.lugar_de_trabajo if encargado else "N/A"
 
     datos_familia = [
-        [Paragraph("Tutor Legal (Encargado):", style_label), Paragraph(enc_nombre, style_val_bold),
-         Paragraph("CUI Tutor:", style_label), Paragraph(enc_cui, style_val)],
-        [Paragraph("Teléfono Tutor:", style_label), Paragraph(enc_tel, style_val),
+        [Paragraph("Padre de Familia o Encargado:", style_label), Paragraph(enc_nombre, style_val_bold),
+         Paragraph("CUI Encargado:", style_label), Paragraph(enc_cui, style_val)],
+        [Paragraph("Teléfono Encargado:", style_label), Paragraph(enc_tel, style_val),
          Paragraph("Lugar de Trabajo:", style_label), Paragraph(enc_trabajo, style_val)],
         [Paragraph("Nombre del Padre:", style_label), Paragraph(estudiante.nombre_padre or "No registrado", style_val),
          Paragraph("Teléfono del Padre:", style_label), Paragraph(estudiante.telefono_padre or "N/A", style_val)],
@@ -185,7 +181,6 @@ def generar_pdf_expediente_estudiante(estudiante):
     story.append(t_fam)
     story.append(Spacer(1, 12))
 
-    # 4. Verification Papelería Obligatoria MINEDUC
     story.append(Paragraph("3. CHECKLIST DE EXPEDIENTE FÍSICO (REQUISITOS OBLIGATORIOS MINEDUC)", style_sec_header))
     story.append(Spacer(1, 4))
 
@@ -197,7 +192,7 @@ def generar_pdf_expediente_estudiante(estudiante):
 
     datos_papeleria = [
         [Paragraph("1. Certificado de Nacimiento RENAP (con CUI)", style_label), Paragraph(doc_renap, style_val_bold)],
-        [Paragraph("2. Fotocopia de DPI del Padre / Encargado Legal", style_label), Paragraph(doc_dpi, style_val_bold)],
+        [Paragraph("2. Fotocopia de DPI del Padre / Encargado", style_label), Paragraph(doc_dpi, style_val_bold)],
         [Paragraph("3. Certificado de Estudios del Grado Anterior", style_label), Paragraph(doc_certificado, style_val_bold)],
         [Paragraph("4. Diploma de Educación Primaria (para 1ro Básico)", style_label), Paragraph(doc_diploma, style_val_bold)],
         [Paragraph("5. Constancia de Código Personal MINEDUC (SIRE)", style_label), Paragraph(doc_codigo, style_val_bold)],
@@ -214,7 +209,6 @@ def generar_pdf_expediente_estudiante(estudiante):
     story.append(t_doc)
     story.append(Spacer(1, 12))
 
-    # 5. Historial Médico (si existe)
     if estudiante.historial_medico:
         story.append(Paragraph("4. HISTORIAL MÉDICO Y ANTECEDENTES DE SALUD", style_sec_header))
         story.append(Spacer(1, 4))
@@ -227,11 +221,10 @@ def generar_pdf_expediente_estudiante(estudiante):
         story.append(t_med)
         story.append(Spacer(1, 20))
 
-    # 6. Sección de Firmas de Conformidad
     story.append(Spacer(1, 30))
     datos_firmas = [
         [Paragraph("_______________________________________<br/>Firma y Sello de Secretaría", style_header_right),
-         Paragraph("_______________________________________<br/>Firma de Conformidad del Tutor Legal", style_header_right)]
+         Paragraph("_______________________________________<br/>Firma de Conformidad del Padre de Familia o Encargado", style_header_right)]
     ]
     t_firmas = Table(datos_firmas, colWidths=[270, 270])
     t_firmas.setStyle(TableStyle([
@@ -251,7 +244,7 @@ def generar_pdf_expediente_estudiante(estudiante):
 def generar_pdf_credenciales_acceso(estudiante, clave_temporal_estudiante=None, clave_temporal_tutor=None):
     """
     Genera el Comprobante Oficial de Apertura de Cuenta y Credenciales de Acceso.
-    Constancia entregable al Tutor / Estudiante.
+    Constancia entregable al Padre de Familia o Encargado / Estudiante.
     """
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
@@ -313,7 +306,6 @@ def generar_pdf_credenciales_acceso(estudiante, clave_temporal_estudiante=None, 
         textColor=colors.HexColor('#334155')
     )
 
-    # 1. Encabezado
     header_data = [
         [
             Paragraph("INSTITUTO DE EDUCACIÓN BÁSICA 'EL PROGRESO'<br/><font size=8 color='#7A1C21'>SISTEMA DE GESTIÓN ESCOLAR (ERP)</font>", style_title),
@@ -324,7 +316,6 @@ def generar_pdf_credenciales_acceso(estudiante, clave_temporal_estudiante=None, 
     story.append(t_header)
     story.append(HRFlowable(width="100%", thickness=2, color=COLOR_AZUL, spaceBefore=6, spaceAfter=14))
 
-    # 2. Aviso Informativo
     story.append(Paragraph(
         "El presente documento contiene las credenciales iniciales de acceso a la plataforma digital del Instituto El Progreso. "
         "Por políticas de seguridad, <b>deberá cambiar su contraseña temporal en su primer inicio de sesión</b>.",
@@ -332,13 +323,12 @@ def generar_pdf_credenciales_acceso(estudiante, clave_temporal_estudiante=None, 
     ))
     story.append(Spacer(1, 12))
 
-    # 3. Credenciales del Alumno Únicamente
     story.append(Paragraph("<b>CREDENCIALES DE ACCESO DEL ESTUDIANTE</b>", style_subtitle))
     story.append(Spacer(1, 4))
     
     pwd_estudiante = clave_temporal_estudiante or "(Generada en registro)"
     cred_estudiante = [
-        [Paragraph("Nombre del Alumno:", style_label), Paragraph(estudiante.persona.nombre_completo, style_body)],
+        [Paragraph("Nombre del Estudiante:", style_label), Paragraph(estudiante.persona.nombre_completo, style_body)],
         [Paragraph("CUI / DPI (Usuario):", style_label), Paragraph(f"<b>{estudiante.persona.cui}</b>", style_val_bold)],
         [Paragraph("Código MINEDUC:", style_label), Paragraph(f"<b>{estudiante.codigo_mineduc}</b>", style_body)],
         [Paragraph("Contraseña Temporal:", style_label), Paragraph(f"<font color='#7A1C21'><b>{pwd_estudiante}</b></font>", style_val_bold)],
@@ -353,7 +343,6 @@ def generar_pdf_credenciales_acceso(estudiante, clave_temporal_estudiante=None, 
     story.append(t_est)
     story.append(Spacer(1, 16))
 
-    # 4. Instrucciones de Acceso
     story.append(Paragraph("<b>INSTRUCCIONES PARA EL PRIMER ACCESO:</b>", style_label))
     story.append(Paragraph("1. Ingrese a la plataforma web del Instituto El Progreso.", style_body))
     story.append(Paragraph("2. Ingrese su Nombre de Usuario (DPI / CUI de 13 dígitos del estudiante).", style_body))
@@ -361,9 +350,8 @@ def generar_pdf_credenciales_acceso(estudiante, clave_temporal_estudiante=None, 
     story.append(Paragraph("4. El sistema le solicitará automáticamente definir una nueva contraseña personal y privada.", style_body))
     story.append(Spacer(1, 30))
 
-    # 5. Firma de Recepción
     datos_firma = [
-        [Paragraph("_______________________________________<br/>Firma de Recepción del Estudiante / Tutor Legal", style_subtitle)]
+        [Paragraph("_______________________________________<br/>Firma de Recepción del Estudiante / Padre de Familia o Encargado", style_subtitle)]
     ]
     t_f = Table(datos_firma, colWidths=[540])
     t_f.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER')]))
@@ -379,7 +367,7 @@ def generar_pdf_credenciales_acceso(estudiante, clave_temporal_estudiante=None, 
 
 def generar_pdf_credenciales_encargado(encargado, clave_temporal=None):
     """
-    Genera un comprobante en PDF con las credenciales temporales de un Encargado / Tutor Legal.
+    Genera un comprobante en PDF con las credenciales temporales de un Padre de Familia o Encargado.
     """
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
@@ -439,33 +427,30 @@ def generar_pdf_credenciales_encargado(encargado, clave_temporal=None):
         textColor=colors.HexColor('#334155')
     )
 
-    # 1. Encabezado
     header_data = [
         [
             Paragraph("INSTITUTO DE EDUCACIÓN BÁSICA 'EL PROGRESO'<br/><font size=8 color='#7A1C21'>SISTEMA DE GESTIÓN ESCOLAR (ERP)</font>", style_title),
-            Paragraph("<b>CREDENCIALES DE TUTOR LEGAL</b><br/>Fecha: <b>2026</b>", style_subtitle)
+            Paragraph("<b>CREDENCIALES DE ENCARGADO</b><br/>Fecha: <b>2026</b>", style_subtitle)
         ]
     ]
     t_header = Table(header_data, colWidths=[340, 200])
     story.append(t_header)
     story.append(HRFlowable(width="100%", thickness=2, color=COLOR_AZUL, spaceBefore=6, spaceAfter=14))
 
-    # 2. Aviso Informativo
     story.append(Paragraph(
-        "El presente documento contiene las credenciales de acceso para el Encargado / Tutor Legal. "
-        "Permite el seguimiento de expedientes, estados de cuenta y rendimiento de los alumnos bajo su tutela. "
+        "El presente documento contiene las credenciales de acceso para el Padre de Familia o Encargado. "
+        "Permite el seguimiento de expedientes, estados de cuenta y rendimiento de los estudiantes bajo su cuidado. "
         "Por políticas de seguridad, <b>deberá cambiar su contraseña temporal en su primer inicio de sesión</b>.",
         style_body
     ))
     story.append(Spacer(1, 12))
 
-    # 3. Credenciales del Encargado
-    story.append(Paragraph("<b>CREDENCIALES DE ACCESO DEL ENCARGADO / TUTOR LEGAL</b>", style_subtitle))
+    story.append(Paragraph("<b>CREDENCIALES DE ACCESO DEL PADRE DE FAMILIA O ENCARGADO</b>", style_subtitle))
     story.append(Spacer(1, 4))
     
     pwd_encargado = clave_temporal or "(Generada en registro)"
     cred_encargado = [
-        [Paragraph("Nombre del Tutor Legal:", style_label), Paragraph(encargado.persona.nombre_completo, style_body)],
+        [Paragraph("Nombre del Encargado:", style_label), Paragraph(encargado.persona.nombre_completo, style_body)],
         [Paragraph("DPI / CUI (Usuario):", style_label), Paragraph(f"<b>{encargado.persona.cui}</b>", style_val_bold)],
         [Paragraph("Teléfono de Contacto:", style_label), Paragraph(encargado.persona.telefono_principal or "N/A", style_body)],
         [Paragraph("Contraseña Temporal:", style_label), Paragraph(f"<font color='#7A1C21'><b>{pwd_encargado}</b></font>", style_val_bold)],
@@ -480,7 +465,6 @@ def generar_pdf_credenciales_encargado(encargado, clave_temporal=None):
     story.append(t_enc)
     story.append(Spacer(1, 16))
 
-    # 4. Instrucciones
     story.append(Paragraph("<b>INSTRUCCIONES PARA EL PRIMER ACCESO:</b>", style_label))
     story.append(Paragraph("1. Ingrese a la plataforma web del Instituto El Progreso.", style_body))
     story.append(Paragraph("2. Ingrese su DPI / CUI (13 dígitos) como Nombre de Usuario.", style_body))
@@ -488,9 +472,8 @@ def generar_pdf_credenciales_encargado(encargado, clave_temporal=None):
     story.append(Paragraph("4. Defina su contraseña personal y privada al ingresar por primera vez.", style_body))
     story.append(Spacer(1, 30))
 
-    # 5. Firma
     datos_firma = [
-        [Paragraph("_______________________________________<br/>Firma de Recepción del Tutor Legal", style_subtitle)]
+        [Paragraph("_______________________________________<br/>Firma de Recepción del Padre de Familia o Encargado", style_subtitle)]
     ]
     t_f = Table(datos_firma, colWidths=[540])
     t_f.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER')]))
@@ -500,6 +483,6 @@ def generar_pdf_credenciales_encargado(encargado, clave_temporal=None):
     buffer.seek(0)
 
     response = HttpResponse(buffer, content_type='application/pdf')
-    response['Content-Disposition'] = f'inline; filename="Credenciales_Tutor_{encargado.persona.cui}.pdf"'
+    response['Content-Disposition'] = f'inline; filename="Credenciales_Encargado_{encargado.persona.cui}.pdf"'
     return response
 

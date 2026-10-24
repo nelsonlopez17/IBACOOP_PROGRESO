@@ -4,7 +4,7 @@ APPS/usuarios/utils.py
 Generación de comprobantes y utilidades para la gestión de usuarios e identidades.
 """
 import io
-import random
+import secrets
 import string
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
@@ -12,18 +12,18 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 
 
-def generar_clave_temporal(longitud=10) -> str:
-    """Genera una clave temporal segura con letras mayúsculas, minúsculas, números y símbolos."""
+def generar_clave_temporal(longitud=12) -> str:
+    """Genera una clave temporal criptográficamente segura e impredecible."""
     caracteres = string.ascii_letters + string.digits + "!@#$%&*"
-    # Garantizar al menos 1 mayúscula, 1 minúscula, 1 número y 1 símbolo
+    # garantizar inclusion de diferentes tipos de caracteres
     clave = [
-        random.choice(string.ascii_uppercase),
-        random.choice(string.ascii_lowercase),
-        random.choice(string.digits),
-        random.choice("!@#$%&*"),
+        secrets.choice(string.ascii_uppercase),
+        secrets.choice(string.ascii_lowercase),
+        secrets.choice(string.digits),
+        secrets.choice("!@#$%&*"),
     ]
-    clave += [random.choice(caracteres) for _ in range(longitud - 4)]
-    random.shuffle(clave)
+    clave += [secrets.choice(caracteres) for _ in range(longitud - 4)]
+    secrets.SystemRandom().shuffle(clave)
     return "".join(clave)
 
 
@@ -44,7 +44,6 @@ def generar_pdf_credenciales_bytes(usuario, clave_temporal: str) -> bytes:
 
     styles = getSampleStyleSheet()
 
-    # Estilos personalizados
     header_title_style = ParagraphStyle(
         'HeaderTitle',
         parent=styles['Normal'],
@@ -105,14 +104,12 @@ def generar_pdf_credenciales_bytes(usuario, clave_temporal: str) -> bytes:
 
     elements = []
 
-    # Encabezado
     elements.append(Paragraph("INSTITUTO DIVERSIFICADO POR COOPERATIVA EL PROGRESO", header_title_style))
     elements.append(Spacer(1, 4))
     elements.append(Paragraph("HOJA OFICIAL DE CREDENCIALES Y CONSTANCIA DE ACCESO AL SISTEMA", header_subtitle_style))
     elements.append(Spacer(1, 10))
     elements.append(HRFlowable(width="100%", thickness=2, color=colors.HexColor('#1E6532'), spaceAfter=15))
 
-    # Información de la Persona
     persona_nombre = "N/A"
     cui_val = "N/A"
 
@@ -141,7 +138,6 @@ def generar_pdf_credenciales_bytes(usuario, clave_temporal: str) -> bytes:
     elements.append(t_datos)
     elements.append(Spacer(1, 20))
 
-    # Cuadro de Credenciales
     cred_data = [
         [Paragraph("CREDENCIALES TEMPORALES ASIGNADAS", cred_title_style)],
         [Spacer(1, 6)],
@@ -165,7 +161,6 @@ def generar_pdf_credenciales_bytes(usuario, clave_temporal: str) -> bytes:
     elements.append(t_cred)
     elements.append(Spacer(1, 25))
 
-    # Indicaciones de Seguridad
     elements.append(Paragraph("<b>INSTRUCCIONES E INFORMACIÓN IMPORTANTE DE SEGURIDAD:</b>", label_style))
     elements.append(Spacer(1, 6))
 
@@ -183,7 +178,6 @@ def generar_pdf_credenciales_bytes(usuario, clave_temporal: str) -> bytes:
     elements.append(Spacer(1, 30))
     elements.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#CBD5E1'), spaceAfter=20))
 
-    # Firma / Pie de Página
     pie_tabla = [
         [Paragraph("__________________________________________", ParagraphStyle('FirmaLine', alignment=1)), Paragraph("__________________________________________", ParagraphStyle('FirmaLine2', alignment=1))],
         [Paragraph("Firma / Sello de Dirección / Administración", ParagraphStyle('FirmaLbl', fontName='Helvetica', fontSize=9, alignment=1, textColor=colors.HexColor('#64748B'))),

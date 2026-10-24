@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Mis Cursos y Notas{% endblock %}
+{% block title %}Cuadro de Calificaciones Masivo{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
@@ -13,106 +13,378 @@
                 <span>/</span>
                 <span class="text-slate-500">Gestión Académica</span>
                 <span>/</span>
-                <span class="text-slate-500">Notas</span>
+                <span class="text-slate-500">Cuadro de Calificaciones</span>
             </div>
             <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
                 <i data-lucide="book-open" class="w-7 h-7 text-[#1E6532]"></i>
-                Control de Calificaciones y Notas
+                Cuadro de Calificaciones Masivo
             </h1>
-            <p class="text-xs text-slate-500 mt-1">Registro de evaluaciones por bimestre (Zona 60 pts + Examen 40 pts).</p>
+            <p class="text-xs text-slate-500 mt-1">
+                Planilla consolidada de ingreso ágil de notas por Curso, Sección y Bimestre (Normativa MINEDUC: Zona 60 pts + Examen 40 pts = Total 100 pts).
+            </p>
         </div>
+
+        {% if ciclo_activo %}
+        <div class="flex items-center gap-2">
+            <span class="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-extrabold flex items-center gap-1.5">
+                <i data-lucide="calendar" class="w-4 h-4 text-emerald-600"></i>
+                Ciclo Lectivo {{ ciclo_activo.anio }}
+            </span>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Pestañas del Módulo Académico -->
     {% include 'academico/partials/academico_tabs.html' %}
 
-    <!-- Alertas -->
-    {% if messages %}
-    <div class="space-y-3">
-        {% for message in messages %}
-        <div class="p-4 rounded-xl flex items-start gap-3 border shadow-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-900 border-emerald-200{% else %}bg-rose-50 text-rose-900 border-rose-200{% endif %}">
-            <i data-lucide="{% if message.tags == 'success' %}check-circle-2{% else %}alert-triangle{% endif %}" class="w-5 h-5 flex-shrink-0 mt-0.5 {% if message.tags == 'success' %}text-emerald-600{% else %}text-rose-600{% endif %}"></i>
-            <div class="text-sm font-medium leading-relaxed">{{ message }}</div>
-        </div>
-        {% endfor %}
+    {% if not ciclo_activo %}
+    <div class="p-8 text-center bg-white rounded-2xl border border-slate-200 shadow-sm">
+        <i data-lucide="calendar-x" class="w-12 h-12 mx-auto text-slate-300 mb-2"></i>
+        <p class="text-sm font-bold text-slate-700">No hay un Ciclo Escolar activo configurado en el sistema.</p>
+        <p class="text-xs text-slate-400 mt-1">Active o configure un ciclo escolar para habilitar el ingreso de calificaciones.</p>
     </div>
+    {% elif not grados %}
+    <div class="p-8 text-center bg-white rounded-2xl border border-slate-200 shadow-sm">
+        <i data-lucide="briefcase" class="w-12 h-12 mx-auto text-slate-300 mb-2"></i>
+        <p class="text-sm font-bold text-slate-700">No se encontraron grados ni cursos asignados a su usuario.</p>
+        <p class="text-xs text-slate-400 mt-1">Si es Docente, contacte a Dirección o Secretaría para que le asignen su carga académica en el ciclo activo.</p>
+    </div>
+    {% else %}
+
+    <!-- Barra de Selección Jerárquica: Grado -> Sección -> Curso -> Bimestre -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
+        <form method="get" id="filtroCuadroForm" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+            <!-- Grado -->
+            <div>
+                <label for="gradoSelect" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                    <i data-lucide="graduation-cap" class="w-3.5 h-3.5 text-slate-400"></i>
+                    Grado Escolar
+                </label>
+                <select name="grado" id="gradoSelect" onchange="limpiarSeccionYCurso(); this.form.submit();"
+                    class="w-full text-xs font-semibold rounded-xl border-slate-300 focus:border-[#1E6532] focus:ring-[#1E6532] bg-slate-50/50 py-2.5 px-3">
+                    {% for g in grados %}
+                    <option value="{{ g.id }}" {% if grado_sel and grado_sel.id == g.id %}selected{% endif %}>
+                        {{ g.nombre }}
+                    </option>
+                    {% empty %}
+                    <option value="">No hay grados disponibles</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Sección -->
+            <div>
+                <label for="seccionSelect" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                    <i data-lucide="users" class="w-3.5 h-3.5 text-slate-400"></i>
+                    Sección
+                </label>
+                <select name="seccion" id="seccionSelect" onchange="limpiarCurso(); this.form.submit();"
+                    class="w-full text-xs font-semibold rounded-xl border-slate-300 focus:border-[#1E6532] focus:ring-[#1E6532] bg-slate-50/50 py-2.5 px-3">
+                    {% for sec in secciones %}
+                    <option value="{{ sec.id }}" {% if seccion_sel and seccion_sel.id == sec.id %}selected{% endif %}>
+                        Sección {{ sec.letra }}
+                    </option>
+                    {% empty %}
+                    <option value="">No hay secciones en este grado</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Curso -->
+            <div>
+                <label for="cursoSelect" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                    <i data-lucide="book" class="w-3.5 h-3.5 text-slate-400"></i>
+                    Asignatura / Curso
+                </label>
+                <select name="curso" id="cursoSelect" onchange="this.form.submit();"
+                    class="w-full text-xs font-semibold rounded-xl border-slate-300 focus:border-[#1E6532] focus:ring-[#1E6532] bg-slate-50/50 py-2.5 px-3">
+                    {% for c in cursos %}
+                    <option value="{{ c.id }}" {% if curso_sel and curso_sel.id == c.id %}selected{% endif %}>
+                        {{ c.nombre_curso }}
+                    </option>
+                    {% empty %}
+                    <option value="">No hay cursos para esta sección</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Bloque / Bimestre -->
+            <div>
+                <label for="bloqueSelect" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                    <i data-lucide="layers" class="w-3.5 h-3.5 text-slate-400"></i>
+                    Bimestre / Bloque
+                </label>
+                <select name="bloque" id="bloqueSelect" onchange="this.form.submit();"
+                    class="w-full text-xs font-semibold rounded-xl border-slate-300 focus:border-[#1E6532] focus:ring-[#1E6532] bg-slate-50/50 py-2.5 px-3">
+                    {% for b in bloques %}
+                    <option value="{{ b.id }}" {% if bloque_sel and bloque_sel.id == b.id %}selected{% endif %}>
+                        {{ b.nombre_bloque }}
+                    </option>
+                    {% empty %}
+                    <option value="">No hay bimestres registrados</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+    </div>
+
+    {% if seccion_sel and curso_sel and bloque_sel %}
+    <!-- Resumen y Estadísticas Rápidas -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Estudiantes Inscritos</span>
+            <span class="text-xl font-black text-slate-900 mt-1 block" id="statTotal">{{ total_estudiantes|default:"0" }}</span>
+        </div>
+        <div class="bg-emerald-50/60 p-4 rounded-xl border border-emerald-200/80 shadow-xs">
+            <span class="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">Aprobados (&ge; 60 pts)</span>
+            <span class="text-xl font-black text-emerald-700 mt-1 block" id="statAprobados">{{ aprobados_count|default:"0" }}</span>
+        </div>
+        <div class="bg-rose-50/60 p-4 rounded-xl border border-rose-200/80 shadow-xs">
+            <span class="text-[10px] font-bold text-rose-800 uppercase tracking-wider block">Reprobados (&lt; 60 pts)</span>
+            <span class="text-xl font-black text-rose-700 mt-1 block" id="statReprobados">{{ reprobados_count|default:"0" }}</span>
+        </div>
+        <div class="bg-blue-50/60 p-4 rounded-xl border border-blue-200/80 shadow-xs">
+            <span class="text-[10px] font-bold text-blue-800 uppercase tracking-wider block">Promedio de Sección</span>
+            <span class="text-xl font-black text-blue-800 mt-1 block" id="statPromedio">{{ promedio_seccion|default:"0.00" }} pts</span>
+        </div>
+    </div>
+
+    <!-- Formulario Masivo de Calificaciones -->
+    <form method="post" id="cuadroNotasForm" class="space-y-4">
+        {% csrf_token %}
+        <input type="hidden" name="grado" value="{{ grado_sel.id }}">
+        <input type="hidden" name="seccion" value="{{ seccion_sel.id }}">
+        <input type="hidden" name="curso" value="{{ curso_sel.id }}">
+        <input type="hidden" name="bloque" value="{{ bloque_sel.id }}">
+
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="px-6 py-4 bg-slate-50/80 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-[#1E6532]/10 text-[#1E6532] flex items-center justify-center">
+                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-sm font-extrabold text-slate-900">
+                            {{ curso_sel.nombre_curso }} — {{ seccion_sel.grado.nombre_grado }} Sección "{{ seccion_sel.letra }}"
+                        </h2>
+                        <span class="text-xs text-slate-500 font-medium">{{ bloque_sel.nombre_bloque }} &bull; Ingrese notas y use Enter o flechas para navegar</span>
+                    </div>
+                </div>
+
+                <button type="submit"
+                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#1E6532] hover:bg-[#1E6532]/90 text-white rounded-xl text-xs font-black shadow-md shadow-[#1E6532]/20 transition-all">
+                    <i data-lucide="save" class="w-4 h-4"></i>
+                    Guardar Calificaciones
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50/50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
+                            <th class="py-3 px-4 text-center w-12">No.</th>
+                            <th class="py-3 px-4">Estudiante</th>
+                            <th class="py-3 px-4 font-mono text-[11px] w-36">CUI</th>
+                            <th class="py-3 px-4 text-center w-36">Zona (Máx 60)</th>
+                            <th class="py-3 px-4 text-center w-36">Examen (Máx 40)</th>
+                            <th class="py-3 px-4 text-center w-32">Total (100 pts)</th>
+                            <th class="py-3 px-4 text-center w-32">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                        {% for nota in notas %}
+                        <tr class="hover:bg-slate-50/70 transition-colors nota-row" data-id="{{ nota.id }}">
+                            <td class="py-3 px-4 text-center font-bold text-slate-400">
+                                {{ forloop.counter }}
+                            </td>
+                            <td class="py-3 px-4 font-bold text-slate-900 text-sm">
+                                {{ nota.asignacion_estudiante.estudiante.persona.nombre_completo }}
+                            </td>
+                            <td class="py-3 px-4 font-mono text-slate-500 text-[11px]">
+                                {{ nota.asignacion_estudiante.estudiante.persona.cui|default:"—" }}
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                <input type="number" step="0.01" min="0" max="60"
+                                    name="zona_{{ nota.id }}"
+                                    value="{{ nota.nota_zona }}"
+                                    data-col="zona"
+                                    class="w-24 text-center font-mono font-bold text-slate-900 rounded-lg border-slate-300 focus:border-[#1E6532] focus:ring-[#1E6532] py-1.5 px-2 text-xs bg-slate-50 input-nota input-zona">
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                <input type="number" step="0.01" min="0" max="40"
+                                    name="examen_{{ nota.id }}"
+                                    value="{{ nota.nota_examen }}"
+                                    data-col="examen"
+                                    class="w-24 text-center font-mono font-bold text-slate-900 rounded-lg border-slate-300 focus:border-[#1E6532] focus:ring-[#1E6532] py-1.5 px-2 text-xs bg-slate-50 input-nota input-examen">
+                            </td>
+                            <td class="py-3 px-4 text-center font-mono font-black text-sm cell-total">
+                                <span class="badge-total px-2.5 py-1 rounded-lg {% if nota.nota_total >= 60 %}text-emerald-700 bg-emerald-50 border border-emerald-200{% else %}text-rose-700 bg-rose-50 border border-rose-200{% endif %}">
+                                    {{ nota.nota_total }} pts
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-center cell-estado">
+                                {% if nota.nota_total >= 60 %}
+                                <span class="badge-estado inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                    <i data-lucide="check" class="w-3 h-3"></i> Aprobado
+                                </span>
+                                {% else %}
+                                <span class="badge-estado inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">
+                                    <i data-lucide="x" class="w-3 h-3"></i> Reprobado
+                                </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="py-12 text-center text-slate-400">
+                                <i data-lucide="users-2" class="w-10 h-10 mx-auto mb-2 text-slate-300"></i>
+                                <p class="text-sm font-semibold">No hay estudiantes inscritos en esta sección.</p>
+                                <p class="text-xs text-slate-400 mt-1">Inscriba estudiantes en la sección para habilitar la planilla de calificaciones.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if notas %}
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                <span class="text-xs text-slate-500 font-medium">
+                    Total: {{ notas|length }} estudiantes &bull; Cambios no guardados se perderán al salir de la página
+                </span>
+                <button type="submit"
+                    class="inline-flex items-center gap-2 px-6 py-2.5 bg-[#1E6532] hover:bg-[#1E6532]/90 text-white rounded-xl text-xs font-black shadow-md shadow-[#1E6532]/20 transition-all">
+                    <i data-lucide="save" class="w-4 h-4"></i>
+                    Guardar Calificaciones
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </form>
     {% endif %}
 
-    <!-- Tabla de Notas por Bloque -->
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs border-collapse">
-                <thead>
-                    <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
-                        <th class="py-3.5 px-6">Alumno</th>
-                        <th class="py-3.5 px-6">Grado y Sección</th>
-                        <th class="py-3.5 px-6">Asignatura / Curso</th>
-                        <th class="py-3.5 px-6">Bimestre / Bloque</th>
-                        <th class="py-3.5 px-6 text-center">Zona (60 pts)</th>
-                        <th class="py-3.5 px-6 text-center">Examen (40 pts)</th>
-                        <th class="py-3.5 px-6 text-center">Total (100 pts)</th>
-                        <th class="py-3.5 px-6 text-right">Acción</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
-                    {% for nota in notas %}
-                    <tr class="hover:bg-slate-50/60 transition-colors">
-                        <td class="py-4 px-6 font-bold text-slate-900 text-sm">
-                            {{ nota.asignacion_estudiante.estudiante.persona.nombre_completo }}
-                        </td>
-                        <td class="py-4 px-6 font-semibold text-slate-700">
-                            {{ nota.asignacion_estudiante.seccion }}
-                        </td>
-                        <td class="py-4 px-6 font-bold text-[#1E6532]">
-                            {{ nota.curso.nombre_curso }}
-                        </td>
-                        <td class="py-4 px-6 font-semibold text-slate-600">
-                            {{ nota.bloque_academico.nombre_bloque }}
-                        </td>
-                        <td class="py-4 px-6 text-center font-mono font-bold text-slate-800">
-                            {{ nota.nota_zona }}
-                        </td>
-                        <td class="py-4 px-6 text-center font-mono font-bold text-slate-800">
-                            {{ nota.nota_examen }}
-                        </td>
-                        <td class="py-4 px-6 text-center font-mono font-bold text-sm {% if nota.nota_total >= 60 %}text-emerald-700{% else %}text-rose-700{% endif %}">
-                            {{ nota.nota_total }} pts
-                        </td>
-                        <td class="py-4 px-6 text-right">
-                            <a href="{% url 'academico:ingreso_notas' nota.pk %}"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-colors">
-                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                                Evaluar / Ingresar
-                            </a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="8" class="py-12 text-center text-slate-400">
-                            <i data-lucide="book-open" class="w-10 h-10 mx-auto mb-2 text-slate-300"></i>
-                            <p class="text-sm font-semibold">No se encontraron notas registradas.</p>
-                            <p class="text-xs text-slate-400 mt-1">Al inscribir estudiantes en secciones se generarán automáticamente sus planillas de notas.</p>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        {% if is_paginated %}
-        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
-            <span class="text-xs font-semibold text-slate-500">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
-            <div class="flex items-center gap-2">
-                {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50">Anterior</a>
-                {% endif %}
-                {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50">Siguiente</a>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
-    </div>
+    {% endif %}
 
 </div>
+
+<script>
+function limpiarSeccionYCurso() {
+    const s = document.getElementById('seccionSelect');
+    const c = document.getElementById('cursoSelect');
+    if (s) s.removeAttribute('name');
+    if (c) c.removeAttribute('name');
+}
+
+function limpiarCurso() {
+    const c = document.getElementById('cursoSelect');
+    if (c) c.removeAttribute('name');
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const rows = document.querySelectorAll('.nota-row');
+    const inputs = document.querySelectorAll('.input-nota');
+
+    function actualizarFila(row) {
+        const inputZona = row.querySelector('.input-zona');
+        const inputExamen = row.querySelector('.input-examen');
+        const cellTotal = row.querySelector('.cell-total');
+        const cellEstado = row.querySelector('.cell-estado');
+
+        let zona = parseFloat(inputZona.value) || 0;
+        let examen = parseFloat(inputExamen.value) || 0;
+
+        // Limitar dentro de rangos
+        if (zona < 0) zona = 0;
+        if (zona > 60) zona = 60;
+        if (examen < 0) examen = 0;
+        if (examen > 40) examen = 40;
+
+        const total = Math.round((zona + examen) * 100) / 100;
+        const esAprobado = total >= 60;
+
+        // Actualizar celda total
+        cellTotal.innerHTML = `
+            <span class="badge-total px-2.5 py-1 rounded-lg ${esAprobado ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-rose-700 bg-rose-50 border border-rose-200'}">
+                ${total.toFixed(2)} pts
+            </span>
+        `;
+
+        // Actualizar celda estado
+        cellEstado.innerHTML = esAprobado
+            ? `<span class="badge-estado inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
+                <svg class="w-3 h-3 lucide lucide-check" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Aprobado
+               </span>`
+            : `<span class="badge-estado inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200">
+                <svg class="w-3 h-3 lucide lucide-x" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg> Reprobado
+               </span>`;
+
+        actualizarResumenGlobal();
+    }
+
+    function actualizarResumenGlobal() {
+        let countAprobados = 0;
+        let countReprobados = 0;
+        let sumaTotales = 0;
+        let totalFilas = rows.length;
+
+        rows.forEach(r => {
+            const z = parseFloat(r.querySelector('.input-zona').value) || 0;
+            const e = parseFloat(r.querySelector('.input-examen').value) || 0;
+            const t = z + e;
+            sumaTotales += t;
+            if (t >= 60) {
+                countAprobados++;
+            } else {
+                countReprobados++;
+            }
+        });
+
+        const statAprobados = document.getElementById('statAprobados');
+        const statReprobados = document.getElementById('statReprobados');
+        const statPromedio = document.getElementById('statPromedio');
+
+        if (statAprobados) statAprobados.textContent = countAprobados;
+        if (statReprobados) statReprobados.textContent = countReprobados;
+        if (statPromedio && totalFilas > 0) {
+            statPromedio.textContent = (sumaTotales / totalFilas).toFixed(2) + ' pts';
+        }
+    }
+
+    // Eventos en inputs de notas
+    inputs.forEach(input => {
+        input.addEventListener('input', function () {
+            const row = this.closest('.nota-row');
+            if (row) actualizarFila(row);
+        });
+
+        // Navegación rápida con teclado: flechas arriba/abajo y Enter
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Prevenir submit accidental
+            }
+
+            const isDown = e.key === 'ArrowDown' || e.key === 'Enter';
+            const isUp = e.key === 'ArrowUp';
+
+            if (isDown || isUp) {
+                const currentRow = this.closest('.nota-row');
+                const colType = this.getAttribute('data-col');
+                let targetRow = isDown ? currentRow.nextElementSibling : currentRow.previousElementSibling;
+
+                while (targetRow && !targetRow.classList.contains('nota-row')) {
+                    targetRow = isDown ? targetRow.nextElementSibling : targetRow.previousElementSibling;
+                }
+
+                if (targetRow) {
+                    const targetInput = targetRow.querySelector(`[data-col="${colType}"]`);
+                    if (targetInput) {
+                        targetInput.focus();
+                        targetInput.select();
+                    }
+                }
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

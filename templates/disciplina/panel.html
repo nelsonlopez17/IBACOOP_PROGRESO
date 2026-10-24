@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+
+{% block title %}Disciplina y Convivencia Escolar{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Encabezado de la Sección -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+                <a href="{% url 'core:home' %}" class="hover:underline">Inicio</a>
+                <span>/</span>
+                <span class="text-slate-500">Gestión Escolar</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+                <i data-lucide="shield-alert" class="w-7 h-7 text-[#1E6532]"></i>
+                Disciplina y Convivencia Escolar
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">
+                Bitácora de faltas disciplinarias, derecho de audiencia y citatorios formales conforme al Acuerdo Ministerial 01-2011 del MINEDUC.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            {% if perms.disciplina.add_incidentedisciplinario %}
+            <a href="{% url 'disciplina:incidente_create' %}" 
+               class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                + Registrar Falta Disciplinaria
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Tarjetas de Métricas KPI -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Incidentes</span>
+                <i data-lucide="clipboard-list" class="w-4 h-4 text-[#1E6532]"></i>
+            </div>
+            <h3 class="text-2xl font-extrabold text-slate-900 mt-2">{{ metricas.total_incidentes }}</h3>
+            <p class="text-[10px] text-slate-500">registrados en el ciclo</p>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-amber-600 uppercase tracking-wider">Faltas Leves</span>
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+            </div>
+            <h3 class="text-2xl font-extrabold text-amber-700 mt-2">{{ metricas.faltas_leves }}</h3>
+            <p class="text-[10px] text-slate-500">en seguimiento formativo</p>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-rose-600 uppercase tracking-wider">Faltas Graves / Muy Graves</span>
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+            </div>
+            <h3 class="text-2xl font-extrabold text-rose-700 mt-2">{{ metricas.faltas_graves }}</h3>
+            <p class="text-[10px] text-slate-500">requieren intervención</p>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-[#3C7DA8] uppercase tracking-wider">Citaciones Pendientes</span>
+                <i data-lucide="calendar" class="w-4 h-4 text-[#3C7DA8]"></i>
+            </div>
+            <h3 class="text-2xl font-extrabold text-[#3C7DA8] mt-2">{{ metricas.citaciones_pendientes }}</h3>
+            <p class="text-[10px] text-slate-500">encargados por comparecer</p>
+        </div>
+    </div>
+
+    <!-- Barra de Búsqueda y Filtros -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs">
+        <form method="get" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+            <div class="sm:col-span-3">
+                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Buscar Estudiante / Hechos</label>
+                <div class="relative">
+                    <input type="text" name="q" value="{{ filtros.q }}" placeholder="Nombre, apellido o código..."
+                           class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1E6532]">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                </div>
+            </div>
+
+            <div class="sm:col-span-3">
+                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Clasificación MINEDUC</label>
+                <select name="tipo_falta" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1E6532]">
+                    <option value="">Todas las faltas</option>
+                    {% for val, label in tipos_falta %}
+                        <option value="{{ val }}" {% if filtros.tipo_falta == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="sm:col-span-2">
+                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Grado / Sección</label>
+                <select name="seccion" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1E6532]">
+                    <option value="">Todas las secciones</option>
+                    {% for sec in secciones %}
+                        <option value="{{ sec.id }}" {% if filtros.seccion == sec.id|stringformat:"s" %}selected{% endif %}>{{ sec.grado.nombre }} "{{ sec.letra }}"</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="sm:col-span-2">
+                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Estado de Resolución</label>
+                <select name="resuelto" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1E6532]">
+                    <option value="">Todos los estados</option>
+                    <option value="no" {% if filtros.resuelto == 'no' %}selected{% endif %}>En Proceso / Activo</option>
+                    <option value="si" {% if filtros.resuelto == 'si' %}selected{% endif %}>Resuelto y Cerrado</option>
+                </select>
+            </div>
+
+            <div class="sm:col-span-2 flex items-center gap-2">
+                <button type="submit" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5">
+                    <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+                    Filtrar
+                </button>
+                {% if filtros.q or filtros.tipo_falta or filtros.resuelto or filtros.seccion %}
+                    <a href="{% url 'disciplina:dashboard' %}" class="p-2 text-slate-400 hover:text-rose-600 rounded-xl border border-slate-200 hover:bg-rose-50" title="Limpiar filtros">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabla de Incidentes Disciplinarios -->
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <i data-lucide="list" class="w-4 h-4 text-[#1E6532]"></i>
+                Bitácora de Incidentes Registrados
+            </h3>
+            <span class="text-xs text-slate-400 font-medium">Mostrando {{ incidentes|length }} de {{ total_registros|default:incidentes|length }} registro(s)</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-50/75 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                    <tr>
+                        <th class="py-3 px-4">Fecha / Hora</th>
+                        <th class="py-3 px-4">Estudiante</th>
+                        <th class="py-3 px-4">Falta MINEDUC</th>
+                        <th class="py-3 px-4">Categoría y Hechos</th>
+                        <th class="py-3 px-4">Citación</th>
+                        <th class="py-3 px-4 text-center">Estado</th>
+                        <th class="py-3 px-4 text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for inc in incidentes %}
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <td class="py-3 px-4 whitespace-nowrap">
+                            <span class="font-bold text-slate-800 block">{{ inc.fecha|date:"d/m/Y" }}</span>
+                            <span class="text-[10px] text-slate-400">{{ inc.hora|time:"H:i"|default:"Sin hora" }} • {{ inc.lugar|truncatechars:18 }}</span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <a href="{% url 'estudiantes:estudiante_detail' inc.estudiante.pk %}" class="font-bold text-slate-900 hover:text-[#1E6532] block">
+                                {{ inc.estudiante.persona.nombre_completo }}
+                            </a>
+                            <span class="text-[10px] text-slate-400">Código: {{ inc.estudiante.codigo_mineduc|default:"S/C" }}</span>
+                        </td>
+                        <td class="py-3 px-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border {{ inc.badge_severidad.class }}">
+                                {{ inc.get_tipo_falta_display }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 max-w-xs">
+                            <p class="font-semibold text-slate-800 text-[11px] truncate">{{ inc.get_categoria_display }}</p>
+                            <p class="text-[11px] text-slate-500 line-clamp-1">{{ inc.descripcion_hechos }}</p>
+                        </td>
+                        <td class="py-3 px-4 whitespace-nowrap">
+                            {% if inc.citacion %}
+                                <a href="{% url 'disciplina:citacion_pdf' inc.citacion.id %}" target="_blank"
+                                   class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors"
+                                   title="Descargar Citatorio PDF">
+                                    <i data-lucide="file-text" class="w-3 h-3"></i>
+                                    {{ inc.citacion.get_estado_display }}
+                                </a>
+                            {% elif inc.requiere_citacion and perms.disciplina.add_citacionpadre %}
+                                <a href="{% url 'disciplina:citacion_create' inc.id %}"
+                                   class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-colors">
+                                    <i data-lucide="alert-circle" class="w-3 h-3"></i>
+                                    Programar Citación
+                                </a>
+                            {% else %}
+                                <span class="text-[10px] text-slate-400">No requerida</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 text-center whitespace-nowrap">
+                            {% if inc.esta_resuelto %}
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <i data-lucide="check" class="w-3 h-3"></i> Resuelto
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                    <i data-lucide="clock" class="w-3 h-3"></i> En Proceso
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 text-right whitespace-nowrap">
+                            <div class="inline-flex items-center gap-1">
+                                <a href="{% url 'disciplina:incidente_detail' inc.id %}" 
+                                   class="p-1.5 text-slate-500 hover:text-[#1E6532] hover:bg-slate-100 rounded-lg transition-colors" 
+                                   title="Ver expediente del incidente">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </a>
+                                {% if perms.disciplina.change_incidentedisciplinario %}
+                                <a href="{% url 'disciplina:incidente_update' inc.id %}" 
+                                   class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition-colors" 
+                                   title="Editar o cerrar caso">
+                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="py-12 text-center text-slate-400">
+                            <i data-lucide="shield-check" class="w-10 h-10 mx-auto text-emerald-500/40 mb-2"></i>
+                            <p class="font-bold text-slate-600 text-sm">No se registran faltas disciplinarias con los filtros aplicados</p>
+                            <p class="text-xs text-slate-400 mt-0.5">El ambiente escolar y de convivencia pacífica se encuentra en orden.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if incidentes.has_other_pages %}
+        <div class="px-5 py-3 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between text-xs text-slate-500">
+            <span>Página {{ incidentes.number }} de {{ incidentes.paginator.num_pages }}</span>
+            <div class="flex items-center gap-1">
+                {% if incidentes.has_previous %}
+                    <a href="?page={{ incidentes.previous_page_number }}{% if filtros.q %}&q={{ filtros.q }}{% endif %}{% if filtros.tipo_falta %}&tipo_falta={{ filtros.tipo_falta }}{% endif %}{% if filtros.resuelto %}&resuelto={{ filtros.resuelto }}{% endif %}{% if filtros.seccion %}&seccion={{ filtros.seccion }}{% endif %}" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 font-semibold">Anterior</a>
+                {% endif %}
+                {% if incidentes.has_next %}
+                    <a href="?page={{ incidentes.next_page_number }}{% if filtros.q %}&q={{ filtros.q }}{% endif %}{% if filtros.tipo_falta %}&tipo_falta={{ filtros.tipo_falta }}{% endif %}{% if filtros.resuelto %}&resuelto={{ filtros.resuelto }}{% endif %}{% if filtros.seccion %}&seccion={{ filtros.seccion }}{% endif %}" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 font-semibold">Siguiente</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+<!-- Sub-navegación por Pestañas Horizontales (Tabs) para el Módulo de Recursos Humanos -->
+<div class="bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-1 overflow-x-auto">
+    {% if perms.rrhh.view_personal %}
+    <a href="{% url 'rrhh:personal_list' %}"
+        class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {% if request.resolver_match.view_name == 'rrhh:personal_list' or request.resolver_match.view_name == 'rrhh:personal_detail' or request.resolver_match.view_name == 'rrhh:personal_create' or request.resolver_match.view_name == 'rrhh:personal_update' %}bg-[#1E6532] text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
+        <i data-lucide="users" class="w-4 h-4"></i>
+        <span>Padrón de Personal</span>
+    </a>
+    {% endif %}
+
+
+
+</div>

@@ -1,38 +1,74 @@
 <!-- Sub-navegación por Pestañas Horizontales (Tabs) para el Módulo Financiero -->
-<div class="bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-1 overflow-x-auto">
-    <a href="{% url 'financiero:cuentaporcobrar_list' %}"
-        class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {% if request.resolver_match.view_name == 'financiero:cuentaporcobrar_list' or request.resolver_match.view_name == 'financiero:generar_cobro_masivo' or request.resolver_match.view_name == 'financiero:cuentaporcobrar_create' or request.resolver_match.view_name == 'financiero:estudiante_cuenta_corriente' %}bg-[#1E6532] text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
-        <i data-lucide="receipt" class="w-4 h-4"></i>
-        <span>Cuentas por Cobrar</span>
-    </a>
+<div class="bg-white p-2 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
+    <!-- Bloques Operativos: Cobros y Pagos -->
+    <div class="flex items-center gap-1.5 overflow-x-auto py-0.5">
+        <!-- Indicador Grupo Cobros -->
+        <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2.5 py-1.5 rounded-xl border border-emerald-200/70 mr-1 hidden sm:inline-flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+            Cobros
+        </span>
 
-    <a href="{% url 'financiero:abono_list' %}"
-        class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {% if request.resolver_match.view_name == 'financiero:abono_list' or request.resolver_match.view_name == 'financiero:abono_create' %}bg-[#1E6532] text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
-        <i data-lucide="history" class="w-4 h-4"></i>
-        <span>Historial de Pagos</span>
-    </a>
+        {% if perms.financiero.view_cuentaporcobrar %}
+        <a href="{% url 'financiero:cuentaporcobrar_list' %}"
+            class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {% if request.resolver_match.view_name == 'financiero:cuentaporcobrar_list' or request.resolver_match.view_name == 'financiero:generar_cobro_masivo' or request.resolver_match.view_name == 'financiero:cuentaporcobrar_create' or request.resolver_match.view_name == 'financiero:estudiante_cuenta_corriente' or request.resolver_match.view_name == 'financiero:calendario_anual' %}bg-[#1E6532] text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
+            <i data-lucide="receipt" class="w-4 h-4"></i>
+            <span>Cuentas por Cobrar</span>
+        </a>
+        {% endif %}
 
-    <a href="{% url 'financiero:concepto_list' %}"
-        class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {% if 'concepto' in request.resolver_match.view_name %}bg-[#1E6532] text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
-        <i data-lucide="tag" class="w-4 h-4"></i>
-        <span>Catálogo de Conceptos</span>
-    </a>
+        {% if perms.financiero.view_abono %}
+        <a href="{% url 'financiero:abono_list' %}"
+            class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {% if request.resolver_match.view_name == 'financiero:abono_list' or request.resolver_match.view_name == 'financiero:abono_create' %}bg-[#1E6532] text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
+            <i data-lucide="banknote" class="w-4 h-4"></i>
+            <span>Recibos de Cobro</span>
+        </a>
+        {% endif %}
 
-    <a href="{% url 'financiero:beca_list' %}"
-        class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {% if 'beca' in request.resolver_match.view_name %}bg-[#1E6532] text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
-        <i data-lucide="award" class="w-4 h-4"></i>
-        <span>Becas y Convenios</span>
-    </a>
+        {% if perms.financiero.view_cuentaporcobrar %}
+        <a href="{% url 'financiero:antiguedad_saldos' %}"
+            class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {% if 'antiguedad_saldos' in request.resolver_match.view_name %}bg-[#1E6532] text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
+            <i data-lucide="clock-alert" class="w-4 h-4"></i>
+            <span>Saldos Vencidos</span>
+        </a>
+        {% endif %}
 
-    <a href="{% url 'financiero:calendario_anual' %}"
-        class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {% if 'calendario_anual' in request.resolver_match.view_name %}bg-[#1E6532] text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
-        <i data-lucide="calendar-range" class="w-4 h-4"></i>
-        <span>Calendario Anual</span>
-    </a>
+        <!-- Separador Visual Vertical -->
+        <div class="h-6 w-[1px] bg-slate-200 mx-2 hidden md:block"></div>
 
-    <a href="{% url 'financiero:antiguedad_saldos' %}"
-        class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {% if 'antiguedad_saldos' in request.resolver_match.view_name %}bg-[#1E6532] text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
-        <i data-lucide="pie-chart" class="w-4 h-4"></i>
-        <span>Antigüedad de Cartera</span>
-    </a>
+        <!-- Indicador Grupo Pagos -->
+        <span class="text-[10px] font-extrabold uppercase tracking-wider text-rose-800 bg-rose-50 px-2.5 py-1.5 rounded-xl border border-rose-200/70 mr-1 hidden sm:inline-flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-rose-600"></span>
+            Pagos
+        </span>
+
+        {% if perms.rrhh.view_planilla %}
+        <a href="{% url 'financiero:planilla_list' %}"
+            class="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {% if 'planilla' in request.resolver_match.view_name %}bg-[#7A1C21] text-white shadow-xs{% else %}text-slate-600 hover:text-[#7A1C21] hover:bg-rose-50/70{% endif %}">
+            <i data-lucide="wallet-cards" class="w-4 h-4"></i>
+            <span>Planillas de Sueldos</span>
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Bloque Configuración y Catálogos (Secundario) -->
+    <div class="flex items-center gap-1.5 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100 w-full sm:w-auto justify-end">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden lg:inline mr-1">
+            Configuración:
+        </span>
+        {% if perms.financiero.view_conceptopago %}
+        <a href="{% url 'financiero:concepto_list' %}"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap {% if 'concepto' in request.resolver_match.view_name %}bg-slate-800 text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
+            <i data-lucide="tag" class="w-3.5 h-3.5"></i>
+            <span>Conceptos de Cobro</span>
+        </a>
+        {% endif %}
+
+        {% if perms.financiero.view_becadescuento %}
+        <a href="{% url 'financiero:beca_list' %}"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap {% if 'beca' in request.resolver_match.view_name %}bg-slate-800 text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
+            <i data-lucide="award" class="w-3.5 h-3.5"></i>
+            <span>Becas y Convenios</span>
+        </a>
+        {% endif %}
+    </div>
 </div>

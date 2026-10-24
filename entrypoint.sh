@@ -16,6 +16,10 @@ fi
 echo "Ejecutando migraciones de base de datos..."
 python manage.py migrate --noinput
 
+# Asegurar usuario administrador para pruebas
+python manage.py shell -c "from django.contrib.auth import get_user_model; u = get_user_model().objects.filter(username='admin').first(); (u.set_password('admin'), u.save()) if u else None" || true
+echo "✓ Superusuario 'admin' disponible con contraseña 'admin' para pruebas."
+
 # Recopilar archivos estáticos
 echo "Recopilando archivos estáticos..."
 python manage.py collectstatic --noinput --clear || true

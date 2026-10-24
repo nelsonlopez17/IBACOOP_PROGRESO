@@ -16,6 +16,7 @@ from django.http import HttpResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.core.exceptions import PermissionDenied
 from django.views import View
 from django.views.generic import ListView, CreateView, UpdateView, TemplateView
 from axes.models import AccessAttempt
@@ -39,7 +40,6 @@ class UsuarioListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     def get_queryset(self):
         queryset = Usuario.objects.select_related('persona').prefetch_related('groups').order_by('-date_joined')
 
-        # Filtro de búsqueda textual
         q = self.request.GET.get('q', '').strip()
         if q:
             queryset = queryset.filter(
@@ -52,17 +52,17 @@ class UsuarioListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
                 Q(persona__apellidos__icontains=q)
             )
 
-        # Filtro por Rol
         rol_filter = self.request.GET.get('rol', '').strip()
         if rol_filter:
             queryset = queryset.filter(rol=rol_filter)
 
-        # Filtro por Estado (Activo / Inactivo)
-        estado_filter = self.request.GET.get('estado', '').strip()
-        if estado_filter == 'activo':
-            queryset = queryset.filter(is_active=True)
-        elif estado_filter == 'inactivo':
+        estado_filter = self.request.GET.get('estado', 'activo').strip().lower() or 'activo'
+        if estado_filter == 'inactivo':
             queryset = queryset.filter(is_active=False)
+        elif estado_filter == 'todos':
+            pass
+        else:
+            queryset = queryset.filter(is_active=True)
 
         return queryset
 
@@ -70,18 +70,17 @@ class UsuarioListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         all_users = Usuario.objects.all()
 
-        # Cálculo de KPIs
         context['total_usuarios'] = all_users.count()
         context['activos_count'] = all_users.filter(is_active=True).count()
         context['inactivos_count'] = all_users.filter(is_active=False).count()
-        context['estudiantes_count'] = all_users.filter(rol=RolChoices.ESTUDIANTE).count()
-        context['encargados_count'] = all_users.filter(rol=RolChoices.ENCARGADO).count()
+        context['estudiantes_count'] = all_users.filter(rol=RolChoices.ESTUDIANTE, is_active=True).count()
+        context['encargados_count'] = all_users.filter(rol=RolChoices.ENCARGADO, is_active=True).count()
 
-        # Opciones para selectores en template
+        estado_actual = self.request.GET.get('estado', 'activo').strip().lower() or 'activo'
         context['rol_choices'] = RolChoices.choices
         context['q_actual'] = self.request.GET.get('q', '')
         context['rol_actual'] = self.request.GET.get('rol', '')
-        context['estado_actual'] = self.request.GET.get('estado', '')
+        context['estado_actual'] = estado_actual
         context['titulo_pagina'] = 'Directorio y Control de Acceso de Usuarios'
         return context
 
@@ -97,6 +96,11 @@ class UsuarioCreateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMess
     permission_required = 'usuarios.add_usuario'
     raise_exception = True
     success_message = "La cuenta administrativa '%(username)s' fue creada exitosamente."
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['current_user'] = self.request.user
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -117,6 +121,23 @@ class UsuarioUpdateView(LoginRequiredMixin, PermissionRequiredMixin, SuccessMess
     raise_exception = True
     success_message = "Los datos del usuario '%(username)s' fueron actualizados exitosamente."
 
+    def get_object(self, queryset=None):
+        usuario = super().get_object(queryset)
+        if usuario.is_superuser and not self.request.user.is_superuser:
+            raise PermissionDenied("No tiene autorización para modificar la cuenta de un Superadministrador.")
+        if (
+            usuario != self.request.user
+            and (usuario.groups.filter(name="Administradores").exists() or usuario.rol == RolChoices.ADMINISTRADOR)
+            and not self.request.user.is_superuser
+        ):
+            raise PermissionDenied("Solo el Administrador Principal puede modificar otras cuentas de nivel administrativo.")
+        return usuario
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['current_user'] = self.request.user
+        return kwargs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['titulo_pagina'] = f"Editar Permisos y Accesos: {self.object.username}"
@@ -136,6 +157,14 @@ class UsuarioToggleActiveView(LoginRequiredMixin, PermissionRequiredMixin, View)
         if usuario == request.user:
             messages.error(request, "No puedes desactivar tu propia cuenta de sesión actual.")
             return redirect('usuarios:usuario_list')
+
+        if usuario.is_superuser and not request.user.is_superuser:
+            raise PermissionDenied("No tiene autorización para activar o desactivar la cuenta de un Superadministrador.")
+        if (
+            (usuario.groups.filter(name="Administradores").exists() or usuario.rol == RolChoices.ADMINISTRADOR)
+            and not request.user.is_superuser
+        ):
+            raise PermissionDenied("Solo el Administrador Principal puede activar o desactivar cuentas de nivel administrativo.")
 
         usuario.is_active = not usuario.is_active
         usuario.save(update_fields=['is_active'])
@@ -160,13 +189,20 @@ class UsuarioResetPasswordView(LoginRequiredMixin, PermissionRequiredMixin, Temp
 
     def post(self, request, pk, *args, **kwargs):
         usuario = get_object_or_404(Usuario, pk=pk)
+
+        # restriccion para evitar que operadores subordinados restablezcan cuentas de jerarquia superior
+        if usuario.is_superuser and not request.user.is_superuser:
+            raise PermissionDenied("No tiene autorización para restablecer la contraseña de un Superadministrador.")
+        if usuario.groups.filter(name="Administradores").exists() and not request.user.is_superuser:
+            raise PermissionDenied("Solo el Administrador Principal puede restablecer cuentas de nivel administrativo.")
+
         clave_temporal = generar_clave_temporal()
 
         usuario.set_password(clave_temporal)
         usuario.debe_cambiar_password = True
         usuario.save(update_fields=['password', 'debe_cambiar_password'])
 
-        # Guardar en sesión para la descarga única del PDF
+        # guardar en sesion para permitir la descarga de la constancia
         request.session[f'temp_pass_{usuario.pk}'] = clave_temporal
 
         messages.success(
@@ -203,9 +239,6 @@ class UsuarioDescargarPdfCredencialesView(LoginRequiredMixin, PermissionRequired
         return response
 
 
-# ==============================================================================
-# AUTOSERVICIO DE USUARIO: "MI PERFIL" Y CAMBIO DE CONTRASEÑA
-# ==============================================================================
 
 class MiPerfilView(LoginRequiredMixin, TemplateView):
     """
@@ -243,7 +276,7 @@ class MiPerfilView(LoginRequiredMixin, TemplateView):
             messages.success(request, "Sus datos de contacto fueron actualizados exitosamente.")
             return redirect('usuarios:mi_perfil')
 
-        return self.render_to_response({'contacto_form': contacto_form, 'persona': persona})
+        return self.render_to_response(self.get_context_data(contacto_form=contacto_form))
 
 
 class CambiarMiPasswordView(LoginRequiredMixin, PasswordChangeView):
@@ -262,7 +295,7 @@ class CambiarMiPasswordView(LoginRequiredMixin, PasswordChangeView):
             user.debe_cambiar_password = False
             user.save(update_fields=['debe_cambiar_password'])
 
-        # Mantener la sesión activa tras el cambio de clave
+        # mantener la sesion activa tras el cambio de clave
         update_session_auth_hash(self.request, user)
         messages.success(self.request, "Su contraseña se ha actualizado correctamente. La cuenta ha sido asegurada.")
         return response
@@ -273,9 +306,6 @@ class CambiarMiPasswordView(LoginRequiredMixin, PasswordChangeView):
         return context
 
 
-# ==============================================================================
-# VISTA PERSONALIZADA DE BLOQUEO TEMPORAL DE CUENTA (django-axes)
-# ==============================================================================
 
 def lockout_view(request, credentials=None, *args, **kwargs):
     """

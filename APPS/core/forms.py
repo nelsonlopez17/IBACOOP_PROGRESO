@@ -21,11 +21,28 @@ class TailwindFormMixin:
                     'focus:ring-[#1E6532] focus:ring-offset-white cursor-pointer transition'
                 )
             elif widget_type in ['Select', 'SelectMultiple']:
-                field.widget.attrs['class'] = (
+                campos_buscables = {
+                    'estudiante', 'personal', 'encargado', 'personal_responsable',
+                    'personal_reporta', 'docente', 'articulo', 'cuenta', 'cobro',
+                    'concepto', 'proveedor', 'usuario'
+                }
+                es_relacion_buscable = (
+                    name in campos_buscables or
+                    name.endswith('_estudiante') or
+                    name.endswith('_personal') or
+                    getattr(field, 'searchable', False)
+                )
+                clases = (
                     'w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg '
                     'text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#1E6532] '
                     'focus:border-[#1E6532] transition-colors shadow-sm text-sm'
                 )
+                if es_relacion_buscable:
+                    clases += ' searchable-select'
+                    field.widget.attrs['data-searchable'] = 'true'
+                    label_texto = str(field.label) if field.label else name
+                    field.widget.attrs['data-placeholder'] = f"Buscar {label_texto} por nombre, CUI/DPI o código..."
+                field.widget.attrs['class'] = clases
             elif widget_type == 'DateInput':
                 field.widget.attrs.update({
                     'type': 'date',
@@ -41,6 +58,20 @@ class TailwindFormMixin:
                     'text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 '
                     'focus:ring-[#1E6532] focus:border-[#1E6532] transition-colors shadow-sm text-sm'
                 )
+
+    def is_valid(self):
+        valid = super().is_valid()
+        if not valid:
+            for field_name in self.errors:
+                if field_name in self.fields:
+                    field = self.fields[field_name]
+                    field.widget.attrs['aria-invalid'] = 'true'
+                    clase_actual = field.widget.attrs.get('class', '')
+                    clase_actual = clase_actual.replace('border-slate-300', 'border-rose-500 focus:ring-rose-500 focus:border-rose-500')
+                    if 'border-rose-500' not in clase_actual:
+                        clase_actual += ' border-rose-500'
+                    field.widget.attrs['class'] = clase_actual
+        return valid
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -75,8 +106,13 @@ class PersonaForm(TailwindFormMixin, forms.ModelForm):
             'correo': 'Correo Electrónico de Contacto',
         }
         widgets = {
+            'cui': forms.TextInput(attrs={'minlength': '13', 'maxlength': '13'}),
+            'nombres': forms.TextInput(attrs={'minlength': '2', 'maxlength': '100'}),
+            'apellidos': forms.TextInput(attrs={'minlength': '2', 'maxlength': '100'}),
+            'telefono_principal': forms.TextInput(attrs={'minlength': '8', 'maxlength': '8'}),
+            'telefono_secundario': forms.TextInput(attrs={'minlength': '8', 'maxlength': '8'}),
             'fecha_nacimiento': forms.DateInput(attrs={'type': 'date'}),
-            'direccion': forms.Textarea(attrs={'rows': 2}),
+            'direccion': forms.Textarea(attrs={'rows': 2, 'maxlength': '300'}),
         }
 
     def clean_cui(self):
@@ -86,6 +122,22 @@ class PersonaForm(TailwindFormMixin, forms.ModelForm):
             if len(cui) != 13 or not cui.isdigit():
                 raise forms.ValidationError('El CUI/DPI debe contener exactamente 13 dígitos numéricos.')
         return cui
+
+    def clean_nombres(self):
+        nombres = self.cleaned_data.get('nombres')
+        if nombres:
+            nombres = nombres.strip()
+            if any(c.isdigit() for c in nombres):
+                raise forms.ValidationError('Los nombres no pueden contener números.')
+        return nombres
+
+    def clean_apellidos(self):
+        apellidos = self.cleaned_data.get('apellidos')
+        if apellidos:
+            apellidos = apellidos.strip()
+            if any(c.isdigit() for c in apellidos):
+                raise forms.ValidationError('Los apellidos no pueden contener números.')
+        return apellidos
 
     def clean_correo(self):
         correo = self.cleaned_data.get('correo')

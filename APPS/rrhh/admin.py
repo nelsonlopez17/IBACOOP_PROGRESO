@@ -1,5 +1,5 @@
 from django.contrib import admin
-from APPS.rrhh.models import Puesto, Personal, AsistenciaPersonal, Planilla
+from APPS.rrhh.models import Puesto, Personal, Planilla
 
 
 @admin.register(Puesto)
@@ -19,14 +19,6 @@ class PersonalAdmin(admin.ModelAdmin):
     @admin.display(description='Nombre Completo')
     def get_nombre_completo(self, obj):
         return obj.persona.nombre_completo
-
-
-@admin.register(AsistenciaPersonal)
-class AsistenciaPersonalAdmin(admin.ModelAdmin):
-    list_display = ['personal', 'fecha', 'hora_entrada', 'hora_salida', 'estado_asistencia']
-    list_filter = ['estado_asistencia', 'fecha']
-    search_fields = ['personal__persona__nombres', 'personal__persona__apellidos']
-    date_hierarchy = 'fecha'
 
 
 @admin.register(Planilla)

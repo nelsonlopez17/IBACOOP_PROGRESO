@@ -1,0 +1,248 @@
+{% extends 'portal/base_portal.html' %}
+
+{% block title %}Admisiones e Inscripciones - Requisitos y Proceso{% endblock %}
+
+{% block content %}
+<!-- ENCABEZADO DE PÁGINA -->
+<section class="bg-gradient-to-r from-slate-900 via-slate-800 to-[#144823] text-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl space-y-4">
+            <span class="text-xs font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-400/30">
+                Ciclo Escolar 2026
+            </span>
+            <h1 class="text-3xl sm:text-5xl font-black tracking-tight">
+                Admisiones e Inscripciones
+            </h1>
+            <p class="text-base sm:text-lg text-slate-300 leading-relaxed">
+                Conozca los pasos, requisitos oficiales y papelería requerida para inscribir a su hijo/a en el Instituto Básico por Cooperativa de Enseñanza de Colonia El Progreso (Escuintla).
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- PASO A PASO DEL PROCESO DE ADMISIÓN -->
+<section class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+            <span class="text-xs font-bold uppercase tracking-wider text-[#1E6532] bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                Paso a Paso
+            </span>
+            <h2 class="text-3xl font-extrabold text-slate-900 mt-3 tracking-tight">
+                ¿Cómo realizar la inscripción?
+            </h2>
+            <p class="text-slate-600 mt-4 leading-relaxed">
+                Un proceso ágil y transparente diseñado para facilitar el ingreso de los estudiantes a nuestra comunidad educativa.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="relative bg-slate-50 p-6 rounded-3xl border border-slate-200 space-y-4">
+                <div class="w-12 h-12 rounded-2xl bg-[#1E6532] text-white flex items-center justify-center font-black text-xl shadow-md">
+                    1
+                </div>
+                <h3 class="text-lg font-bold text-slate-900">Solicitud o Consulta</h3>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Comuníquese a través de nuestro formulario en línea o acérquese a Secretaría para verificar disponibilidad de cupo en el grado deseado.
+                </p>
+            </div>
+
+            <div class="relative bg-slate-50 p-6 rounded-3xl border border-slate-200 space-y-4">
+                <div class="w-12 h-12 rounded-2xl bg-[#3C7DA8] text-white flex items-center justify-center font-black text-xl shadow-md">
+                    2
+                </div>
+                <h3 class="text-lg font-bold text-slate-900">Entrega de Papelería</h3>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Presente en ventanilla de Secretaría los documentos oficiales requeridos (certificados, diploma de primaria, RENAP y DPI).
+                </p>
+            </div>
+
+            <div class="relative bg-slate-50 p-6 rounded-3xl border border-slate-200 space-y-4">
+                <div class="w-12 h-12 rounded-2xl bg-[#7A1C21] text-white flex items-center justify-center font-black text-xl shadow-md">
+                    3
+                </div>
+                <h3 class="text-lg font-bold text-slate-900">Asignación Escolar</h3>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    La Dirección y Secretaría formalizan la inscripción en el Sistema ERP del colegio y en el SIRE (Sistema del MINEDUC).
+                </p>
+            </div>
+
+            <div class="relative bg-slate-50 p-6 rounded-3xl border border-slate-200 space-y-4">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black text-xl shadow-md">
+                    4
+                </div>
+                <h3 class="text-lg font-bold text-slate-900">Inscripción y Bienvenida</h3>
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    Cancelación de la cuota cooperativa reglamentaria, entrega del carné escolar e información sobre el inicio de clases.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- REQUISITOS Y DOCUMENTACIÓN OFICIAL -->
+<section class="py-20 bg-slate-50 border-t border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+            <span class="text-xs font-bold uppercase tracking-wider text-[#1E6532] bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                Documentación Exigida
+            </span>
+            <h2 class="text-3xl font-extrabold text-slate-900 mt-3 tracking-tight">
+                Requisitos Oficiales de Admisión
+            </h2>
+            <p class="text-slate-600 mt-4 leading-relaxed">
+                Toda la papelería responde a los lineamientos legales del Ministerio de Educación de Guatemala.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Columna 1: Primer Ingreso (1ro Básico) -->
+            <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+                <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-100 text-[#1E6532] flex items-center justify-center">
+                        <i data-lucide="user-plus" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-slate-900">Requisitos para Primero Básico</h3>
+                        <p class="text-xs text-slate-500">Egresados de 6to Primaria</p>
+                    </div>
+                </div>
+
+                <ul class="space-y-3.5 text-sm text-slate-700">
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5"></i>
+                        <span><strong>Certificado original de 6to Grado de Primaria:</strong> Firmado y sellado por la dirección del centro educativo de procedencia.</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5"></i>
+                        <span><strong>Diploma oficial de conclusión de Primaria:</strong> Emitido por el MINEDUC.</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5"></i>
+                        <span><strong>Certificado de Nacimiento reciente emitido por RENAP:</strong> Con Código Único de Identificación (CUI) legible.</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5"></i>
+                        <span><strong>Constancia de Código Personal del Estudiante:</strong> Registrado en el sistema SIRE.</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5"></i>
+                        <span><strong>Fotocopia de DPI de ambos padres o encargado:</strong> Legible y vigente.</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5"></i>
+                        <span><strong>2 Fotografías recientes tamaño cédula:</strong> De frente, formales para expediente escolar.</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Columna 2: Traslados (2do y 3ro Básico) -->
+            <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+                <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
+                    <div class="w-10 h-10 rounded-xl bg-blue-100 text-[#3C7DA8] flex items-center justify-center">
+                        <i data-lucide="repeat" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-slate-900">Requisitos para Traslados (2° y 3°)</h3>
+                        <p class="text-xs text-slate-500">Estudiantes provenientes de otros colegios</p>
+                    </div>
+                </div>
+
+                <ul class="space-y-3.5 text-sm text-slate-700">
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="check-circle" class="w-5 h-5 text-blue-600 shrink-0 mt-0.5"></i>
+                        <span><strong>Certificados oficiales de todos los grados previos:</strong> Certificado de 6to Primaria y certificados aprobados de 1ro o 2do Básico.</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="check-circle" class="w-5 h-5 text-blue-600 shrink-0 mt-0.5"></i>
+                        <span><strong>Código Personal del Estudiante (SIRE):</strong> En estado liberado o transferido hacia nuestro establecimiento.</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="check-circle" class="w-5 h-5 text-blue-600 shrink-0 mt-0.5"></i>
+                        <span><strong>Certificado de Nacimiento RENAP:</strong> Con CUI legible y vigente.</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="check-circle" class="w-5 h-5 text-blue-600 shrink-0 mt-0.5"></i>
+                        <span><strong>Constancia de solvencia económica:</strong> Emitida por el establecimiento educativo de origen.</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="check-circle" class="w-5 h-5 text-blue-600 shrink-0 mt-0.5"></i>
+                        <span><strong>Fotocopia de DPI de los padres o encargados:</strong> Acompañado de los datos de contacto vigentes.</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- PREGUNTAS FRECUENTES (FAQ) -->
+<section class="py-20 bg-white border-t border-slate-200">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <span class="text-xs font-bold uppercase tracking-wider text-[#1E6532] bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                Dudas Comunes
+            </span>
+            <h2 class="text-3xl font-extrabold text-slate-900 mt-3 tracking-tight">
+                Preguntas Frecuentes sobre Admisiones
+            </h2>
+        </div>
+
+        <div class="space-y-4">
+            <details class="group bg-slate-50 p-5 rounded-2xl border border-slate-200 transition-all [&_summary::-webkit-details-marker]:hidden">
+                <summary class="flex items-center justify-between cursor-pointer font-bold text-slate-900 text-sm sm:text-base">
+                    <span>¿Por qué las cuotas de un instituto por cooperativa son más accesibles?</span>
+                    <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform"></i>
+                </summary>
+                <div class="mt-4 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-200/80 pt-3">
+                    Bajo el Decreto 17-95, los institutos por cooperativa cuentan con aporte del Ministerio de Educación, la Municipalidad local y las familias asociadas. Al ser una entidad sin fines de lucro, los costos son significativamente menores a los de un colegio privado tradicional, manteniendo el estándar de calidad docente.
+                </div>
+            </details>
+
+            <details class="group bg-slate-50 p-5 rounded-2xl border border-slate-200 transition-all [&_summary::-webkit-details-marker]:hidden">
+                <summary class="flex items-center justify-between cursor-pointer font-bold text-slate-900 text-sm sm:text-base">
+                    <span>¿Cuentan con becas o descuentos para hermanos?</span>
+                    <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform"></i>
+                </summary>
+                <div class="mt-4 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-200/80 pt-3">
+                    Sí. La Junta Directiva y Comisión de Finanzas contempla programas de becas socioeconómicas y convenios especiales para familias con múltiples hermanos inscritos simultáneamente. Puede consultar los requisitos en Secretaría.
+                </div>
+            </details>
+
+            <details class="group bg-slate-50 p-5 rounded-2xl border border-slate-200 transition-all [&_summary::-webkit-details-marker]:hidden">
+                <summary class="flex items-center justify-between cursor-pointer font-bold text-slate-900 text-sm sm:text-base">
+                    <span>¿En qué horario se realizan las clases?</span>
+                    <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform"></i>
+                </summary>
+                <div class="mt-4 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-200/80 pt-3">
+                    Las clases se imparten en la <strong>Jornada Vespertina</strong>, de lunes a viernes, en horario de 13:00 a 18:00 hrs.
+                </div>
+            </details>
+
+            <details class="group bg-slate-50 p-5 rounded-2xl border border-slate-200 transition-all [&_summary::-webkit-details-marker]:hidden">
+                <summary class="flex items-center justify-between cursor-pointer font-bold text-slate-900 text-sm sm:text-base">
+                    <span>¿Cómo pueden los padres consultar notas y asistencias?</span>
+                    <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform"></i>
+                </summary>
+                <div class="mt-4 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-200/80 pt-3">
+                    IBACOOP cuenta con un moderno <strong>Sistema ERP Escolar</strong> donde cada padre y estudiante recibe credenciales de acceso para verificar calificaciones bimestrales, control de asistencia diaria y solvencia de cuotas.
+                </div>
+            </details>
+        </div>
+    </div>
+</section>
+
+<!-- CTA CONTACTO -->
+<section class="py-16 bg-[#1E6532] text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+        <h2 class="text-2xl sm:text-3xl font-extrabold">¿Tiene alguna consulta particular sobre la papelería?</h2>
+        <p class="text-emerald-100 max-w-2xl mx-auto text-sm sm:text-base">
+            Escríbanos a través de nuestro formulario o llámenos directamente a secretaría escolar.
+        </p>
+        <div class="pt-2">
+            <a href="{% url 'portal:contacto' %}" class="px-8 py-3.5 rounded-xl bg-white text-[#1E6532] font-bold text-sm shadow-md hover:bg-emerald-50 transition-colors inline-flex items-center gap-2">
+                <span>Ir al Formulario de Contacto</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

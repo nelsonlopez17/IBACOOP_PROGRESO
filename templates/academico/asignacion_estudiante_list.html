@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Inscripciones y Matrícula Académica{% endblock %}
+{% block title %}Inscripciones Académicas{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
@@ -17,41 +17,31 @@
             </div>
             <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
                 <i data-lucide="graduation-cap" class="w-7 h-7 text-[#1E6532]"></i>
-                Inscripciones y Matrícula Académica
+                Inscripciones Académicas
             </h1>
-            <p class="text-xs text-slate-500 mt-1">Control de alumnos matriculados por Grado y Sección en el ciclo lectivo.</p>
+            <p class="text-xs text-slate-500 mt-1">Control de estudiantes inscritos por Grado y Sección en el ciclo lectivo.</p>
         </div>
 
+        {% if perms.academico.add_asignacionestudiante %}
         <div class="flex items-center gap-3">
             <a href="{% url 'academico:asignacion_estudiante_create' %}"
                 class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
                 <i data-lucide="user-plus" class="w-4 h-4"></i>
-                Inscribir Alumno en Sección
+                Inscribir Estudiante en Sección
             </a>
         </div>
+        {% endif %}
     </div>
 
     <!-- Pestañas del Módulo Académico -->
     {% include 'academico/partials/academico_tabs.html' %}
-
-    <!-- Alertas -->
-    {% if messages %}
-    <div class="space-y-3">
-        {% for message in messages %}
-        <div class="p-4 rounded-xl flex items-start gap-3 border shadow-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-900 border-emerald-200{% else %}bg-rose-50 text-rose-900 border-rose-200{% endif %}">
-            <i data-lucide="{% if message.tags == 'success' %}check-circle-2{% else %}alert-triangle{% endif %}" class="w-5 h-5 flex-shrink-0 mt-0.5 {% if message.tags == 'success' %}text-emerald-600{% else %}text-rose-600{% endif %}"></i>
-            <div class="text-sm font-medium leading-relaxed">{{ message }}</div>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
 
     <!-- Barra de Filtros -->
     <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
         <form method="get" class="flex flex-col md:flex-row items-center gap-3">
             <div class="relative flex-1 w-full">
                 <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                <input type="text" name="q" value="{{ q }}" placeholder="Buscar por alumno, CUI o Código MINEDUC..."
+                <input type="text" name="q" value="{{ q }}" placeholder="Buscar por estudiante, CUI o Código MINEDUC..."
                     class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:border-[#1E6532] focus:bg-white transition-all">
             </div>
 
@@ -94,11 +84,11 @@
             <table class="w-full text-left text-xs border-collapse">
                 <thead>
                     <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
-                        <th class="py-3.5 px-6">Alumno / CUI</th>
+                        <th class="py-3.5 px-6">Estudiante / CUI</th>
                         <th class="py-3.5 px-6">Código MINEDUC</th>
                         <th class="py-3.5 px-6">Grado y Sección Asignada</th>
                         <th class="py-3.5 px-6">Ciclo Lectivo</th>
-                        <th class="py-3.5 px-6 text-right">Boleta de Notas (PDF)</th>
+                        <th class="py-3.5 px-6 text-right">Boleta de Calificaciones (PDF)</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 font-medium text-slate-700">

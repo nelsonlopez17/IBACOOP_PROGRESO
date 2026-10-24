@@ -1,22 +1,28 @@
 <!-- Sub-navegación por Pestañas Horizontales (Tabs) para el Módulo Académico -->
 <div class="bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-1 overflow-x-auto">
+    {% if perms.academico.view_asignacionestudiante %}
     <a href="{% url 'academico:asignacion_estudiante_list' %}"
         class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {% if request.resolver_match.view_name == 'academico:asignacion_estudiante_list' or request.resolver_match.view_name == 'academico:asignacion_estudiante_create' %}bg-[#1E6532] text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
         <i data-lucide="graduation-cap" class="w-4 h-4"></i>
-        <span>Inscripciones y Matrícula</span>
+        <span>Inscripciones</span>
     </a>
+    {% endif %}
 
+    {% if perms.academico.view_asignaciondocente %}
     <a href="{% url 'academico:asignacion_docente_list' %}"
         class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {% if request.resolver_match.view_name == 'academico:asignacion_docente_list' or request.resolver_match.view_name == 'academico:asignacion_docente_create' %}bg-[#1E6532] text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
         <i data-lucide="briefcase" class="w-4 h-4"></i>
         <span>Carga Docente</span>
     </a>
+    {% endif %}
 
+    {% if perms.academico.change_notabloque %}
     <a href="{% url 'academico:notas_lista' %}"
         class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {% if request.resolver_match.view_name == 'academico:notas_lista' or request.resolver_match.view_name == 'academico:ingreso_notas' %}bg-[#1E6532] text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
         <i data-lucide="book-open" class="w-4 h-4"></i>
-        <span>Mis Cursos y Notas</span>
+        <span>Cuadro de Calificaciones</span>
     </a>
+    {% endif %}
 
     {% if perms.academico.change_cicloescolar %}
     <a href="{% url 'academico:cierre_ciclo_escolar' %}"
@@ -26,17 +32,21 @@
     </a>
     {% endif %}
 
+    {% if perms.academico.add_asistenciaestudiantil or perms.academico.view_asistenciaestudiantil %}
     <a href="{% url 'academico:asistencia' %}"
         class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {% if 'asistencia' in request.resolver_match.view_name %}bg-[#1E6532] text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
         <i data-lucide="calendar-check" class="w-4 h-4"></i>
         <span>Asistencia</span>
     </a>
+    {% endif %}
 
+    {% if perms.academico.view_notafinalcurso %}
     <a href="{% url 'academico:alertas_tempranas' %}"
         class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {% if 'alertas_tempranas' in request.resolver_match.view_name %}bg-[#1E6532] text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
         <i data-lucide="alert-triangle" class="w-4 h-4"></i>
         <span>Alertas Tempranas</span>
     </a>
+    {% endif %}
 
     {% if perms.academico.change_cicloescolar %}
     <a href="{% url 'academico:configuracion_pensum' %}"

@@ -1,0 +1,377 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" class="h-full scroll-smooth font-sans antialiased text-slate-800">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ titulo_pagina|default:"Portal Institucional" }}{% endblock %} | Instituto Básico por Cooperativa de Enseñanza de Colonia El Progreso (IBACOOP)</title>
+    <meta name="description" content="Portal oficial del Instituto Básico por Cooperativa de Enseñanza de Colonia El Progreso (IBACOOP), Escuintla, Guatemala. Excelencia académica y valores éticos.">
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Notyf v3 (Notificaciones Emergentes / Toast Temporales) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+
+    <!-- Tailwind CSS CDN Config con Paleta Institucional IBACOOP -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            red: '#7A1C21',         /* Rojo Granate Institucional */
+                            darkgreen: '#1E6532',   /* Verde Bosque Institucional */
+                            ocean: '#3C7DA8',       /* Azul Océano */
+                            lightgreen: '#42A855',  /* Verde Manzana */
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .notyf {
+            padding: 1.25rem !important;
+        }
+        .notyf__toast {
+            border-radius: 0.875rem !important;
+            box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.32), 0 4px 10px -2px rgba(15, 23, 42, 0.15) !important;
+            font-family: 'Inter', sans-serif !important;
+            font-size: 0.8125rem !important;
+            font-weight: 600 !important;
+            max-width: 420px !important;
+            width: auto !important;
+            color: #FFFFFF !important;
+            border: 1px solid rgba(255, 255, 255, 0.18) !important;
+            overflow: hidden !important;
+            padding: 0 !important;
+        }
+        .notyf__toast--success {
+            background-color: #1E6532 !important;
+        }
+        .notyf__toast--error {
+            background-color: #7A1C21 !important;
+        }
+        .notyf__toast--warning {
+            background-color: #D97706 !important;
+        }
+        .notyf__toast--info {
+            background-color: #3C7DA8 !important;
+        }
+        .notyf__ripple {
+            display: none !important;
+        }
+        .notyf__wrapper {
+            padding: 0.875rem 1.125rem !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 0.75rem !important;
+        }
+        .notyf__icon {
+            margin: 0 !important;
+            flex-shrink: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        .notyf__icon--success {
+            background: #FFFFFF !important;
+            color: #1E6532 !important;
+        }
+        .notyf__icon--error {
+            background: #FFFFFF !important;
+            color: #7A1C21 !important;
+        }
+        .notyf__message {
+            color: #FFFFFF !important;
+            line-height: 1.4 !important;
+            font-weight: 600 !important;
+            margin: 0 !important;
+        }
+        .notyf__dismiss {
+            border-left: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+        .notyf__dismiss-btn {
+            background-color: transparent !important;
+            opacity: 0.85 !important;
+        }
+        .notyf__dismiss-btn:hover {
+            background-color: rgba(255, 255, 255, 0.15) !important;
+            opacity: 1 !important;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col bg-slate-50 text-slate-800">
+
+    <!-- BARRA SUPERIOR SOBRIA -->
+    <div class="bg-[#1E6532] text-emerald-50 text-xs py-2 px-4 border-b border-white/10 hidden sm:block">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-6">
+                <span class="flex items-center gap-1.5 font-medium">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-300"></i>
+                    Acreditación y Validez Oficial MINEDUC
+                </span>
+                <span class="flex items-center gap-1.5 font-medium text-emerald-200">
+                    <i data-lucide="clock" class="w-3.5 h-3.5 text-emerald-300"></i>
+                    Atención: Lunes a Viernes 13:00 a 18:00 hrs
+                </span>
+            </div>
+            <div class="flex items-center gap-4 text-emerald-200 font-medium">
+                <span class="flex items-center gap-1.5">
+                    <i data-lucide="phone" class="w-3.5 h-3.5 text-emerald-300"></i>
+                    +(502) 7889-5918
+                </span>
+                <span>•</span>
+                <span>Colonia El Progreso, Escuintla, Guatemala</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ENCABEZADO Y NAVEGACIÓN LIMPIA -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                
+                <!-- Logotipo Institucional Limpio -->
+                <a href="{% url 'portal:index' %}" class="flex items-center gap-3 group">
+                    <div class="w-10 h-10 rounded-xl bg-[#1E6532] text-white flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                        <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-extrabold text-lg text-slate-900 tracking-tight leading-none">IBACOOP</span>
+                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 uppercase tracking-wider">
+                                El Progreso • Escuintla
+                            </span>
+                        </div>
+                        <span class="text-xs text-slate-500 block leading-tight mt-0.5 font-medium">
+                            Instituto Básico por Cooperativa de Enseñanza
+                        </span>
+                    </div>
+                </a>
+
+                <!-- Navegación Simplificada Sin Pestañas Redundantes -->
+                <nav class="hidden md:flex items-center gap-1">
+                    <a href="{% url 'portal:index' %}#inicio" 
+                       class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:text-[#1E6532] hover:bg-slate-100/70 transition-colors">
+                        Inicio
+                    </a>
+                    <a href="{% url 'portal:index' %}#grados" 
+                       class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:text-[#1E6532] hover:bg-slate-100/70 transition-colors">
+                        Plan de Estudios
+                    </a>
+                    <a href="{% url 'portal:index' %}#admisiones" 
+                       class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:text-[#1E6532] hover:bg-slate-100/70 transition-colors">
+                        Admisiones
+                    </a>
+                    <a href="{% url 'portal:index' %}#contacto" 
+                       class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:text-[#1E6532] hover:bg-slate-100/70 transition-colors">
+                        Contacto
+                    </a>
+                </nav>
+
+                <!-- Botón de Acceso Principal (ERP) -->
+                <div class="hidden sm:flex items-center gap-3">
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'core:home' %}" 
+                       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#1E6532] hover:bg-[#164c25] shadow-xs transition-all">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                        <span>Ir al Panel ERP</span>
+                    </a>
+                    {% else %}
+                    <a href="{% url 'usuarios:login' %}" 
+                       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#1E6532] hover:bg-[#164c25] shadow-xs transition-all">
+                        <i data-lucide="log-in" class="w-4 h-4"></i>
+                        <span>Acceso al Sistema (ERP)</span>
+                    </a>
+                    {% endif %}
+                </div>
+
+                <!-- Botón de Menú Móvil -->
+                <button id="mobile-menu-btn" type="button" 
+                        class="md:hidden p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none"
+                        aria-label="Abrir Menú">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Menú Móvil Desplegable -->
+        <div id="mobile-menu" class="hidden md:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-6 space-y-1 shadow-md">
+            <a href="{% url 'portal:index' %}#inicio" class="block px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                Inicio
+            </a>
+            <a href="{% url 'portal:index' %}#grados" class="block px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                Plan de Estudios
+            </a>
+            <a href="{% url 'portal:index' %}#admisiones" class="block px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                Admisiones
+            </a>
+            <a href="{% url 'portal:index' %}#contacto" class="block px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                Contacto
+            </a>
+            <div class="pt-3 border-t border-slate-100">
+                {% if user.is_authenticated %}
+                <a href="{% url 'core:home' %}" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#1E6532]">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                    <span>Ir al Panel ERP</span>
+                </a>
+                {% else %}
+                <a href="{% url 'usuarios:login' %}" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#1E6532]">
+                    <i data-lucide="log-in" class="w-4 h-4"></i>
+                    <span>Acceso al Sistema (ERP)</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENIDO DE LA PÁGINA -->
+    <main class="flex-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- PIE DE PÁGINA LIMPIO Y MODERNO -->
+    <footer class="bg-slate-900 text-slate-300 pt-12 pb-8 border-t-2 border-[#1E6532]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 pb-8 border-b border-slate-800">
+                
+                <!-- Columna 1: Identidad -->
+                <div class="space-y-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-[#1E6532] text-white flex items-center justify-center">
+                            <i data-lucide="graduation-cap" class="w-4 h-4"></i>
+                        </div>
+                        <span class="font-extrabold text-base text-white">IBACOOP El Progreso</span>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Instituto Básico por Cooperativa de Enseñanza de Colonia El Progreso, Escuintla. Formación académica integral bajo el Currículo Nacional Base de Guatemala.
+                    </p>
+                    <span class="inline-block text-[11px] text-emerald-400 font-medium">
+                        Autorizado bajo el Decreto Legislativo No. 17-95
+                    </span>
+                </div>
+
+                <!-- Columna 2: Enlaces Rápidos -->
+                <div>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-white mb-3">Secciones</h4>
+                    <ul class="space-y-2 text-xs text-slate-400">
+                        <li><a href="{% url 'portal:index' %}#inicio" class="hover:text-emerald-400 transition-colors">Inicio</a></li>
+                        <li><a href="{% url 'portal:index' %}#grados" class="hover:text-emerald-400 transition-colors">Plan de Estudios (1ro, 2do y 3ro Básico)</a></li>
+                        <li><a href="{% url 'portal:index' %}#admisiones" class="hover:text-emerald-400 transition-colors">Requisitos de Admisión e Inscripción</a></li>
+                        <li><a href="{% url 'portal:index' %}#contacto" class="hover:text-emerald-400 transition-colors">Contacto y Ubicación</a></li>
+                        <li><a href="{% url 'usuarios:login' %}" class="text-emerald-400 hover:text-emerald-300 font-semibold">Acceso al Sistema ERP</a></li>
+                    </ul>
+                </div>
+
+                <!-- Columna 3: Contacto Directo -->
+                <div>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-white mb-3">Secretaría y Atención</h4>
+                    <ul class="space-y-2 text-xs text-slate-400">
+                        <li class="flex items-center gap-2">
+                            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>
+                            <span>1ª Avenida 10-30, Colonia El Progreso, Escuintla, Guatemala</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <i data-lucide="phone" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>
+                            <span>+(502) 7889-5918</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <i data-lucide="clock" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>
+                            <span>Jornada Vespertina: 13:00 a 18:00 hrs</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <i data-lucide="mail" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>
+                            <span>ibacoop.elprogreso@gmail.com</span>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <!-- Derechos -->
+            <div class="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+                <p>© 2026 Instituto Básico por Cooperativa de Enseñanza de Colonia El Progreso. Todos los derechos reservados.</p>
+                <div class="flex items-center gap-4">
+                    <span>Sistema de Gestión Escolar IBACOOP</span>
+                    <a href="{% url 'usuarios:login' %}" class="text-emerald-400 hover:underline font-semibold">Acceso Personal</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    {% if messages %}
+    <!-- Contenedor global de notificaciones emergentes (Toast) -->
+    <div id="django-toast-messages" class="hidden" aria-live="polite">
+        {% for message in messages %}
+        <div class="django-toast-item" data-tag="{{ message.tags|default:'info' }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Script de Inicialización de Iconos, Menú Móvil y Notificaciones Emergentes -->
+    <script>
+        lucide.createIcons();
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const menuBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            if (menuBtn && mobileMenu) {
+                menuBtn.addEventListener('click', function () {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+
+            // Disparar notificaciones emergentes temporales (Notyf v3)
+            const toastItems = document.querySelectorAll('#django-toast-messages .django-toast-item');
+            if (toastItems.length > 0 && typeof Notyf !== 'undefined') {
+                const notyf = new Notyf({
+                    duration: 5000,
+                    ripple: false,
+                    dismissible: true,
+                    position: { x: 'right', y: 'top' },
+                    types: [
+                        { type: 'success', background: '#1E6532', className: 'notyf__toast--success', icon: { className: 'notyf__icon--success', tagName: 'i' } },
+                        { type: 'error', background: '#7A1C21', className: 'notyf__toast--error', duration: 6500, icon: { className: 'notyf__icon--error', tagName: 'i' } },
+                        { type: 'warning', background: '#D97706', className: 'notyf__toast--warning', duration: 5500, icon: false },
+                        { type: 'info', background: '#3C7DA8', className: 'notyf__toast--info', duration: 5000, icon: false }
+                    ]
+                });
+
+                toastItems.forEach(function (item) {
+                    const rawTag = (item.getAttribute('data-tag') || 'info').toLowerCase();
+                    const text = item.textContent.trim();
+                    if (!text) return;
+                    let type = 'info';
+                    if (rawTag.includes('success')) type = 'success';
+                    else if (rawTag.includes('error') || rawTag.includes('danger')) type = 'error';
+                    else if (rawTag.includes('warning')) type = 'warning';
+                    notyf.open({ type: type, message: text });
+                });
+            }
+
+            const firstInvalidField = document.querySelector('[aria-invalid="true"]');
+            if (firstInvalidField) {
+                firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(function () {
+                    firstInvalidField.focus({ preventScroll: true });
+                }, 300);
+            }
+        });
+    </script>
+</body>
+
+</html>

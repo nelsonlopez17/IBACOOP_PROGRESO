@@ -1,1 +1,1 @@
-# APPS/usuarios — Modelo de usuario personalizado
+# modulo de autenticacion y gestion de usuarios

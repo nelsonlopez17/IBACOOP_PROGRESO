@@ -25,7 +25,7 @@ class EnforcePasswordChangeMiddleware:
                 url_cambio = reverse('usuarios:cambiar_mi_password')
                 url_logout = reverse('usuarios:logout')
 
-                # Rutas permitidas mientras esté pendiente el cambio
+                # rutas autorizadas durante el cambio de clave obligatorio
                 rutas_permitidas = [url_cambio, url_logout]
 
                 if not any(path.startswith(r) for r in rutas_permitidas) and not path.startswith('/static/') and not path.startswith('/media/'):

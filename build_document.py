@@ -9,16 +9,14 @@ import os
 def create_apa7_document(output_path):
     doc = docx.Document()
     
-    # -------------------------------------------------------------
-    # Page Margins (APA 7: 1 inch = 2.54 cm on all sides)
-    # -------------------------------------------------------------
+    # page margins apa inch cm on all sides
     for section in doc.sections:
         section.top_margin = Inches(1.0)
         section.bottom_margin = Inches(1.0)
         section.left_margin = Inches(1.0)
         section.right_margin = Inches(1.0)
         
-        # Configure Header Page Numbering (Top Right)
+        # configure header page numbering top right
         header = section.header
         header_p = header.paragraphs[0]
         header_p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
@@ -27,7 +25,7 @@ def create_apa7_document(output_path):
         header_run.font.size = Pt(10)
         header_run.font.color.rgb = RGBColor(120, 120, 120)
         
-        # Add Page field
+        # add page field
         fldChar1 = OxmlElement('w:fldChar')
         fldChar1.set(qn('w:fldCharType'), 'begin')
         instrText = OxmlElement('w:instrText')
@@ -44,12 +42,10 @@ def create_apa7_document(output_path):
         r.append(fldChar2)
         r.append(fldChar3)
 
-    # -------------------------------------------------------------
-    # Document Base Styles Setup
-    # -------------------------------------------------------------
+    # document base styles setup
     styles = doc.styles
     
-    # Normal Style (Body Text)
+    # normal style body text
     style_normal = styles['Normal']
     font_normal = style_normal.font
     font_normal.name = 'Times New Roman'
@@ -60,7 +56,7 @@ def create_apa7_document(output_path):
     style_normal.paragraph_format.space_before = Pt(0)
     style_normal.paragraph_format.first_line_indent = Inches(0.5)
 
-    # Helper function for adding paragraphs
+    # helper function for adding paragraphs
     def add_p(text, indent=True, align=WD_ALIGN_PARAGRAPH.JUSTIFY, bold=False, italic=False, space_after=6):
         p = doc.add_paragraph()
         p.alignment = align
@@ -80,7 +76,7 @@ def create_apa7_document(output_path):
         run.font.color.rgb = RGBColor(0, 0, 0)
         return p
 
-    # Helper functions for Headings (APA 7 & Word TOC mapped)
+    # helper functions for headings apa word toc mapped
     def add_h1(text):
         p = doc.add_paragraph(style='Heading 1')
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -90,7 +86,7 @@ def create_apa7_document(output_path):
         p.paragraph_format.first_line_indent = Inches(0)
         p.paragraph_format.keep_with_next = True
         
-        # Format runs in Heading 1
+        # format runs in heading
         p.text = "" # Clear default run
         run = p.add_run(text)
         run.font.name = 'Times New Roman'
@@ -134,7 +130,7 @@ def create_apa7_document(output_path):
         run.font.color.rgb = RGBColor(0, 0, 0)
         return p
 
-    # Helper function to insert native Word TOC XML
+    # helper function to insert native word toc xml
     def insert_word_toc(paragraph):
         run = paragraph.add_run()
         fldChar1 = OxmlElement('w:fldChar')
@@ -153,9 +149,7 @@ def create_apa7_document(output_path):
         r.append(fldChar2)
         r.append(fldChar3)
 
-    # =============================================================
-    # 1. CARÁTULA / PORTADA (APA 7 Format)
-    # =============================================================
+    # caratula portada apa format
     for _ in range(3):
         add_p("", indent=False, space_after=0)
         
@@ -165,7 +159,7 @@ def create_apa7_document(output_path):
     for _ in range(4):
         add_p("", indent=False, space_after=0)
 
-    # Placeholders clearly demarcated
+    # placeholders clearly demarcated
     p_meta1 = add_p("Presentado por:", indent=False, align=WD_ALIGN_PARAGRAPH.CENTER, bold=True, space_after=4)
     p_meta2 = add_p("[Escriba aquí los nombres y apellidos completados del autor o integrantes]", indent=False, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=24)
     
@@ -182,9 +176,7 @@ def create_apa7_document(output_path):
 
     doc.add_page_break()
 
-    # =============================================================
-    # 2. DEDICATORIA
-    # =============================================================
+    # dedicatoria
     add_h1("Dedicatoria")
     add_p("", indent=False, space_after=12)
     
@@ -192,9 +184,7 @@ def create_apa7_document(output_path):
     
     doc.add_page_break()
 
-    # =============================================================
-    # 3. AGRADECIMIENTO
-    # =============================================================
+    # agradecimiento
     add_h1("Agradecimiento")
     add_p("", indent=False, space_after=12)
 
@@ -202,20 +192,18 @@ def create_apa7_document(output_path):
 
     doc.add_page_break()
 
-    # =============================================================
-    # 4. ÍNDICE GENERAL (TABLA DE CONTENIDOS)
-    # =============================================================
+    # indice general tabla de contenidos
     add_h1("Índice General")
     
     add_p("La siguiente estructura recopila las secciones principales y secundarias desarrolladas en el documento. En entornos Microsoft Word, el campo automatizado inferior actualizará los números de página finales mediante la instrucción de actualización de campos.", indent=False, italic=True, space_after=12)
 
-    # Insert Native Word TOC Field
+    # insert native word toc field
     p_toc = doc.add_paragraph()
     p_toc.paragraph_format.first_line_indent = Inches(0)
     p_toc.paragraph_format.space_after = Pt(18)
     insert_word_toc(p_toc)
 
-    # Visual Structured Table of Contents preview
+    # visual structured table of contents preview
     add_p("Resumen de Contenido y Titulación Configurada:", indent=False, bold=True, space_after=6)
 
     toc_items = [
@@ -243,7 +231,7 @@ def create_apa7_document(output_path):
         r_title.font.name = 'Times New Roman'
         r_title.font.size = Pt(11)
         
-        # Fill dots
+        # fill dots
         dots_count = max(5, 80 - len(title) * 2)
         r_dots = p_t.add_run(" " + "." * dots_count + " ")
         r_dots.font.name = 'Times New Roman'
@@ -257,9 +245,7 @@ def create_apa7_document(output_path):
 
     doc.add_page_break()
 
-    # =============================================================
-    # 5. INTRODUCCIÓN
-    # =============================================================
+    # introduccion
     add_h1("Introducción")
 
     add_p("La transformación digital de los entornos educativos constituye una prioridad estratégica para fortalecer la gestión administrativa, optimizar la trazabilidad académica y elevar la transparencia financiera en las instituciones de enseñanza secundaria. En el contexto de la educación media en Guatemala, el ciclo de educación básica enfrenta constantes desafíos normativos y operativos vinculados al manejo eficiente de expedientes estudiantiles, la consolidación de actas de notas por bloques académicos y la cobranza ordenada de cuotas escolares. La adopción de sistemas centralizados de planificación de recursos empresariales, adaptados al sector educativo, surge como una solución tecnológica pertinente para sustituir métodos manuales propensos a inconsistencias e integrar todas las áreas funcionales en un único entorno de trabajo.")
@@ -272,14 +258,10 @@ def create_apa7_document(output_path):
 
     doc.add_page_break()
 
-    # =============================================================
-    # 6. CAPÍTULO 1: MARCO CONCEPTUAL
-    # =============================================================
+    # capitulo marco conceptual
     add_h1("Capítulo 1. Marco Conceptual")
 
-    # -------------------------------------------------------------
-    # 1.1 Presentación del problema
-    # -------------------------------------------------------------
+    # presentacion del problema
     add_h2("1.1 Presentación del problema")
 
     add_p("Las instituciones educativas de nivel medio en la República de Guatemala desenvuelven sus labores administrativas dentro de un marco regulatorio exigente supervisado por el Ministerio de Educación. En los establecimientos de Educación Básica, la administración tradicional de la información ha dependido históricamente de archivos físicos en papel, cuadernos de asistencia locales y libros contables manuales. Esta metodología convencional genera una fragmentación severa de los datos, donde la información personal de los alumnos, sus expedientes de admisión, el historial de calificaciones y los registros de pagos se encuentran dispersos en múltiples dependencias sin interconexión oportuna.")
@@ -290,9 +272,7 @@ def create_apa7_document(output_path):
 
     add_p("Asimismo, el proceso de registro de calificaciones por bloques académicos se ve afectado cuando los docentes entregan actas parciales en formatos físicos o carpetas desconectadas. La posterior transcripción manual de notas al sistema central genera un margen considerable de error humano, duplicación de esfuerzos y retrasos en la entrega de reportes de rendimiento académico a los padres de familia o tutores legales, erosionando la percepción de eficiencia institucional.")
 
-    # -------------------------------------------------------------
-    # 1.2 Plantear el problema
-    # -------------------------------------------------------------
+    # plantear el problema
     add_h2("1.2 Plantear el problema")
 
     add_p("La ausencia de una herramienta tecnológica centralizada en el Instituto de Educación Básica \"El Progreso\" impacta negativamente en cuatro ejes funcionales prioritarios: la administración del expediente digital estudiantil, la evaluación académica por bloques, el control de la cuenta corriente financiera y la trazabilidad de la auditoría interna.")
@@ -305,18 +285,14 @@ def create_apa7_document(output_path):
 
     add_p("En cuarto lugar, la seguridad de la información institucional se encuentra comprometida por la inexistencia de registros inmutables de auditoría. Cualquier modificación en una nota o en un estado de cuenta realizada en archivos locales no deja huella de responsabilidad, imposibilitando rastrear qué usuario ejecutó un cambio, en qué fecha se realizó y cuál era el valor original antes de la modificación. Esta carencia de trazabilidad debilita la gobernanza de datos y expone al centro educativo a inconsistencias en la memoria histórica de sus registros.")
 
-    # -------------------------------------------------------------
-    # 1.3 Formular el problema
-    # -------------------------------------------------------------
+    # formular el problema
     add_h2("1.3 Formular el problema")
 
     add_p("Tomando como base la caracterización de la problemática expuesta y la necesidad imperiosa de modernización tecnológica en el establecimiento, se plantea la interrogante central que orienta la presente investigación:")
 
     add_p("¿De qué manera el diseño e implementación de un sistema web integral de gestión escolar ERP optimiza los procesos administrativos, el control financiero de cuentas por cobrar, la evaluación académica por bloques y la trazabilidad de los expedientes estudiantiles en el Instituto de Educación Básica \"El Progreso\"?", bold=True)
 
-    # -------------------------------------------------------------
-    # 1.4 Interrogantes de la investigación
-    # -------------------------------------------------------------
+    # interrogantes de la investigacion
     add_h2("1.4 Interrogantes de la investigación")
 
     add_p("Para dar respuesta de manera estructurada al problema central formulado, se derivan las siguientes interrogantes específicas de investigación:")
@@ -332,20 +308,18 @@ def create_apa7_document(output_path):
     for q in questions:
         add_p("• " + q, indent=True, space_after=4)
 
-    # -------------------------------------------------------------
-    # 1.5 Objetivos
-    # -------------------------------------------------------------
+    # objetivos
     add_h2("1.5 Objetivos")
 
-    # 1.5.1 De la investigación
+    # de la investigacion
     add_h3("1.5.1 De la investigación")
     add_p("Analizar, evaluar y sistematizar el impacto de la implementación de una plataforma web ERP de gestión escolar en la optimización operativa, la integridad de los datos y el cumplimiento regulatorio en centros educativos del nivel medio, tomando como unidad de estudio el Instituto de Educación Básica \"El Progreso\".")
 
-    # 1.5.2 Generales
+    # generales
     add_h3("1.5.2 Generales")
     add_p("Desarrollar e implementar un sistema web integral de gestión escolar ERP para el Instituto de Educación Básica \"El Progreso\", que automatice la administración de expedientes estudiantiles, la evaluación académica por bloques, la cuenta corriente financiera y el control de personal e inventarios, garantizando la trazabilidad, la seguridad y el cumplimiento normativo del Ministerio de Educación de Guatemala.")
 
-    # 1.5.3 Específicos
+    # especificos
     add_h3("1.5.3 Específicos")
     
     objectives_spec = [
@@ -359,18 +333,16 @@ def create_apa7_document(output_path):
     for spec in objectives_spec:
         add_p("1. " if spec == objectives_spec[0] else str(objectives_spec.index(spec)+1) + ". " + spec, indent=True, space_after=4)
 
-    # -------------------------------------------------------------
-    # 1.6 Hipótesis
-    # -------------------------------------------------------------
+    # hipotesis
     add_h2("1.6 Hipótesis")
 
-    # 1.6.1 General
+    # general
     add_h3("1.6.1 Hipótesis General")
     add_p("La implementación de un sistema web integral de gestión escolar ERP en el Instituto de Educación Básica \"El Progreso\" incrementa de manera sustancial la eficiencia operativa, reduce los errores en la consolidación de calificaciones y cobranzas, y garantiza el cumplimiento normativo de los expedientes estudiantiles en comparación con los procedimientos de administración manual tradicionales.")
 
     add_p("Hipótesis Nula (H0): La implementación del sistema web integral de gestión escolar ERP no produce cambios significativos en la eficiencia operativa, la precisión del registro de notas ni en el cumplimiento normativo de expedientes en el Instituto de Educación Básica \"El Progreso\".", italic=True)
 
-    # 1.6.2 Específicas
+    # especificas
     add_h3("1.6.2 Hipótesis Específicas")
 
     h_spec = [
@@ -382,7 +354,7 @@ def create_apa7_document(output_path):
     for h in h_spec:
         add_p("• " + h, indent=True, space_after=4)
 
-    # Save output file
+    # save output file
     doc.save(output_path)
     print(f"Document successfully created at: {output_path}")
 

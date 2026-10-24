@@ -84,6 +84,28 @@ class Usuario(AbstractUser):
         """Retorna el nombre completo del usuario."""
         return self.get_full_name() or self.username
 
+    @property
+    def iniciales(self) -> str:
+        """Retorna las iniciales del nombre y apellido del titular (ej. PA), o los 2 primeros caracteres del usuario."""
+        if self.first_name and self.last_name:
+            return f"{self.first_name.strip()[:1]}{self.last_name.strip()[:1]}".upper()
+        try:
+            if self.persona and self.persona.nombres and self.persona.apellidos:
+                return f"{self.persona.nombres.strip()[:1]}{self.persona.apellidos.strip()[:1]}".upper()
+        except Exception:
+            pass
+        return self.username[:2].upper()
+
+    @property
+    def mi_estudiante_id(self):
+        """Retorna el ID del expediente Estudiante vinculado al usuario si su rol es ESTUDIANTE."""
+        try:
+            if self.persona and hasattr(self.persona, 'estudiante'):
+                return self.persona.estudiante.pk
+        except Exception:
+            pass
+        return None
+
     def tiene_rol(self, *roles):
         """
         Verifica si el usuario tiene alguno de los roles indicados.
@@ -93,3 +115,13 @@ class Usuario(AbstractUser):
             {% if request.user.tiene_rol 'DOCENTE' 'DIRECTOR' %}
         """
         return self.rol in roles
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.rol and not getattr(self, '_omitir_sincronizacion_grupo', False):
+            try:
+                from APPS.usuarios.permisos import sincronizar_grupo_usuario
+                sincronizar_grupo_usuario(self)
+            except Exception:
+                pass
+

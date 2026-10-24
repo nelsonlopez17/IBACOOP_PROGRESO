@@ -1,0 +1,17 @@
+<div class="border-b border-slate-200">
+    <nav class="flex space-x-2 sm:space-x-4" aria-label="Tabs">
+        <!-- Pestaña 1: Pista de Auditoría -->
+        <a href="{% url 'auditoria:dashboard' %}"
+           class="flex items-center gap-2 py-3 px-4 border-b-2 font-bold text-xs sm:text-sm transition-all {% if request.resolver_match.url_name == 'dashboard' or request.resolver_match.url_name == 'diff_detail' %}border-[#1E6532] text-[#1E6532] bg-[#1E6532]/5 rounded-t-xl{% else %}border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300{% endif %}">
+            <i data-lucide="history" class="w-4 h-4"></i>
+            <span>Pista de Auditoría Global</span>
+        </a>
+
+        <!-- Pestaña 2: Seguridad y Accesos -->
+        <a href="{% url 'auditoria:seguridad' %}"
+           class="flex items-center gap-2 py-3 px-4 border-b-2 font-bold text-xs sm:text-sm transition-all {% if request.resolver_match.url_name == 'seguridad' %}border-[#1E6532] text-[#1E6532] bg-[#1E6532]/5 rounded-t-xl{% else %}border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300{% endif %}">
+            <i data-lucide="shield-alert" class="w-4 h-4"></i>
+            <span>Seguridad y Bloqueos de Acceso</span>
+        </a>
+    </nav>
+</div>

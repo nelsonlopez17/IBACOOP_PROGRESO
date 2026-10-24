@@ -1,1 +1,1 @@
-# APPS/core - Módulo base con ModeloAuditable y utilidades compartidas
+# modulo base con modelos auditables y utilidades compartidas

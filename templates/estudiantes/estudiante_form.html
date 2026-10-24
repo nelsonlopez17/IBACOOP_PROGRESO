@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}{% if es_edicion %}Editar Expediente del Alumno{% else %}Nuevo Registro de Alumno{% endif %}{% endblock %}
+{% block title %}{% if es_edicion %}Editar Expediente del Estudiante{% else %}Nuevo Registro de Estudiante{% endif %}{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto space-y-6">
@@ -11,13 +11,13 @@
             <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
                 <a href="{% url 'core:home' %}" class="hover:underline">Dashboard</a>
                 <span>/</span>
-                <a href="{% url 'estudiantes:estudiante_list' %}" class="hover:underline">Gestión de Alumnos</a>
+                <a href="{% url 'estudiantes:estudiante_list' %}" class="hover:underline">Control de Estudiantes</a>
                 <span>/</span>
                 <span class="text-slate-500">{% if es_edicion %}Edición{% else %}Nuevo Registro{% endif %}</span>
             </div>
             <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
                 <i data-lucide="{% if es_edicion %}edit-3{% else %}user-plus{% endif %}" class="w-7 h-7 text-[#1E6532]"></i>
-                {% if es_edicion %}Editar Expediente del Alumno{% else %}Nuevo Registro de Alumno{% endif %}
+                {% if es_edicion %}Editar Expediente del Estudiante{% else %}Nuevo Registro de Estudiante{% endif %}
             </h1>
         </div>
         <a href="{% url 'estudiantes:estudiante_list' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm self-start sm:self-auto">
@@ -26,39 +26,21 @@
         </a>
     </div>
 
-    <!-- Mensajes y Alertas del Sistema -->
-    {% if messages %}
-        <div class="space-y-3">
-            {% for message in messages %}
-                <div class="p-4 rounded-xl flex items-start gap-3 border shadow-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-900 border-emerald-200{% else %}bg-rose-50 text-rose-900 border-rose-200{% endif %}">
-                    <i data-lucide="{% if message.tags == 'success' %}check-circle-2{% else %}alert-triangle{% endif %}" class="w-5 h-5 flex-shrink-0 mt-0.5 {% if message.tags == 'success' %}text-emerald-600{% else %}text-rose-600{% endif %}"></i>
-                    <div class="text-sm font-medium leading-relaxed">
-                        {{ message }}
-                    </div>
-                </div>
+    <!-- Errores Generales No Asociados a un Campo Específico -->
+    {% if form.non_field_errors or persona_form.non_field_errors %}
+        <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 shadow-sm space-y-1.5">
+            {% for error in persona_form.non_field_errors %}
+                <p class="text-xs font-bold text-rose-700 flex items-center gap-1.5">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 flex-shrink-0"></i>
+                    <span>{{ error }}</span>
+                </p>
             {% endfor %}
-        </div>
-    {% endif %}
-
-    <!-- Resumen de Errores Generales en el Formulario -->
-    {% if form.errors or persona_form.errors %}
-        <div class="p-5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 shadow-sm space-y-2">
-            <div class="flex items-center gap-2 font-bold text-rose-700">
-                <i data-lucide="alert-triangle" class="w-5 h-5 flex-shrink-0"></i>
-                <span>Atención: El formulario contiene errores que impiden el registro. Revise los campos marcados:</span>
-            </div>
-            <ul class="list-disc list-inside text-xs text-rose-800 font-semibold space-y-1 pl-2">
-                {% for field in persona_form %}
-                    {% for error in field.errors %}
-                        <li><strong>{{ field.label }}:</strong> {{ error }}</li>
-                    {% endfor %}
-                {% endfor %}
-                {% for field in form %}
-                    {% for error in field.errors %}
-                        <li><strong>{{ field.label }}:</strong> {{ error }}</li>
-                    {% endfor %}
-                {% endfor %}
-            </ul>
+            {% for error in form.non_field_errors %}
+                <p class="text-xs font-bold text-rose-700 flex items-center gap-1.5">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 flex-shrink-0"></i>
+                    <span>{{ error }}</span>
+                </p>
+            {% endfor %}
         </div>
     {% endif %}
 
@@ -69,7 +51,7 @@
             <i data-lucide="key-round" class="w-5 h-5"></i>
         </div>
         <div class="space-y-1">
-            <h3 class="text-sm font-bold text-[#1E6532]">Generación Automática de Credencial de Acceso del Alumno</h3>
+            <h3 class="text-sm font-bold text-[#1E6532]">Generación Automática de Credencial de Acceso del Estudiante</h3>
             <p class="text-xs text-slate-600 leading-relaxed">
                 Al registrar al estudiante se creará automáticamente su usuario de acceso. El <strong>Nombre de Usuario</strong> será su <strong>CUI / DPI de 13 dígitos</strong> y se generará una <strong>contraseña temporal aleatoria</strong> imprimible en PDF.
             </p>
@@ -78,7 +60,7 @@
     {% endif %}
 
     <!-- Formulario Unificado -->
-    <form method="post" novalidate class="space-y-6">
+    <form method="post" class="space-y-6">
         {% csrf_token %}
 
         <!-- Sección 1: Datos Personales (Persona) -->
@@ -207,12 +189,12 @@
             </div>
         </div>
 
-        <!-- Sección 2: Datos Académicos y Tutor Legal -->
+        <!-- Sección 2: Datos Académicos y Padre de Familia o Encargado -->
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">
             <div class="flex items-center gap-3 border-b border-slate-100 pb-3">
                 <div class="w-8 h-8 rounded-lg bg-[#1E6532]/10 text-[#1E6532] flex items-center justify-center font-bold text-sm">2</div>
                 <div>
-                    <h2 class="text-base font-bold text-slate-900">Datos Académicos y Tutor Legal</h2>
+                    <h2 class="text-base font-bold text-slate-900">Datos Académicos y Padre de Familia o Encargado</h2>
                     <p class="text-xs text-slate-500">Asignación del código oficial del MINEDUC y asignación de encargado.</p>
                 </div>
             </div>
@@ -246,7 +228,7 @@
                     {% endif %}
                 </div>
 
-                <!-- Matrícula Académica Directa -->
+                <!-- Inscripción Académica Directa -->
                 {% if not es_edicion %}
                 <div class="space-y-1 sm:col-span-2 p-4 bg-emerald-50/60 border border-emerald-200 rounded-xl">
                     <label for="{{ form.seccion_asignada.id_for_label }}" class="block text-xs font-bold text-[#1E6532] uppercase tracking-wider flex items-center gap-1.5">
@@ -254,7 +236,7 @@
                         {{ form.seccion_asignada.label }}
                     </label>
                     {{ form.seccion_asignada }}
-                    <p class="text-[11px] text-slate-500 mt-1">Si selecciona una sección, el alumno quedará inscrito en el Módulo Académico inmediatamente.</p>
+                    <p class="text-[11px] text-slate-500 mt-1">Si selecciona una sección, el estudiante quedará inscrito en el Módulo Académico inmediatamente.</p>
                     {% if form.seccion_asignada.errors %}
                         <p class="text-xs text-rose-600 font-bold mt-1 flex items-center gap-1">
                             <i data-lucide="x-circle" class="w-3.5 h-3.5 flex-shrink-0"></i>
@@ -267,7 +249,7 @@
                 <!-- Encargado Principal con Búsqueda Dinámica HTMX -->
                 <div class="space-y-2 sm:col-span-2">
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                        Encargado / Tutor Legal Principal
+                        Padre de Familia o Encargado Principal
                     </label>
                     
                     <!-- Campo Oculto para la FK -->
@@ -299,6 +281,7 @@
                             <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
                             <input type="text" 
                                    id="input-buscar-encargado"
+                                   maxlength="100"
                                    placeholder="Escriba el CUI o Nombre del Encargado para buscar..." 
                                    hx-get="{% url 'estudiantes:buscar_encargado_api' %}"
                                    hx-trigger="keyup changed delay:300ms, search"
@@ -371,7 +354,7 @@
                 <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold text-sm">3</div>
                 <div>
                     <h2 class="text-base font-bold text-slate-900">Información de los Padres de Familia (SIRE)</h2>
-                    <p class="text-xs text-slate-500">Registro de contactos del Padre y de la Madre para la ficha del alumno.</p>
+                    <p class="text-xs text-slate-500">Registro de contactos del Padre y de la Madre para la ficha del estudiante.</p>
                 </div>
             </div>
 
@@ -456,8 +439,8 @@
                 <label class="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors cursor-pointer">
                     {{ form.doc_dpi_encargado }}
                     <div>
-                        <span class="text-xs font-bold text-slate-800 block">2. Fotocopia de DPI de Encargado / Padre</span>
-                        <span class="text-[11px] text-slate-500">Copia clara del Documento Personal de Identificación del tutor legal.</span>
+                        <span class="text-xs font-bold text-slate-800 block">2. Fotocopia de DPI de Padre o Encargado</span>
+                        <span class="text-[11px] text-slate-500">Copia clara del Documento Personal de Identificación del encargado.</span>
                     </div>
                 </label>
 
@@ -494,7 +477,7 @@
             </a>
             <button type="submit" class="inline-flex items-center gap-2 px-6 py-3 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
                 <i data-lucide="check-circle" class="w-4 h-4"></i>
-                {% if es_edicion %}Guardar Cambios de Expediente{% else %}Registrar Alumno{% endif %}
+                {% if es_edicion %}Guardar Cambios de Expediente{% else %}Registrar Estudiante{% endif %}
             </button>
         </div>
     </form>

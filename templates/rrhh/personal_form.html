@@ -26,39 +26,21 @@
         </a>
     </div>
 
-    <!-- Alertas del Sistema -->
-    {% if messages %}
-        <div class="space-y-3">
-            {% for message in messages %}
-                <div class="p-4 rounded-xl flex items-start gap-3 border shadow-sm {% if message.tags == 'success' %}bg-emerald-50 text-emerald-900 border-emerald-200{% else %}bg-rose-50 text-rose-900 border-rose-200{% endif %}">
-                    <i data-lucide="{% if message.tags == 'success' %}check-circle-2{% else %}alert-triangle{% endif %}" class="w-5 h-5 flex-shrink-0 mt-0.5 {% if message.tags == 'success' %}text-emerald-600{% else %}text-rose-600{% endif %}"></i>
-                    <div class="text-sm font-medium leading-relaxed">
-                        {{ message }}
-                    </div>
-                </div>
+    <!-- Errores Generales No Asociados a un Campo Específico -->
+    {% if form.non_field_errors or persona_form.non_field_errors %}
+        <div class="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 shadow-sm space-y-1.5">
+            {% for error in persona_form.non_field_errors %}
+                <p class="text-xs font-bold text-rose-700 flex items-center gap-1.5">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 flex-shrink-0"></i>
+                    <span>{{ error }}</span>
+                </p>
             {% endfor %}
-        </div>
-    {% endif %}
-
-    <!-- Resumen de Errores Generales en el Formulario -->
-    {% if form.errors or persona_form.errors %}
-        <div class="p-5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 shadow-sm space-y-2">
-            <div class="flex items-center gap-2 font-bold text-rose-700">
-                <i data-lucide="alert-triangle" class="w-5 h-5 flex-shrink-0"></i>
-                <span>Atención: El formulario contiene errores que impiden el registro. Revise los campos marcados:</span>
-            </div>
-            <ul class="list-disc list-inside text-xs text-rose-800 font-semibold space-y-1 pl-2">
-                {% for field in persona_form %}
-                    {% for error in field.errors %}
-                        <li><strong>{{ field.label }}:</strong> {{ error }}</li>
-                    {% endfor %}
-                {% endfor %}
-                {% for field in form %}
-                    {% for error in field.errors %}
-                        <li><strong>{{ field.label }}:</strong> {{ error }}</li>
-                    {% endfor %}
-                {% endfor %}
-            </ul>
+            {% for error in form.non_field_errors %}
+                <p class="text-xs font-bold text-rose-700 flex items-center gap-1.5">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 flex-shrink-0"></i>
+                    <span>{{ error }}</span>
+                </p>
+            {% endfor %}
         </div>
     {% endif %}
 
@@ -78,7 +60,7 @@
     {% endif %}
 
     <!-- Formulario Unificado -->
-    <form method="post" novalidate class="space-y-6">
+    <form method="post" class="space-y-6">
         {% csrf_token %}
 
         <!-- Sección 1: Datos Personales (Persona) -->

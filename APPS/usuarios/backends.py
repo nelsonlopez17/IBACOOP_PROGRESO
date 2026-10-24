@@ -24,7 +24,7 @@ class CUIOrEmailModelBackend(ModelBackend):
         username_clean = username.strip().lower()
 
         try:
-            # Buscar por username (CUI/DPI) O por email (correo)
+            # busqueda por identificador unico o por correo electronico
             user = UserModel.objects.filter(
                 Q(username__iexact=username_clean) | Q(email__iexact=username_clean)
             ).first()

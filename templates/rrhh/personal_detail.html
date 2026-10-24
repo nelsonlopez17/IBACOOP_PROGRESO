@@ -40,37 +40,47 @@
                 <i data-lucide="edit-3" class="w-4 h-4"></i>
                 Editar
             </a>
+            {% if personal.estado_laboral == 'ACTIVO' %}
+            <a href="{% url 'rrhh:personal_baja' personal.pk %}" class="inline-flex items-center gap-2 px-4 py-2 bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 rounded-xl text-xs font-bold transition-all shadow-sm">
+                <i data-lucide="user-x" class="w-4 h-4"></i>
+                Dar de Baja
+            </a>
+            {% else %}
+            <form method="post" action="{% url 'rrhh:personal_reactivar' personal.pk %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" onclick="return confirm('¿Confirma la reactivación laboral de este colaborador y la habilitación de su cuenta institucional?')" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition-all shadow-sm">
+                    <i data-lucide="user-check" class="w-4 h-4"></i>
+                    Reactivar Colaborador
+                </button>
+            </form>
+            {% endif %}
         </div>
     </div>
 
-    <!-- Banner de Registro Exitoso y Credenciales en Sesión -->
-    {% if messages %}
-        <div class="space-y-3">
-            {% for message in messages %}
-                <div class="p-5 rounded-2xl bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-700 text-white shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-emerald-500/30">
-                    <div class="flex items-start gap-3.5">
-                        <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center flex-shrink-0 text-white font-bold shadow-sm">
-                            <i data-lucide="check-circle-2" class="w-6 h-6"></i>
-                        </div>
-                        <div class="space-y-1">
-                            <h3 class="text-sm font-extrabold tracking-wide">¡Empleado Registrado Exitosamente!</h3>
-                            <p class="text-xs text-emerald-100 leading-relaxed font-medium">
-                                {{ message }}
-                            </p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2.5 self-stretch sm:self-auto flex-shrink-0 pt-2 sm:pt-0">
-                        <a href="{% url 'rrhh:personal_pdf_credenciales' personal.pk %}" target="_blank" class="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black transition-all shadow-md flex items-center gap-2">
-                            <i data-lucide="key-round" class="w-4 h-4"></i>
-                            <span>Descargar Credenciales (PDF)</span>
-                        </a>
-                        <a href="{% url 'rrhh:personal_pdf_expediente' personal.pk %}" target="_blank" class="px-4 py-2.5 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2">
-                            <i data-lucide="file-text" class="w-4 h-4"></i>
-                            <span>Ficha (PDF)</span>
-                        </a>
-                    </div>
+    <!-- Descarga de Credenciales en Sesión -->
+    {% if clave_temporal %}
+        <div class="p-5 rounded-2xl bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-700 text-white shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-emerald-500/30">
+            <div class="flex items-start gap-3.5">
+                <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center flex-shrink-0 text-white font-bold shadow-sm">
+                    <i data-lucide="key-round" class="w-6 h-6"></i>
                 </div>
-            {% endfor %}
+                <div class="space-y-1">
+                    <h3 class="text-sm font-extrabold tracking-wide">Credenciales de Acceso Generadas</h3>
+                    <p class="text-xs text-emerald-100 leading-relaxed font-medium">
+                        Descargue e imprima la Constancia de Credenciales de Acceso (PDF) para entregarla al colaborador.
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2.5 self-stretch sm:self-auto flex-shrink-0 pt-2 sm:pt-0">
+                <a href="{% url 'rrhh:personal_pdf_credenciales' personal.pk %}" target="_blank" class="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-black transition-all shadow-md flex items-center gap-2">
+                    <i data-lucide="key-round" class="w-4 h-4"></i>
+                    <span>Descargar Credenciales (PDF)</span>
+                </a>
+                <a href="{% url 'rrhh:personal_pdf_expediente' personal.pk %}" target="_blank" class="px-4 py-2.5 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2">
+                    <i data-lucide="file-text" class="w-4 h-4"></i>
+                    <span>Ficha (PDF)</span>
+                </a>
+            </div>
         </div>
     {% endif %}
 
@@ -86,7 +96,7 @@
                     {% if personal.estado_laboral == 'ACTIVO' %}
                         <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">Activo</span>
                     {% else %}
-                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">{{ personal.get_estado_laboral_display }}</span>
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">{{ personal.get_estado_laboral_display }}</span>
                     {% endif %}
                 </div>
                 <p class="text-xs text-slate-500 font-mono">DPI / CUI: <span class="font-bold text-[#1E6532]">{{ personal.persona.cui }}</span> | Puesto: <span class="font-bold text-slate-800">{{ personal.puesto.nombre_puesto }}</span></p>
@@ -110,6 +120,78 @@
             </div>
         </div>
     </div>
+
+    <!-- Banner Informativo de Baja (si no está Activo) -->
+    {% if personal.estado_laboral != 'ACTIVO' %}
+    <div class="bg-rose-50 border border-rose-200 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="flex items-start gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                <i data-lucide="user-x" class="w-5 h-5"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-sm font-extrabold text-rose-950">Registro de Desvinculación / Baja Laboral</h3>
+                <p class="text-xs text-rose-900 leading-relaxed">
+                    Fecha de Baja: <strong>{{ personal.fecha_baja|date:"d/m/Y"|default:"No especificada" }}</strong> | 
+                    Estado: <span class="font-bold uppercase">{{ personal.get_estado_laboral_display }}</span>
+                </p>
+                {% if personal.motivo_baja %}
+                <p class="text-xs text-rose-800 bg-white/70 p-2.5 rounded-xl border border-rose-100 mt-1">
+                    <strong>Motivo documentado:</strong> {{ personal.motivo_baja }}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        <form method="post" action="{% url 'rrhh:personal_reactivar' personal.pk %}" class="flex-shrink-0">
+            {% csrf_token %}
+            <button type="submit" onclick="return confirm('¿Confirma la reactivación laboral de este colaborador?')" class="inline-flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm">
+                <i data-lucide="user-check" class="w-4 h-4"></i>
+                Reactivar Colaborador
+            </button>
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- Carga Académica Asignada en Ciclo Activo -->
+    {% if cursos_asignados %}
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <i data-lucide="book-open" class="w-4 h-4 text-[#1E6532]"></i>
+                    Carga Académica Asignada (Ciclo Lectivo Activo)
+                </h3>
+                <p class="text-xs text-slate-500 mt-0.5">Materias y secciones que tiene a su cargo este colaborador.</p>
+            </div>
+            <a href="{% url 'academico:asignacion_docente_list' %}" class="text-xs font-bold text-[#1E6532] hover:underline flex items-center gap-1">
+                Ver todas en Carga Docente <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+            </a>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+            {% for c in cursos_asignados %}
+            <div class="p-3.5 rounded-xl border {% if personal.estado_laboral != 'ACTIVO' %}bg-rose-50/40 border-rose-200{% else %}bg-slate-50 border-slate-200{% endif %} flex flex-col justify-between gap-2">
+                <div>
+                    <span class="font-bold text-slate-900 block text-sm">{{ c.curso.nombre_curso }}</span>
+                    <span class="text-xs text-slate-600 block mt-0.5">{{ c.seccion }}</span>
+                    <span class="text-[10px] text-slate-400 font-mono">Ciclo {{ c.ciclo_escolar.anio }}</span>
+                </div>
+                <div class="pt-2 border-t border-slate-200/60 flex items-center justify-between">
+                    {% if personal.estado_laboral != 'ACTIVO' %}
+                    <span class="text-[10px] font-bold text-rose-700">Requiere nuevo docente</span>
+                    <a href="{% url 'academico:asignacion_docente_update' c.pk %}" class="px-2.5 py-1 bg-white border border-rose-300 text-rose-800 rounded-lg font-bold text-[11px] hover:bg-rose-600 hover:text-white transition-all shadow-xs">
+                        Reasignar
+                    </a>
+                    {% else %}
+                    <span class="text-[10px] font-bold text-emerald-700">Docente Activo</span>
+                    <a href="{% url 'academico:asignacion_docente_update' c.pk %}" class="px-2.5 py-1 bg-white border border-slate-300 text-slate-700 rounded-lg font-bold text-[11px] hover:bg-[#1E6532] hover:text-white transition-all shadow-xs">
+                        Cambiar
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Grid de Secciones de Información -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
