@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo_pagina }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+
+    <!-- Encabezado con Migas de Pan -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+                <a href="{% url 'portal:gestion_dashboard' %}" class="hover:underline">Portal Web</a>
+                <span>/</span>
+                <a href="{% url 'portal:publicaciones_list' %}" class="hover:underline">Publicaciones</a>
+                <span>/</span>
+                <span class="text-slate-500">Editor</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+                <i data-lucide="file-edit" class="w-7 h-7 text-[#1E6532]"></i>
+                {{ titulo_pagina }}
+            </h1>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="{% url 'portal:gestion_dashboard' %}" 
+               class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50">
+                <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Panel
+            </a>
+            <a href="{% url 'portal:publicaciones_list' %}" 
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Volver a Publicaciones
+            </a>
+        </div>
+    </div>
+
+    <form method="post" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-5">
+        {% csrf_token %}
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Sección del Portal *</label>
+                {{ form.seccion }}
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Fecha de Publicación</label>
+                {{ form.fecha_publicacion }}
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Título del Comunicado *</label>
+            {{ form.titulo }}
+            {% if form.titulo.errors %}
+            <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.titulo.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Contenido / Cuerpo del Comunicado *</label>
+            {{ form.cuerpo }}
+            {% if form.cuerpo.errors %}
+            <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.cuerpo.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Enlace de Imagen Ilustrativa (Google Drive u otro enlace web)</label>
+            {{ form.imagen_url }}
+            <p class="text-[11px] text-slate-400 mt-1">Opcional. Puede pegar el enlace compartido de Google Drive o un enlace directo a la imagen.</p>
+        </div>
+
+        <div class="pt-2 border-t border-slate-100">
+            <label class="flex items-center gap-2 cursor-pointer">
+                {{ form.publicado }}
+                <span class="text-xs font-bold text-slate-800">Publicar de inmediato en el portal</span>
+            </label>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+            <a href="{% url 'portal:publicaciones_list' %}" 
+               class="px-5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50">
+                Cancelar
+            </a>
+            <button type="submit" 
+                    class="px-6 py-2.5 rounded-xl bg-[#1E6532] hover:bg-[#164c25] text-white text-xs font-bold shadow-xs">
+                Guardar Publicación
+            </button>
+        </div>
+    </form>
+
+</div>
+{% endblock %}

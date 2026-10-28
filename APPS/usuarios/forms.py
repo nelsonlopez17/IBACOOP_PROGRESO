@@ -3,6 +3,7 @@ Formularios para la creación, edición, autoservicio de perfil y seguridad de u
 """
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm, PasswordChangeForm
+from django.contrib.auth.models import Group
 from APPS.usuarios.models import Usuario
 from APPS.core.models import Persona
 from APPS.core.forms import TailwindFormMixin
@@ -337,3 +338,56 @@ class MiPasswordChangeForm(TailwindFormMixin, PasswordChangeForm):
                     'maxlength': '128',
                 })
         self._aplicar_estilos_tailwind()
+
+
+
+class GrupoPermisosForm(TailwindFormMixin, forms.ModelForm):
+    """
+    Formulario intuitivo para crear y actualizar Grupos de Permisos / Roles del sistema.
+    """
+    name = forms.CharField(
+        label='Nombre del Rol / Grupo',
+        max_length=150,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Ej. Coordinador Académico de Nivel Básico',
+            'minlength': '3',
+            'maxlength': '150',
+        }),
+        help_text='Nombre descriptivo del rol o perfil de acceso dentro de la institución.'
+    )
+
+    class Meta:
+        model = Group
+        fields = ('name',)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from APPS.usuarios.permisos import es_grupo_base_protegido
+        self._es_base = False
+        if self.instance and self.instance.pk:
+            self._es_base = es_grupo_base_protegido(self.instance.name)
+            if self._es_base:
+                self.fields['name'].help_text = (
+                    'Este es un rol institucional base del sistema. '
+                    'Su nombre no puede modificarse para preservar la integridad operativa, pero puede ajustar libremente su lista de permisos.'
+                )
+                self.fields['name'].widget.attrs['readonly'] = True
+        self._aplicar_estilos_tailwind()
+
+    def clean_name(self):
+        nombre = self.cleaned_data.get('name', '').strip()
+        if not nombre:
+            raise forms.ValidationError('El nombre del rol es obligatorio.')
+        if len(nombre) < 3:
+            raise forms.ValidationError('El nombre debe contener al menos 3 caracteres.')
+
+        if self.instance and self.instance.pk and self._es_base:
+            return self.instance.name
+
+        qs = Group.objects.filter(name__iexact=nombre)
+        if self.instance and self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError(f"Ya existe un rol o grupo con el nombre '{nombre}'. Ingrese uno diferente.")
+        return nombre

@@ -2,7 +2,7 @@
 APPS/usuarios/permisos.py
 
 Definición centralizada de Grupos de Permisos (RBAC) por Rol Institucional
-para el Instituto Diversificado por Cooperativa El Progreso (IBACOOP).
+para el Instituto Básico por Cooperativa El Progreso (IBACOOP).
 
 Garantiza que cada usuario tenga asignado exactamente el Grupo de Django y
 los permisos que corresponden a su rol operativo, además de proveer validadores
@@ -196,7 +196,7 @@ def sincronizar_grupo_usuario(usuario) -> None:
 
     # asegurar existencia del grupo con sus permisos correspondientes
     grupo = Group.objects.filter(name=nombre_grupo).first()
-    if not grupo or not grupo.permissions.exists():
+    if not grupo:
         grupos = configurar_grupos_y_permisos()
         grupo = grupos.get(usuario.rol)
 
@@ -232,3 +232,247 @@ def es_titular_o_encargado_de_estudiante(usuario, estudiante) -> bool:
         encargado__persona__usuario=usuario,
         esta_eliminado=False,
     ).exists()
+
+
+
+# ==============================================================================
+# INTERFAZ INTUITIVA DE GESTIÓN DE ROLES Y PERMISOS
+# ==============================================================================
+
+GRUPOS_BASE_PROTEGIDOS = set(NOMBRE_GRUPO_POR_ROL.values())
+
+
+def es_grupo_base_protegido(nombre_grupo: str) -> bool:
+    """Indica si un grupo pertenece a los roles base institucionales del sistema."""
+    return nombre_grupo in GRUPOS_BASE_PROTEGIDOS
+
+
+DEFINICION_MODULOS_SISTEMA = [
+    {
+        'codigo': 'academico',
+        'nombre': 'Gestión Académica',
+        'icono': 'graduation-cap',
+        'descripcion': 'Ciclos escolares, grados, secciones, cursos, asignación de docentes y calificaciones.',
+        'modelos': [
+            ('cicloescolar', 'Ciclos Escolares'),
+            ('grado', 'Grados Académicos'),
+            ('seccion', 'Secciones'),
+            ('curso', 'Cursos y Asignaturas'),
+            ('bloqueacademico', 'Bloques Académicos (Bimestres)'),
+            ('asignaciondocente', 'Asignación de Catedráticos'),
+            ('asignacionestudiante', 'Inscripción y Asignación de Estudiantes'),
+            ('notabloque', 'Calificaciones de Bloque'),
+            ('notafinalcurso', 'Calificaciones Finales de Curso'),
+            ('asistenciaestudiantil', 'Asistencia Estudiantil'),
+        ]
+    },
+    {
+        'codigo': 'estudiantes',
+        'nombre': 'Estudiantes y Familias',
+        'icono': 'users',
+        'descripcion': 'Expedientes de estudiantes, padres de familia o encargados y vínculos familiares.',
+        'modelos': [
+            ('estudiante', 'Estudiantes'),
+            ('encargado', 'Padres de Familia o Encargados'),
+            ('estudianteencargado', 'Vínculo Estudiante - Encargado'),
+        ]
+    },
+    {
+        'codigo': 'financiero',
+        'nombre': 'Finanzas y Pagos',
+        'icono': 'receipt',
+        'descripcion': 'Conceptos de cuotas escolares, cuentas por cobrar, abonos y becas o descuentos.',
+        'modelos': [
+            ('conceptopago', 'Conceptos de Cobro y Cuotas'),
+            ('cuentaporcobrar', 'Cuentas por Cobrar y Cuotas Mensuales'),
+            ('abono', 'Abonos y Boletas de Pago'),
+            ('becadescuento', 'Becas y Descuentos'),
+        ]
+    },
+    {
+        'codigo': 'rrhh',
+        'nombre': 'Recursos Humanos y Planilla',
+        'icono': 'briefcase',
+        'descripcion': 'Personal docente y administrativo, puestos institucionales, planilla de sueldos y asistencia.',
+        'modelos': [
+            ('personal', 'Expedientes de Personal'),
+            ('puesto', 'Puestos Institucionales'),
+            ('planilla', 'Planilla de Sueldos y Salarios'),
+            ('asistenciapersonal', 'Asistencia del Personal'),
+        ]
+    },
+    {
+        'codigo': 'disciplina',
+        'nombre': 'Disciplina y Convivencia',
+        'icono': 'shield-alert',
+        'descripcion': 'Registro de incidentes disciplinarios y citaciones a padres de familia o encargados.',
+        'modelos': [
+            ('incidentedisciplinario', 'Incidentes Disciplinarios'),
+            ('citacionpadre', 'Citaciones a Encargados'),
+        ]
+    },
+    {
+        'codigo': 'inventario',
+        'nombre': 'Inventario y Bienes',
+        'icono': 'package',
+        'descripcion': 'Control de bienes escolares, catálogo de artículos e historial de movimientos.',
+        'modelos': [
+            ('articuloinventario', 'Artículos de Inventario'),
+            ('movimientoinventario', 'Movimientos de Entrada y Salida'),
+        ]
+    },
+    {
+        'codigo': 'portal',
+        'nombre': 'Portal Web Institucional',
+        'icono': 'globe',
+        'descripcion': 'Publicación de contenidos escolares, noticias institucionales y solicitudes de contacto.',
+        'modelos': [
+            ('contenidoweb', 'Publicaciones y Noticias Web'),
+            ('solicitudcontacto', 'Solicitudes de Contacto y Admisión'),
+        ]
+    },
+    {
+        'codigo': 'usuarios',
+        'nombre': 'Control de Accesos y Usuarios',
+        'icono': 'user-cog',
+        'descripcion': 'Cuentas institucionales de usuario y credenciales de acceso al sistema.',
+        'modelos': [
+            ('usuario', 'Cuentas de Usuarios'),
+        ]
+    },
+    {
+        'codigo': 'core',
+        'nombre': 'Datos Base Institucionales',
+        'icono': 'building-2',
+        'descripcion': 'Registros de personas (CUI), información de contacto y documentos del expediente.',
+        'modelos': [
+            ('persona', 'Personas y Datos de CUI'),
+            ('contactopersona', 'Medios de Contacto'),
+            ('documentoexpediente', 'Expedientes y Documentos Digitales'),
+        ]
+    },
+    {
+        'codigo': 'auth_axes',
+        'nombre': 'Seguridad y Auditoría TI',
+        'icono': 'shield-check',
+        'descripcion': 'Grupos de roles y permisos, intentos de acceso y bloqueos de seguridad.',
+        'modelos': [
+            ('group', 'Grupos y Roles de Permisos'),
+            ('accessattempt', 'Intentos de Acceso Bloqueados'),
+            ('accesslog', 'Registros de Auditoría de Sesiones'),
+        ]
+    },
+]
+
+
+def obtener_matriz_permisos_ui(grupo=None) -> list[dict]:
+    """
+    Construye una estructura de datos jerárquica con todos los permisos del sistema,
+    organizados por módulo institucional y modelo, indicando si están asignados al grupo.
+    """
+    ids_asignados = set(grupo.permissions.values_list('id', flat=True)) if grupo and getattr(grupo, 'pk', None) else set()
+
+    todos_permisos = Permission.objects.select_related('content_type').exclude(
+        content_type__model__startswith='historical'
+    ).exclude(
+        content_type__app_label__in=['contenttypes', 'sessions']
+    )
+
+    permisos_por_modelo = {}
+    for p in todos_permisos:
+        app_label = p.content_type.app_label
+        model_name = p.content_type.model
+        key = (app_label, model_name)
+        if key not in permisos_por_modelo:
+            permisos_por_modelo[key] = {}
+
+        if p.codename.startswith('view_'):
+            action = 'view'
+        elif p.codename.startswith('add_'):
+            action = 'add'
+        elif p.codename.startswith('change_'):
+            action = 'change'
+        elif p.codename.startswith('delete_'):
+            action = 'delete'
+        else:
+            action = p.codename
+
+        permisos_por_modelo[key][action] = {
+            'id': p.id,
+            'codename': p.codename,
+            'nombre': p.name,
+            'asignado': p.id in ids_asignados,
+        }
+
+    matriz = []
+    modelos_procesados = set()
+
+    for mod in DEFINICION_MODULOS_SISTEMA:
+        app_label = mod['codigo']
+        modelos_data = []
+        total_modulo = 0
+        asignados_modulo = 0
+
+        for model_code, nombre_legible in mod['modelos']:
+            target_app = 'auth' if model_code == 'group' else ('axes' if model_code in ['accessattempt', 'accesslog'] else app_label)
+            key = (target_app, model_code)
+            modelos_procesados.add(key)
+
+            perms_dict = permisos_por_modelo.get(key, {})
+            for p_info in perms_dict.values():
+                total_modulo += 1
+                if p_info['asignado']:
+                    asignados_modulo += 1
+
+            modelos_data.append({
+                'model_code': model_code,
+                'nombre_legible': nombre_legible,
+                'permiso_view': perms_dict.get('view'),
+                'permiso_add': perms_dict.get('add'),
+                'permiso_change': perms_dict.get('change'),
+                'permiso_delete': perms_dict.get('delete'),
+                'otros': [v for k, v in perms_dict.items() if k not in ('view', 'add', 'change', 'delete')],
+            })
+
+        matriz.append({
+            'codigo': mod['codigo'],
+            'nombre': mod['nombre'],
+            'icono': mod['icono'],
+            'descripcion': mod['descripcion'],
+            'modelos': modelos_data,
+            'total_permisos': total_modulo,
+            'asignados': asignados_modulo,
+        })
+
+    otros_modelos = []
+    total_otros = 0
+    asignados_otros = 0
+    for key, perms_dict in permisos_por_modelo.items():
+        if key not in modelos_procesados:
+            app_lbl, mdl_nm = key
+            for p_info in perms_dict.values():
+                total_otros += 1
+                if p_info['asignado']:
+                    asignados_otros += 1
+            otros_modelos.append({
+                'model_code': mdl_nm,
+                'nombre_legible': f'{app_lbl} / {mdl_nm}',
+                'permiso_view': perms_dict.get('view'),
+                'permiso_add': perms_dict.get('add'),
+                'permiso_change': perms_dict.get('change'),
+                'permiso_delete': perms_dict.get('delete'),
+                'otros': [v for k, v in perms_dict.items() if k not in ('view', 'add', 'change', 'delete')],
+            })
+
+    if otros_modelos:
+        matriz.append({
+            'codigo': 'otros',
+            'nombre': 'Componentes Adicionales del Sistema',
+            'icono': 'sliders',
+            'descripcion': 'Permisos de módulos complementarios del sistema.',
+            'modelos': otros_modelos,
+            'total_permisos': total_otros,
+            'asignados': asignados_otros,
+        })
+
+    return matriz

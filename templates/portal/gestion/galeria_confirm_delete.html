@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar Fotografía de Galería{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-4">
+    <div class="w-12 h-12 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center">
+        <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+    </div>
+    
+    <div>
+        <h3 class="text-lg font-extrabold text-slate-900">¿Eliminar esta fotografía?</h3>
+        <p class="text-xs text-slate-500 mt-1">
+            Se desvinculará la fotografía <strong>"{{ object.titulo }}"</strong> de la galería pública del portal.
+        </p>
+    </div>
+
+    <div class="aspect-video bg-slate-100 rounded-xl overflow-hidden border border-slate-200">
+        <img src="{{ object.url_directa }}" alt="{{ object.titulo }}" class="w-full h-full object-cover">
+    </div>
+
+    <form method="post" class="flex items-center justify-end gap-3 pt-2">
+        {% csrf_token %}
+        <a href="{% url 'portal:galeria_list' %}" 
+           class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50">
+            Cancelar
+        </a>
+        <button type="submit" 
+                class="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs">
+            Confirmar y Eliminar
+        </button>
+    </form>
+</div>
+{% endblock %}

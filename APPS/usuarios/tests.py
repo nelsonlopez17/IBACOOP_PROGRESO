@@ -285,3 +285,100 @@ class MiPerfilNotificacionYValidacionTestCase(TestCase):
         self.assertEqual(res_toggle.status_code, 403)
         superadmin.refresh_from_db()
         self.assertTrue(superadmin.is_active)
+
+
+
+class GestionRolesPermisosTestCase(TestCase):
+    def setUp(self):
+        from django.contrib.auth.models import Group, Permission
+        from APPS.usuarios.models import Usuario, RolChoices
+
+        self.admin_user = Usuario.objects.create_superuser(
+            username='admin_roles',
+            email='admin_roles@ibacoop.edu.gt',
+            password='Password123!',
+            rol=RolChoices.ADMINISTRADOR,
+            debe_cambiar_password=False,
+        )
+        self.docente_user = Usuario.objects.create_user(
+            username='docente_simple',
+            email='docente@ibacoop.edu.gt',
+            password='Password123!',
+            rol=RolChoices.DOCENTE,
+            debe_cambiar_password=False,
+        )
+        self.grupo_base, _ = Group.objects.get_or_create(name='Docentes')
+        self.grupo_personalizado = Group.objects.create(name='Comisión de Evaluación')
+        self.perm1 = Permission.objects.filter(codename='view_curso').first()
+        self.perm2 = Permission.objects.filter(codename='add_curso').first()
+
+    def test_acceso_denegado_a_usuarios_no_administradores(self):
+        """Verifica que usuarios sin rol ni grupo de administración no puedan acceder a la gestión de roles."""
+        self.client.force_login(self.docente_user)
+        res = self.client.get(reverse('usuarios:grupo_list'))
+        self.assertEqual(res.status_code, 403)
+
+        res_create = self.client.get(reverse('usuarios:grupo_create'))
+        self.assertEqual(res_create.status_code, 403)
+
+    def test_listado_roles_acceso_admin(self):
+        """Verifica que un administrador pueda listar los roles y ver sus métricas."""
+        self.client.force_login(self.admin_user)
+        res = self.client.get(reverse('usuarios:grupo_list'))
+        self.assertEqual(res.status_code, 200)
+        self.assertContains(res, 'Gestión de Roles y Permisos')
+        self.assertContains(res, 'Docentes')
+        self.assertContains(res, 'Comisión de Evaluación')
+
+    def test_creacion_rol_personalizado_con_permisos(self):
+        """Verifica la creación interactiva de un nuevo rol con asignación de permisos."""
+        self.client.force_login(self.admin_user)
+        perms_ids = [self.perm1.id, self.perm2.id] if self.perm1 and self.perm2 else []
+        res = self.client.post(reverse('usuarios:grupo_create'), {
+            'name': 'Coordinador de Nivel',
+            'permisos': perms_ids,
+        })
+        self.assertEqual(res.status_code, 302)
+        nuevo_grupo = Group.objects.filter(name='Coordinador de Nivel').first()
+        self.assertIsNotNone(nuevo_grupo)
+        if perms_ids:
+            self.assertEqual(nuevo_grupo.permissions.count(), len(perms_ids))
+
+    def test_actualizacion_permisos_rol_existente(self):
+        """Verifica la actualización de los permisos asignados a un rol."""
+        self.client.force_login(self.admin_user)
+        if self.perm1:
+            self.grupo_personalizado.permissions.add(self.perm1)
+        res = self.client.post(reverse('usuarios:grupo_update', args=[self.grupo_personalizado.pk]), {
+            'name': 'Comisión de Evaluación Actualizada',
+            'permisos': [self.perm2.id] if self.perm2 else [],
+        })
+        self.assertEqual(res.status_code, 302)
+        self.grupo_personalizado.refresh_from_db()
+        self.assertEqual(self.grupo_personalizado.name, 'Comisión de Evaluación Actualizada')
+        if self.perm2:
+            self.assertIn(self.perm2, self.grupo_personalizado.permissions.all())
+
+    def test_proteccion_nombre_rol_base(self):
+        """Verifica que un rol base institucional no permita cambiar su nombre."""
+        self.client.force_login(self.admin_user)
+        res = self.client.post(reverse('usuarios:grupo_update', args=[self.grupo_base.pk]), {
+            'name': 'Nombre Alterado',
+            'permisos': [],
+        })
+        self.grupo_base.refresh_from_db()
+        self.assertEqual(self.grupo_base.name, 'Docentes')
+
+    def test_eliminacion_rol_personalizado(self):
+        """Verifica que un rol personalizado pueda ser eliminado."""
+        self.client.force_login(self.admin_user)
+        res = self.client.post(reverse('usuarios:grupo_delete', args=[self.grupo_personalizado.pk]))
+        self.assertEqual(res.status_code, 302)
+        self.assertFalse(Group.objects.filter(pk=self.grupo_personalizado.pk).exists())
+
+    def test_proteccion_eliminacion_rol_base(self):
+        """Verifica que un rol institucional base protegido no pueda ser eliminado."""
+        self.client.force_login(self.admin_user)
+        res = self.client.post(reverse('usuarios:grupo_delete', args=[self.grupo_base.pk]))
+        self.assertEqual(res.status_code, 302)
+        self.assertTrue(Group.objects.filter(pk=self.grupo_base.pk).exists())

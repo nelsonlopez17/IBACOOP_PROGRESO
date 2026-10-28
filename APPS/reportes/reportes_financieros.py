@@ -1,12 +1,14 @@
 """
 reportes/reportes_financieros.py
 
-Generación de reportes financieros y de cartera para el Instituto El Progreso:
-  1. Antigüedad de Saldos y Morosidad (PDF y CSV)
-  2. Cuadre Diario y Recaudación de Caja (PDF y CSV)
-  3. Relación de Becas y Descuentos Otorgados (CSV)
+Generación de reportes financieros y de tesorería para el Instituto Básico por Cooperativa El Progreso:
+  1. Antigüedad de Saldos y Morosidad (PDF y CSV/Excel)
+  2. Arqueo y Cuadre Diario de Caja (PDF y CSV/Excel)
+  3. Estado de Cuenta y Solvencia por Estudiante (PDF y CSV/Excel)
+  4. Padrón de Becas y Descuentos Otorgados (CSV/Excel)
 """
 import io
+from collections import defaultdict
 from decimal import Decimal
 from datetime import date
 from django.http import HttpResponse
@@ -110,19 +112,19 @@ def generar_pdf_antiguedad_saldos(ciclo_escolar=None):
         ])
 
     tabla_data.append([
-        Paragraph("<b>TOTALES CONSOLIDADOS (Q)</b>", styles['td_bold']),
+        Paragraph("<b>TOTALES GENERALES EN MORA (Q)</b>", styles['td_bold']),
         "", "",
-        Paragraph(f"<b>Q {totales['al_dia']:.2f}</b>", styles['td_right']),
-        Paragraph(f"<b>Q {totales['dias_1_30']:.2f}</b>", styles['td_right']),
-        Paragraph(f"<b>Q {totales['dias_31_60']:.2f}</b>", styles['td_right']),
-        Paragraph(f"<b>Q {totales['dias_61_90']:.2f}</b>", styles['td_right']),
-        Paragraph(f"<font color='#7A1C21'><b>Q {totales['mas_90']:.2f}</b></font>", styles['td_right']),
-        Paragraph(f"<b>Q {totales['total']:.2f}</b>", styles['td_right']),
+        Paragraph(f"<b>Q {totales['al_dia']:,.2f}</b>", styles['td_right']),
+        Paragraph(f"<b>Q {totales['dias_1_30']:,.2f}</b>", styles['td_right']),
+        Paragraph(f"<b>Q {totales['dias_31_60']:,.2f}</b>", styles['td_right']),
+        Paragraph(f"<b>Q {totales['dias_61_90']:,.2f}</b>", styles['td_right']),
+        Paragraph(f"<b>Q {totales['mas_90']:,.2f}</b>", styles['td_right']),
+        Paragraph(f"<b>Q {totales['total']:,.2f}</b>", styles['td_right']),
     ])
 
-    col_widths = [180, 110, 65, 60, 60, 60, 60, 60, 65]
-    t_morosidad = Table(tabla_data, colWidths=col_widths)
-    t_morosidad.setStyle(TableStyle([
+    col_widths = [190, 110, 65, 55, 55, 55, 55, 55, 80]
+    t_ant = Table(tabla_data, colWidths=col_widths, repeatRows=1)
+    t_ant.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), COLOR_VERDE),
         ('BOX', (0,0), (-1,-1), 0.5, COLOR_BORDER),
         ('INNERGRID', (0,0), (-1,-1), 0.5, COLOR_BORDER),
@@ -132,13 +134,13 @@ def generar_pdf_antiguedad_saldos(ciclo_escolar=None):
         ('SPAN', (0,-1), (2,-1)),
         ('BACKGROUND', (0,-1), (-1,-1), COLOR_BG_LIGHT),
     ]))
-    story.append(t_morosidad)
-    story.append(Spacer(1, 20))
+    story.append(t_ant)
+    story.append(Spacer(1, 25))
 
     story.append(ReportLabHelper.build_signature_block([
-        "Director(a) Técnico Pedagógico",
-        "Contador(a) General / Tesorería",
-        "Auditor(a) Interno / Comisión de Finanzas"
+        "Encargado(a) de Cartera y Cobros",
+        "Contador(a) General",
+        "Director(a) Técnico Pedagógico"
     ], orientation_landscape=True))
 
     doc.build(story, canvasmaker=NumberedCanvas)
@@ -170,7 +172,7 @@ def generar_csv_antiguedad_saldos(ciclo_escolar=None):
         rows.append([
             c.estudiante.persona.nombre_completo,
             c.estudiante.persona.cui,
-            c.estudiante.codigo_mineduc,
+            c.estudiante.codigo_mineduc or 'PENDIENTE',
             c.concepto.nombre,
             c.fecha_limite_pago.strftime('%d/%m/%Y') if c.fecha_limite_pago else "",
             dias_mora,
@@ -185,26 +187,272 @@ def generar_csv_antiguedad_saldos(ciclo_escolar=None):
     return IBACOOPReportCSV.generate_csv_response('Antiguedad_Saldos', headers, rows)
 
 
+def generar_pdf_cuadre_caja(fecha_inicio, fecha_fin):
+    """
+    Genera el Reporte Oficial de Arqueo y Cuadre de Caja en PDF.
+    Consolida todos los cobros efectuados entre las fechas indicadas, con desglose y firmas.
+    """
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        rightMargin=36,
+        leftMargin=36,
+        topMargin=36,
+        bottomMargin=36
+    )
+
+    story = []
+    styles = ReportLabHelper.get_styles()
+
+    abonos = Abono.objects.filter(
+        esta_eliminado=False,
+        fecha_pago__gte=fecha_inicio,
+        fecha_pago__lte=fecha_fin
+    ).select_related(
+        'cuenta_por_cobrar__estudiante__persona',
+        'cuenta_por_cobrar__concepto'
+    ).order_by('fecha_pago', 'id')
+
+    subtitulo = f"Período del {fecha_inicio.strftime('%d/%m/%Y')} al {fecha_fin.strftime('%d/%m/%Y')}"
+    if fecha_inicio == fecha_fin:
+        subtitulo = f"Corte Diario del {fecha_inicio.strftime('%d/%m/%Y')}"
+
+    story.append(ReportLabHelper.build_header(
+        doc_title="ARQUEO Y CUADRE DIARIO DE CAJA",
+        subtitle=f"{subtitulo} • Moneda: Quetzales (Q)"
+    ))
+    story.append(Spacer(1, 10))
+
+    tabla_data = [
+        [
+            Paragraph("<b>RECIBO</b>", styles['th']),
+            Paragraph("<b>FECHA</b>", styles['th']),
+            Paragraph("<b>ESTUDIANTE</b>", styles['th']),
+            Paragraph("<b>CONCEPTO DE COBRO</b>", styles['th']),
+            Paragraph("<b>MÉTODO PAGO</b>", styles['th']),
+            Paragraph("<b>MONTO (Q)</b>", styles['th']),
+        ]
+    ]
+
+    total_recaudado = Decimal(0)
+    totales_por_metodo = defaultdict(Decimal)
+
+    for a in abonos:
+        monto = a.monto_pagado
+        total_recaudado += monto
+        metodo = a.get_metodo_pago_display() if hasattr(a, 'get_metodo_pago_display') else "Efectivo"
+        totales_por_metodo[metodo] += monto
+
+        no_recibo = getattr(a, 'numero_recibo', None) or a.numero_boleta or f"REC-{a.id}"
+        est_nombre = a.cuenta_por_cobrar.estudiante.persona.nombre_completo if a.cuenta_por_cobrar and a.cuenta_por_cobrar.estudiante else "General"
+        concepto_nombre = a.cuenta_por_cobrar.concepto.nombre if a.cuenta_por_cobrar and a.cuenta_por_cobrar.concepto else "Cuota"
+
+        tabla_data.append([
+            Paragraph(f"<b>{no_recibo}</b>", styles['td']),
+            Paragraph(a.fecha_pago.strftime('%d/%m/%Y') if a.fecha_pago else "-", styles['td_center']),
+            Paragraph(est_nombre, styles['td']),
+            Paragraph(concepto_nombre, styles['td']),
+            Paragraph(metodo, styles['td_center']),
+            Paragraph(f"<b>{monto:,.2f}</b>", styles['td_right']),
+        ])
+
+    tabla_data.append([
+        Paragraph("<b>TOTAL RECAUDADO EN EL PERÍODO (Q)</b>", styles['td_bold']),
+        "", "", "", "",
+        Paragraph(f"<b>Q {total_recaudado:,.2f}</b>", styles['td_right']),
+    ])
+
+    col_widths = [75, 60, 165, 115, 65, 60]
+    t_cuadre = Table(tabla_data, colWidths=col_widths, repeatRows=1)
+    t_cuadre.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), COLOR_VERDE),
+        ('BOX', (0,0), (-1,-1), 0.5, COLOR_BORDER),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, COLOR_BORDER),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('TOPPADDING', (0,0), (-1,-1), 3),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+        ('SPAN', (0,-1), (4,-1)),
+        ('BACKGROUND', (0,-1), (-1,-1), COLOR_BG_LIGHT),
+    ]))
+    story.append(t_cuadre)
+    story.append(Spacer(1, 15))
+
+    # Resumen por método de pago
+    resumen_data = [
+        [Paragraph("<b>FORMA DE PAGO</b>", styles['th']), Paragraph("<b>TOTAL INGRESADO (Q)</b>", styles['th'])]
+    ]
+    for met, total_met in totales_por_metodo.items():
+        resumen_data.append([
+            Paragraph(met, styles['td']),
+            Paragraph(f"Q {total_met:,.2f}", styles['td_right'])
+        ])
+
+    t_resumen = Table(resumen_data, colWidths=[200, 120])
+    t_resumen.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), COLOR_AZUL),
+        ('BOX', (0,0), (-1,-1), 0.5, COLOR_BORDER),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, COLOR_BORDER),
+        ('TOPPADDING', (0,0), (-1,-1), 2.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2.5),
+    ]))
+    story.append(t_resumen)
+    story.append(Spacer(1, 30))
+
+    story.append(ReportLabHelper.build_signature_block([
+        "Cajero(a) Receptor(a)",
+        "Contador(a) General"
+    ]))
+
+    doc.build(story, canvasmaker=NumberedCanvas)
+    buffer.seek(0)
+
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    filename = f"Cuadre_Caja_{fecha_inicio.strftime('%Y%m%d')}_{fecha_fin.strftime('%Y%m%d')}.pdf"
+    response['Content-Disposition'] = f'inline; filename="{filename}"'
+    return response
+
+
 def generar_csv_cuadre_caja(fecha_inicio, fecha_fin):
     """Genera reporte de ingresos y recaudación de caja por fecha y medio de pago."""
     abonos = Abono.objects.filter(
         esta_eliminado=False,
         fecha_pago__gte=fecha_inicio,
         fecha_pago__lte=fecha_fin
-    ).select_related('cuenta_cobrar', 'cuenta_cobrar__estudiante', 'cuenta_cobrar__estudiante__persona', 'cuenta_cobrar__concepto')
+    ).select_related('cuenta_por_cobrar', 'cuenta_por_cobrar__estudiante', 'cuenta_por_cobrar__estudiante__persona', 'cuenta_por_cobrar__concepto')
 
     headers = ['No. Recibo', 'Fecha de Pago', 'Estudiante', 'Concepto', 'Medio de Pago', 'Referencia / Depósito', 'Monto Pagado (Q)']
     rows = []
 
     for a in abonos:
         rows.append([
-            a.numero_recibo or f"REC-{a.id}",
+            getattr(a, 'numero_recibo', None) or a.numero_boleta or f"REC-{a.id}",
             a.fecha_pago.strftime('%d/%m/%Y') if a.fecha_pago else "",
-            a.cuenta_cobrar.estudiante.persona.nombre_completo,
-            a.cuenta_cobrar.concepto.nombre,
+            a.cuenta_por_cobrar.estudiante.persona.nombre_completo if a.cuenta_por_cobrar and a.cuenta_por_cobrar.estudiante else "General",
+            a.cuenta_por_cobrar.concepto.nombre if a.cuenta_por_cobrar and a.cuenta_por_cobrar.concepto else "Cuota",
             a.get_metodo_pago_display() if hasattr(a, 'get_metodo_pago_display') else "Efectivo",
-            a.referencia_bancaria or "N/A",
+            getattr(a, 'referencia_bancaria', None) or a.numero_boleta or "N/A",
             f"{a.monto_pagado:.2f}"
         ])
 
     return IBACOOPReportCSV.generate_csv_response('Cuadre_Caja_Recaudacion', headers, rows)
+
+
+def generar_pdf_estado_cuenta_estudiante(estudiante, ciclo_escolar):
+    """
+    Genera el Estado de Cuenta y Registro de Pagos por Estudiante en PDF.
+    Detalla todas las cuotas asignadas, los abonos y el estado de solvencia institucional.
+    """
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        rightMargin=36,
+        leftMargin=36,
+        topMargin=36,
+        bottomMargin=36
+    )
+
+    story = []
+    styles = ReportLabHelper.get_styles()
+
+    cuentas = CuentaPorCobrar.objects.filter(
+        estudiante=estudiante,
+        ciclo_escolar=ciclo_escolar,
+        esta_eliminado=False
+    ).select_related('concepto').order_by('fecha_limite_pago', 'id')
+
+    p = estudiante.persona
+    total_cobrado = sum(c.monto_total for c in cuentas)
+    total_pendiente = sum(c.saldo_pendiente for c in cuentas)
+    total_pagado = total_cobrado - total_pendiente
+    es_solvente = (total_pendiente == 0)
+
+    story.append(ReportLabHelper.build_header(
+        doc_title="ESTADO DE CUENTA Y REGISTRO DE PAGOS",
+        subtitle=f"Ciclo Lectivo {ciclo_escolar.anio} • Moneda: Quetzales (Q)"
+    ))
+    story.append(Spacer(1, 10))
+
+    # Cuadro datos del estudiante
+    datos_est = [
+        [
+            Paragraph(f"<b>ESTUDIANTE:</b> {p.nombre_completo.upper()}", styles['td']),
+            Paragraph(f"<b>CÓDIGO MINEDUC:</b> {estudiante.codigo_mineduc or 'PENDIENTE'}", styles['td']),
+        ],
+        [
+            Paragraph(f"<b>CUI / DPI:</b> {p.cui or 'Sin registro'}", styles['td']),
+            Paragraph(f"<b>ESTADO DE SOLVENCIA:</b> {'<font color=\"#1E6532\"><b>SOLVENTE</b></font>' if es_solvente else '<font color=\"#7A1C21\"><b>CON SALDO PENDIENTE</b></font>'}", styles['td']),
+        ]
+    ]
+    t_est = Table(datos_est, colWidths=[340, 200])
+    t_est.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,-1), COLOR_BG_LIGHT),
+        ('BOX', (0,0), (-1,-1), 0.5, COLOR_BORDER),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, COLOR_BORDER),
+        ('TOPPADDING', (0,0), (-1,-1), 4),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+    ]))
+    story.append(t_est)
+    story.append(Spacer(1, 12))
+
+    tabla_data = [
+        [
+            Paragraph("<b>CONCEPTO / CUOTA ESCOLAR</b>", styles['th']),
+            Paragraph("<b>VENCIMIENTO</b>", styles['th']),
+            Paragraph("<b>MONTO (Q)</b>", styles['th']),
+            Paragraph("<b>PAGADO (Q)</b>", styles['th']),
+            Paragraph("<b>SALDO (Q)</b>", styles['th']),
+            Paragraph("<b>ESTADO</b>", styles['th']),
+        ]
+    ]
+
+    for c in cuentas:
+        pagado_cuota = c.monto_total - c.saldo_pendiente
+        color_est = "#1E6532" if c.saldo_pendiente == 0 else "#7A1C21"
+
+        tabla_data.append([
+            Paragraph(f"<b>{c.concepto.nombre}</b>", styles['td']),
+            Paragraph(c.fecha_limite_pago.strftime('%d/%m/%Y') if c.fecha_limite_pago else "-", styles['td_center']),
+            Paragraph(f"{c.monto_total:.2f}", styles['td_right']),
+            Paragraph(f"{pagado_cuota:.2f}", styles['td_right']),
+            Paragraph(f"<font color='{color_est}'><b>{c.saldo_pendiente:.2f}</b></font>", styles['td_right']),
+            Paragraph(f"<font color='{color_est}'><b>{c.get_estado_pago_display()}</b></font>", styles['td_center']),
+        ])
+
+    tabla_data.append([
+        Paragraph("<b>TOTALES ACUMULADOS (Q)</b>", styles['td_bold']),
+        "",
+        Paragraph(f"<b>Q {total_cobrado:,.2f}</b>", styles['td_right']),
+        Paragraph(f"<b>Q {total_pagado:,.2f}</b>", styles['td_right']),
+        Paragraph(f"<b>Q {total_pendiente:,.2f}</b>", styles['td_right']),
+        Paragraph("<b>SOLVENTE</b>" if es_solvente else "<b>PENDIENTE</b>", styles['td_center']),
+    ])
+
+    col_widths = [200, 70, 65, 65, 70, 70]
+    t_cuentas = Table(tabla_data, colWidths=col_widths)
+    t_cuentas.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), COLOR_VERDE),
+        ('BOX', (0,0), (-1,-1), 0.5, COLOR_BORDER),
+        ('INNERGRID', (0,0), (-1,-1), 0.5, COLOR_BORDER),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('TOPPADDING', (0,0), (-1,-1), 3.5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3.5),
+        ('SPAN', (0,-1), (1,-1)),
+        ('BACKGROUND', (0,-1), (-1,-1), COLOR_BG_LIGHT),
+    ]))
+    story.append(t_cuentas)
+    story.append(Spacer(1, 35))
+
+    story.append(ReportLabHelper.build_signature_block([
+        "Encargado(a) de Caja y Cobros",
+        "Contador(a) General"
+    ]))
+
+    doc.build(story, canvasmaker=NumberedCanvas)
+    buffer.seek(0)
+
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    filename = f"Estado_Cuenta_{p.apellidos}_{p.nombres}_{ciclo_escolar.anio}.pdf".replace(' ', '_')
+    response['Content-Disposition'] = f'inline; filename="{filename}"'
+    return response

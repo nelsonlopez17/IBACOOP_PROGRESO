@@ -24,6 +24,7 @@ urlpatterns = [
     path('carga-docente/<int:pk>/editar/', views.AsignacionDocenteUpdateView.as_view(), name='asignacion_docente_update'),
 
     path('notas/', views.CuadroCalificacionesView.as_view(), name='notas_lista'),
+    path('mis-cursos/', views.CuadroCalificacionesView.as_view(), name='docente_mis_cursos'),
     path('notas/<int:pk>/editar/', views.IngresoNotasUpdateView.as_view(), name='ingreso_notas'),
 
     path('cierre-ciclo/', views.CierreCicloEscolarView.as_view(), name='cierre_ciclo_escolar'),

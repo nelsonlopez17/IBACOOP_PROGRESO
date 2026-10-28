@@ -13,6 +13,7 @@ ESTRATEGIA DE AUTENTICACIÓN:
 """
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from simple_history.models import HistoricalRecords
 
 
 class RolChoices(models.TextChoices):
@@ -67,6 +68,7 @@ class Usuario(AbstractUser):
         verbose_name='Debe cambiar contraseña',
         help_text='Obliga al usuario a cambiar su contraseña en su próximo inicio de sesión.'
     )
+    history = HistoricalRecords()
 
     class Meta:
         verbose_name = 'Usuario'
@@ -81,8 +83,26 @@ class Usuario(AbstractUser):
 
     @property
     def nombre_completo(self):
-        """Retorna el nombre completo del usuario."""
-        return self.get_full_name() or self.username
+        """Retorna el nombre completo del usuario o de la persona vinculada."""
+        full = self.get_full_name()
+        if full:
+            return full
+        try:
+            if hasattr(self, 'persona') and self.persona and self.persona.nombre_completo:
+                return self.persona.nombre_completo
+        except Exception:
+            pass
+        return self.username
+
+    @property
+    def cui(self):
+        """Retorna el CUI/DPI de la persona vinculada si existe."""
+        try:
+            if hasattr(self, 'persona') and self.persona and self.persona.cui:
+                return self.persona.cui
+        except Exception:
+            pass
+        return None
 
     @property
     def iniciales(self) -> str:
@@ -118,6 +138,9 @@ class Usuario(AbstractUser):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
+        update_fields = kwargs.get('update_fields')
+        if update_fields is not None and 'rol' not in update_fields:
+            return
         if self.rol and not getattr(self, '_omitir_sincronizacion_grupo', False):
             try:
                 from APPS.usuarios.permisos import sincronizar_grupo_usuario

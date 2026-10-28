@@ -1,11 +1,13 @@
 {% extends 'base.html' %}
 
-{% block title %}Centro de Reportes y Business Intelligence (BI){% endblock %}
+{% block title %}Centro de Reportes y Analítica | IBACOOP EL PROGRESO{% endblock %}
+{% block page_title %}Centro de Reportes y Analítica{% endblock %}
 
 {% block content %}
 <div class="hidden">
     {% csrf_token %}
 </div>
+
 <div class="space-y-6">
 
     <!-- Encabezado de la Sección -->
@@ -14,465 +16,1049 @@
             <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
                 <a href="{% url 'core:home' %}" class="hover:underline">Dashboard</a>
                 <span>/</span>
-                <span class="text-slate-500">Business Intelligence</span>
+                <span class="text-slate-500">Centro de Reportes</span>
             </div>
             <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
                 <i data-lucide="bar-chart-3" class="w-7 h-7 text-[#1E6532]"></i>
                 Centro de Reportes y Analítica
             </h1>
             <p class="text-xs text-slate-500 mt-1">
-                Emisión de boletas oficiales con membrete MINEDUC, estados financieros, planillas de sueldos e inventario en PDF y Excel.
+                Emisión de boletas oficiales con membrete institucional, cuadros de calificaciones, planillas de sueldos y estados financieros en PDF y Excel.
             </p>
         </div>
-        
-        <div class="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-xl text-xs font-bold text-emerald-800">
+
+        <div class="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-xl text-xs font-bold text-emerald-800 self-start sm:self-auto">
             <i data-lucide="calendar" class="w-4 h-4 text-emerald-600"></i>
-            <span>Ciclo Activo: {{ ciclo_activo.anio|default:"No configurado" }}</span>
+            <span>Ciclo Lectivo Activo: {{ ciclo_activo.anio|default:"No configurado" }}</span>
         </div>
     </div>
 
-    <!-- LOS 4 CUADRANTES DE REPORTES -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        <!-- ================================================================== -->
-        <!-- CUADRANTE 1: REPORTES ACADÉMICOS -->
-        <!-- ================================================================== -->
-        <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-6">
-            <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
-                <div class="w-10 h-10 rounded-2xl bg-emerald-100 text-[#1E6532] flex items-center justify-center font-bold">
-                    <i data-lucide="graduation-cap" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <h2 class="text-base font-extrabold text-slate-900">1. Reportes Académicos y Evaluación</h2>
-                    <p class="text-xs text-slate-500">Boletas oficiales MINEDUC, cuadros de honor y sábanas de notas.</p>
-                </div>
+    <!-- Barra de Filtros Rápidos y Buscador en Tiempo Real -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        <!-- Buscador en tiempo real -->
+        <div class="relative w-full md:w-96">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <i data-lucide="search" class="w-4 h-4"></i>
             </div>
+            <input type="text" id="buscador-reportes"
+                   placeholder="Buscar reporte por nombre o palabra clave..."
+                   class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1E6532] focus:border-[#1E6532] transition-all">
+        </div>
 
-            <div class="space-y-5 text-xs">
-                <!-- Reporte 1.1: Boleta de Calificaciones Oficial (PDF) -->
-                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="font-bold text-slate-900 flex items-center gap-1.5 text-xs">
-                            <i data-lucide="file-text" class="w-3.5 h-3.5 text-emerald-600"></i>
-                            Boleta Oficial de Calificaciones por Estudiante (PDF)
-                        </span>
-                        <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">PDF Membretado</span>
-                    </div>
-                    <p class="text-slate-500 text-[11px]">Incluye notas de bloques 1 a 4, promedio acumulado y firmas de Director y Docente Guía.</p>
+        <!-- Pestañas de Categoría -->
+        <div class="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0" id="tabs-categoria">
+            <button type="button" class="btn-tab-categoria px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-[#1E6532] text-white shadow-xs cursor-pointer" data-categoria="todos">
+                Todos
+            </button>
+            <button type="button" class="btn-tab-categoria px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 cursor-pointer" data-categoria="academico">
+                Académico
+            </button>
+            <button type="button" class="btn-tab-categoria px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 cursor-pointer" data-categoria="financiero">
+                Finanzas
+            </button>
+            <button type="button" class="btn-tab-categoria px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 cursor-pointer" data-categoria="rrhh">
+                Planillas
+            </button>
+            <button type="button" class="btn-tab-categoria px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 cursor-pointer" data-categoria="disciplina">
+                Disciplina
+            </button>
+            <button type="button" class="btn-tab-categoria px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 cursor-pointer" data-categoria="inventario">
+                Inventario
+            </button>
+        </div>
+    </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Estudiante</label>
-                            <select id="select-estudiante-boleta" class="searchable-select w-full text-xs bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-slate-800" data-placeholder="Buscar estudiante por nombre o CUI/DPI...">
-                                <option value="">-- Seleccionar estudiante --</option>
-                                {% for est in estudiantes %}
-                                <option value="{{ est.persona_id }}">{{ est.persona.nombre_completo }} | CUI: {{ est.persona.cui }} (MINEDUC: {{ est.codigo_mineduc }})</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Ciclo Escolar</label>
-                            <select id="select-ciclo-boleta" class="w-full text-xs bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-slate-800">
-                                {% for c in ciclos %}
-                                <option value="{{ c.id }}" {% if c.estado_activo %}selected{% endif %}>{{ c.anio }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
+    <!-- Catálogo de Tarjetas de Reportes -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="catalogo-reportes">
 
-                    <button type="button" onclick="descargarBoletaPDF()" 
-                            class="w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#1E6532] text-white rounded-xl font-bold hover:bg-[#1E6532]/90 transition-all shadow-xs cursor-pointer">
-                        <i data-lucide="printer" class="w-3.5 h-3.5"></i>
-                        <span>Generar Boleta Oficial en PDF</span>
-                    </button>
-                </div>
-
-                <!-- Reporte 1.2: Cuadro de Honor y Sábana de Notas (Cuadro MED) -->
-                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                    <span class="font-bold text-slate-900 flex items-center gap-1.5 text-xs">
-                        <i data-lucide="award" class="w-3.5 h-3.5 text-amber-600"></i>
-                        Rendimiento por Sección: Cuadro de Honor y Sábana MED (CSV)
+        <!-- 1. Boleta Oficial de Calificaciones Individual -->
+        <div class="tarjeta-reporte bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+             data-categoria="academico"
+             data-titulo="boleta oficial de calificaciones estudiante"
+             data-desc="notas bloques 1 a 4 promedio final firmas">
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        Académico
                     </span>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Grado y Sección</label>
-                            <select id="select-seccion-rendimiento" class="w-full text-xs bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-slate-800">
-                                {% for s in secciones %}
-                                <option value="{{ s.id }}">{{ s.grado.nombre }} '{{ s.letra }}'</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Ciclo Escolar</label>
-                            <select id="select-ciclo-rendimiento" class="w-full text-xs bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-slate-800">
-                                {% for c in ciclos %}
-                                <option value="{{ c.id }}" {% if c.estado_activo %}selected{% endif %}>{{ c.anio }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center gap-2 pt-1">
-                        <button type="button" onclick="descargarCuadroHonor()" 
-                                class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-700 transition-all shadow-xs cursor-pointer">
-                            <i data-lucide="trophy" class="w-3.5 h-3.5 text-amber-400"></i>
-                            <span>Cuadro de Honor</span>
-                        </button>
-                        <button type="button" onclick="descargarSabanaNotas()" 
-                                class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-700 transition-all shadow-xs cursor-pointer">
-                            <i data-lucide="table" class="w-3.5 h-3.5 text-emerald-400"></i>
-                            <span>Sábana (Cuadro MED)</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Reporte 1.3: Alertas Tempranas (Reprobados) -->
-                <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
-                    <div>
-                        <span class="font-bold text-slate-800 block">Reporte de Alertas Tempranas</span>
-                        <span class="text-[10px] text-slate-500">Estudiantes en riesgo académico (&lt; 60 pts)</span>
-                    </div>
-                    <a href="{% url 'reportes:academico_alertas' %}" 
-                       class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100 rounded-xl font-bold transition-all">
-                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
-                        <span>Exportar CSV</span>
-                    </a>
-                </div>
-
-                <!-- Reporte 1.4: Emisión Masiva de Boletas por Sección (ZIP Asíncrono con Celery) -->
-                <div class="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200 space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="font-bold text-slate-900 flex items-center gap-1.5 text-xs">
-                            <i data-lucide="cpu" class="w-3.5 h-3.5 text-indigo-600"></i>
-                            Emisión Masiva de Boletas por Sección (ZIP)
-                        </span>
-                        <span class="px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 font-bold text-[10px] flex items-center gap-1">
-                            <i data-lucide="zap" class="w-3 h-3 text-indigo-600"></i>
-                            Segundo Plano
-                        </span>
-                    </div>
-                    <p class="text-slate-600 text-[11px]">
-                        Procesa en segundo plano todas las boletas de la sección en un paquete .ZIP descargable, sin bloquear la navegación.
-                    </p>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Grado y Sección</label>
-                            <select id="select-seccion-zip" class="w-full text-xs bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-slate-800">
-                                {% for s in secciones %}
-                                <option value="{{ s.id }}">{{ s.grado.nombre }} '{{ s.letra }}'</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Ciclo Escolar</label>
-                            <select id="select-ciclo-zip" class="w-full text-xs bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-slate-800">
-                                {% for c in ciclos %}
-                                <option value="{{ c.id }}" {% if c.estado_activo %}selected{% endif %}>{{ c.anio }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-
-                    <button type="button" id="btn-iniciar-zip" onclick="iniciarGeneracionZip()"
-                            class="w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-xs cursor-pointer">
-                        <i data-lucide="play" class="w-3.5 h-3.5"></i>
-                        <span>Generar Lote en Segundo Plano</span>
-                    </button>
-
-                    <!-- Estado y Barra de Progreso en Vivo -->
-                    <div id="celery-progress-panel" class="hidden p-3 bg-white rounded-xl border border-indigo-200 space-y-2 mt-3 shadow-xs">
-                        <div class="flex items-center justify-between text-xs">
-                            <span id="celery-status-badge" class="font-bold text-indigo-700 flex items-center gap-1.5">
-                                <span class="relative flex h-2 w-2">
-                                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                                  <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-                                </span>
-                                <span id="celery-status-text">Procesando lote...</span>
-                            </span>
-                            <span id="celery-progress-percent" class="font-extrabold text-indigo-900 text-xs">0%</span>
-                        </div>
-
-                        <!-- Barra de Progreso -->
-                        <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200">
-                            <div id="celery-progress-bar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%;"></div>
-                        </div>
-
-                        <div class="flex items-center justify-between text-[11px] text-slate-500">
-                            <span id="celery-estudiante-detail" class="truncate max-w-[200px]">Iniciando...</span>
-                            <span id="celery-count-detail">0 / 0</span>
-                        </div>
-
-                        <!-- Botón de Descarga cuando finaliza -->
-                        <a id="celery-download-btn" href="#" target="_blank"
-                           class="hidden w-full mt-2 inline-flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-xs">
-                            <i data-lucide="download-cloud" class="w-4 h-4"></i>
-                            <span id="celery-download-label">Descargar Archivo ZIP</span>
-                        </a>
-
-                        <!-- Alerta de Error si ocurre -->
-                        <div id="celery-error-alert" class="hidden p-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-[11px]">
-                            <span id="celery-error-text">Ocurrió un error.</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ================================================================== -->
-        <!-- CUADRANTE 2: REPORTES FINANCIEROS Y CARTERA -->
-        <!-- ================================================================== -->
-        <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-6">
-            <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
-                <div class="w-10 h-10 rounded-2xl bg-blue-100 text-[#3C7DA8] flex items-center justify-center font-bold">
-                    <i data-lucide="credit-card" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <h2 class="text-base font-extrabold text-slate-900">2. Reportes Financieros y Tesorería</h2>
-                    <p class="text-xs text-slate-500">Antigüedad de saldos, morosidad, cuadre de caja y becas.</p>
-                </div>
-            </div>
-
-            <div class="space-y-5 text-xs">
-                <!-- Reporte 2.1: Antigüedad de Saldos y Morosidad -->
-                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="font-bold text-slate-900 flex items-center gap-1.5 text-xs">
-                            <i data-lucide="clock" class="w-3.5 h-3.5 text-blue-600"></i>
-                            Saldos Vencidos y Morosidad
-                        </span>
-                        <span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-bold text-[10px]">PDF / Excel</span>
-                    </div>
-                    <p class="text-slate-500 text-[11px]">Estratificación de saldos: Al día, 30, 60, 90 y más de 90 días en mora.</p>
-
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Filtrar por Ciclo (Opcional)</label>
-                        <select id="select-ciclo-antiguedad" class="w-full text-xs bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-slate-800">
-                            <option value="">Todos los ciclos escolares</option>
-                            {% for c in ciclos %}
-                            <option value="{{ c.id }}" {% if c.estado_activo %}selected{% endif %}>Ciclo {{ c.anio }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="flex items-center gap-2 pt-1">
-                        <button type="button" onclick="descargarAntiguedad('pdf')" 
-                                class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-[#1E6532] text-white rounded-xl font-bold hover:bg-[#1E6532]/90 transition-all shadow-xs cursor-pointer">
-                            <i data-lucide="printer" class="w-3.5 h-3.5"></i>
-                            <span>Descargar PDF</span>
-                        </button>
-                        <button type="button" onclick="descargarAntiguedad('csv')" 
-                                class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-700 transition-all shadow-xs cursor-pointer">
-                            <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-400"></i>
-                            <span>Exportar Excel/CSV</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Reporte 2.2: Cuadre Diario y Recaudación de Caja -->
-                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                    <span class="font-bold text-slate-900 flex items-center gap-1.5 text-xs">
-                        <i data-lucide="receipt" class="w-3.5 h-3.5 text-emerald-600"></i>
-                        Cuadre de Caja y Recaudación por Rango de Fechas
+                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500">
+                        <i data-lucide="file-text" class="w-3.5 h-3.5 text-emerald-600"></i> PDF
                     </span>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Fecha Desde</label>
-                            <input type="date" id="input-cuadre-ini" value="{{ hoy|date:'Y-m-d' }}" 
-                                   class="w-full text-xs bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-slate-800">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Fecha Hasta</label>
-                            <input type="date" id="input-cuadre-fin" value="{{ hoy|date:'Y-m-d' }}" 
-                                   class="w-full text-xs bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-slate-800">
-                        </div>
-                    </div>
-
-                    <button type="button" onclick="descargarCuadreCaja()" 
-                            class="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-700 transition-all shadow-xs cursor-pointer">
-                        <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i>
-                        <span>Exportar Recaudación de Caja en CSV</span>
-                    </button>
                 </div>
-
-                <!-- Reporte 2.3: Padrón de Becas -->
-                <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-100 text-[#1E6532] flex items-center justify-center font-bold flex-shrink-0">
+                        <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+                    </div>
                     <div>
-                        <span class="font-bold text-slate-800 block">Padrón de Becas y Descuentos</span>
-                        <span class="text-[10px] text-slate-500">Convenios y subsidios aplicados</span>
+                        <h3 class="font-extrabold text-slate-900 text-sm">Boleta Oficial de Calificaciones</h3>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Notas de bloques 1 a 4, promedio acumulado y firmas de Dirección y Docente Guía.
+                        </p>
                     </div>
-                    <a href="{% url 'reportes:financiero_becas' %}" 
-                       class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 rounded-xl font-bold transition-all">
-                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
-                        <span>Exportar CSV</span>
-                    </a>
                 </div>
+            </div>
+            <button type="button" onclick="abrirModalReporte('boleta_individual')"
+                    class="w-full mt-4 inline-flex items-center justify-center gap-2 px-3.5 py-2 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-xs cursor-pointer">
+                <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                <span>Configurar y Emitir</span>
+            </button>
+        </div>
+
+        <!-- 2. Cuadro General de Calificaciones por Sección -->
+        <div class="tarjeta-reporte bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+             data-categoria="academico"
+             data-titulo="cuadro general de calificaciones seccion sabana med"
+             data-desc="matriz completa de calificaciones por curso promedio final aprobados">
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        Académico
+                    </span>
+                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500">
+                        <i data-lucide="table" class="w-3.5 h-3.5 text-emerald-600"></i> PDF / Excel
+                    </span>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-100 text-[#1E6532] flex items-center justify-center font-bold flex-shrink-0">
+                        <i data-lucide="book-open" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-900 text-sm">Cuadro General de Calificaciones</h3>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Matriz concentradora horizontal de notas de todos los cursos y promedios por sección.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <button type="button" onclick="abrirModalReporte('cuadro_calificaciones')"
+                    class="w-full mt-4 inline-flex items-center justify-center gap-2 px-3.5 py-2 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-xs cursor-pointer">
+                <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                <span>Configurar y Emitir</span>
+            </button>
+        </div>
+
+        <!-- 3. Listado Oficial de Estudiantes Inscritos -->
+        <div class="tarjeta-reporte bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+             data-categoria="academico"
+             data-titulo="listado oficial de estudiantes inscritos seccion"
+             data-desc="nomina de inscritos codigo mineduc cui encargados telefonos">
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        Académico
+                    </span>
+                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500">
+                        <i data-lucide="users" class="w-3.5 h-3.5 text-emerald-600"></i> PDF / Excel
+                    </span>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-100 text-[#1E6532] flex items-center justify-center font-bold flex-shrink-0">
+                        <i data-lucide="user-check" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-900 text-sm">Listado Oficial de Estudiantes</h3>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Padrón de estudiantes inscritos por sección con código MINEDUC, CUI, encargado y contacto.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <button type="button" onclick="abrirModalReporte('listado_estudiantes')"
+                    class="w-full mt-4 inline-flex items-center justify-center gap-2 px-3.5 py-2 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-xs cursor-pointer">
+                <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                <span>Configurar y Emitir</span>
+            </button>
+        </div>
+
+        <!-- 4. Cuadro de Honor y Rendimiento -->
+        <div class="tarjeta-reporte bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+             data-categoria="academico"
+             data-titulo="cuadro de honor excelencia ranking rendimiento"
+             data-desc="mejores promedios por seccion puestos destacados diplomas">
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                        Académico
+                    </span>
+                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500">
+                        <i data-lucide="award" class="w-3.5 h-3.5 text-amber-600"></i> PDF / Excel
+                    </span>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold flex-shrink-0">
+                        <i data-lucide="trophy" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-900 text-sm">Cuadro de Honor y Excelencia</h3>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Ranking oficial de los estudiantes con mejores promedios acumulados en la sección.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <button type="button" onclick="abrirModalReporte('cuadro_honor')"
+                    class="w-full mt-4 inline-flex items-center justify-center gap-2 px-3.5 py-2 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-xs cursor-pointer">
+                <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                <span>Configurar y Emitir</span>
+            </button>
+        </div>
+
+        <!-- 5. Constancia Oficial de Inscripción Escolar -->
+        <div class="tarjeta-reporte bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+             data-categoria="academico"
+             data-titulo="constancia oficial de inscripcion escolar"
+             data-desc="certificado de matricula formal estudiante grado seccion">
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        Académico
+                    </span>
+                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500">
+                        <i data-lucide="file-check" class="w-3.5 h-3.5 text-emerald-600"></i> PDF
+                    </span>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-100 text-[#1E6532] flex items-center justify-center font-bold flex-shrink-0">
+                        <i data-lucide="file-badge" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-900 text-sm">Constancia de Inscripción Escolar</h3>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Documento oficial para trámites legales y laborales que certifica la inscripción activa.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <button type="button" onclick="abrirModalReporte('constancia_inscripcion')"
+                    class="w-full mt-4 inline-flex items-center justify-center gap-2 px-3.5 py-2 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-xs cursor-pointer">
+                <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                <span>Configurar y Emitir</span>
+            </button>
+        </div>
+
+        <!-- 6. Alertas Tempranas de Reprobación -->
+        <div class="tarjeta-reporte bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+             data-categoria="academico"
+             data-titulo="alertas tempranas reprobacion riesgo notas menores 60"
+             data-desc="estudiantes reprobados recuperacion apoyo pedagogico">
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-800 border border-rose-200">
+                        Académico
+                    </span>
+                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500">
+                        <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-rose-600"></i> Excel
+                    </span>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-rose-100 text-[#7A1C21] flex items-center justify-center font-bold flex-shrink-0">
+                        <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-900 text-sm">Alertas Tempranas de Reprobación</h3>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Listado de calificaciones en riesgo (&lt; 60 pts) para asignación de planes de recuperación.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <a href="{% url 'reportes:academico_alertas' %}"
+               class="w-full mt-4 inline-flex items-center justify-center gap-2 px-3.5 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-700 transition-all shadow-xs">
+                <i data-lucide="download" class="w-3.5 h-3.5 text-rose-400"></i>
+                <span>Exportar Excel (CSV)</span>
+            </a>
+        </div>
+
+        <!-- 7. Antigüedad de Saldos y Morosidad -->
+        <div class="tarjeta-reporte bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+             data-categoria="financiero"
+             data-titulo="antiguedad saldos morosidad cartera cobranza"
+             data-desc="estratificacion mora 30 60 90 dias saldos pendientes cuotas">
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
+                        Financiero
+                    </span>
+                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500">
+                        <i data-lucide="clock" class="w-3.5 h-3.5 text-blue-600"></i> PDF / Excel
+                    </span>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-100 text-[#3C7DA8] flex items-center justify-center font-bold flex-shrink-0">
+                        <i data-lucide="credit-card" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-900 text-sm">Antigüedad de Saldos y Morosidad</h3>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Estratificación de saldos en mora (al día, 30, 60, 90 y más de 90 días) con totales en Quetzales.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <button type="button" onclick="abrirModalReporte('antiguedad_saldos')"
+                    class="w-full mt-4 inline-flex items-center justify-center gap-2 px-3.5 py-2 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-xs cursor-pointer">
+                <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                <span>Configurar y Emitir</span>
+            </button>
+        </div>
+
+        <!-- 8. Arqueo y Cuadre Diario de Caja -->
+        <div class="tarjeta-reporte bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+             data-categoria="financiero"
+             data-titulo="arqueo cuadre diario caja ingresos recaudacion cobros"
+             data-desc="recibos emitidos conceptos efectivo boleta comprobantes firmas">
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
+                        Financiero
+                    </span>
+                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500">
+                        <i data-lucide="receipt" class="w-3.5 h-3.5 text-blue-600"></i> PDF / Excel
+                    </span>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-100 text-[#1E6532] flex items-center justify-center font-bold flex-shrink-0">
+                        <i data-lucide="coins" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-900 text-sm">Arqueo y Cuadre Diario de Caja</h3>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Consolidado de recibos emitidos por rango de fechas, agrupados por forma de pago y concepto.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <button type="button" onclick="abrirModalReporte('cuadre_caja')"
+                    class="w-full mt-4 inline-flex items-center justify-center gap-2 px-3.5 py-2 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-xs cursor-pointer">
+                <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                <span>Configurar y Emitir</span>
+            </button>
+        </div>
+
+        <!-- 9. Estado de Cuenta y Solvencia por Estudiante -->
+        <div class="tarjeta-reporte bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+             data-categoria="financiero"
+             data-titulo="estado de cuenta solvencia estudiante pagos cuotas"
+             data-desc="cuotas escolares abonos recibos saldo pendiente estado solvencia">
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
+                        Financiero
+                    </span>
+                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500">
+                        <i data-lucide="file-check" class="w-3.5 h-3.5 text-blue-600"></i> PDF
+                    </span>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-100 text-[#3C7DA8] flex items-center justify-center font-bold flex-shrink-0">
+                        <i data-lucide="badge-check" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-900 text-sm">Estado de Cuenta y Solvencia</h3>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Detalle de cuotas escolares asignadas, abonos y estado de solvencia individual.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <button type="button" onclick="abrirModalReporte('estado_cuenta')"
+                    class="w-full mt-4 inline-flex items-center justify-center gap-2 px-3.5 py-2 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-xs cursor-pointer">
+                <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                <span>Configurar y Emitir</span>
+            </button>
+        </div>
+
+        <!-- 10. Consolidado Mensual de Planilla de Sueldos -->
+        <div class="tarjeta-reporte bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+             data-categoria="rrhh"
+             data-titulo="consolidado mensual planilla sueldos salarios personal"
+             data-desc="bonificacion decreto 37-2001 igss 4.83 liquido sueldos docentes">
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-800 border border-rose-200">
+                        Planillas
+                    </span>
+                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500">
+                        <i data-lucide="briefcase" class="w-3.5 h-3.5 text-rose-600"></i> PDF / Excel
+                    </span>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-rose-100 text-[#7A1C21] flex items-center justify-center font-bold flex-shrink-0">
+                        <i data-lucide="wallet" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-900 text-sm">Consolidado Mensual de Planilla</h3>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Nómina general de salarios con Bonificación Decreto 37-2001 y retenciones del IGSS.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <button type="button" onclick="abrirModalReporte('consolidado_planilla')"
+                    class="w-full mt-4 inline-flex items-center justify-center gap-2 px-3.5 py-2 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-xs cursor-pointer">
+                <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                <span>Configurar y Emitir</span>
+            </button>
+        </div>
+
+        <!-- 11. Boleta Oficial de Pago Individual (Planilla) -->
+        <div class="tarjeta-reporte bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+             data-categoria="rrhh"
+             data-titulo="boleta oficial de pago individual planilla colaborador docente"
+             data-desc="recibo de salario firmado devengado descuentos igss bono">
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-800 border border-rose-200">
+                        Planillas
+                    </span>
+                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500">
+                        <i data-lucide="receipt" class="w-3.5 h-3.5 text-rose-600"></i> PDF
+                    </span>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-rose-100 text-[#7A1C21] flex items-center justify-center font-bold flex-shrink-0">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-900 text-sm">Boleta de Pago Individual</h3>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Comprobante individual de liquidación salarial con espacio para firma de recibido del empleado.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <button type="button" onclick="abrirModalReporte('boleta_pago_individual')"
+                    class="w-full mt-4 inline-flex items-center justify-center gap-2 px-3.5 py-2 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-xs cursor-pointer">
+                <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                <span>Configurar y Emitir</span>
+            </button>
+        </div>
+
+        <!-- 12. Directorio Institucional de Personal -->
+        <div class="tarjeta-reporte bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+             data-categoria="rrhh"
+             data-titulo="directorio institucional personal docentes colaboradores"
+             data-desc="nomina de colaboradores puestos cui telefonos correos activos">
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-800 border border-rose-200">
+                        Planillas
+                    </span>
+                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500">
+                        <i data-lucide="users" class="w-3.5 h-3.5 text-rose-600"></i> PDF / Excel
+                    </span>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-rose-100 text-[#7A1C21] flex items-center justify-center font-bold flex-shrink-0">
+                        <i data-lucide="contact" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-900 text-sm">Directorio Oficial de Personal</h3>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Nómina general del personal docente y operativo con puestos institucionales y contacto.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 mt-4">
+                <a href="{% url 'reportes:rrhh_directorio' %}?formato=pdf" target="_blank"
+                   class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-xs">
+                    <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                    <span>PDF</span>
+                </a>
+                <a href="{% url 'reportes:rrhh_directorio' %}?formato=csv"
+                   class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-700 transition-all shadow-xs">
+                    <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i>
+                    <span>Excel</span>
+                </a>
             </div>
         </div>
 
-        <!-- ================================================================== -->
-        <!-- CUADRANTE 3: RECURSOS HUMANOS Y PLANILLAS -->
-        <!-- ================================================================== -->
-        <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-6">
-            <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
-                <div class="w-10 h-10 rounded-2xl bg-rose-100 text-[#7A1C21] flex items-center justify-center font-bold">
-                    <i data-lucide="briefcase" class="w-5 h-5"></i>
+        <!-- 13. Historial de Disciplina y Convivencia Escolar -->
+        <div class="tarjeta-reporte bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+             data-categoria="disciplina"
+             data-titulo="historial incidentes disciplinarios citaciones convivencia escolar"
+             data-desc="faltas tipificadas medidas formativas mineduc acuerdos compromisos">
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                        Disciplina
+                    </span>
+                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500">
+                        <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-600"></i> PDF / Excel
+                    </span>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold flex-shrink-0">
+                        <i data-lucide="shield" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-900 text-sm">Historial de Disciplina Escolar</h3>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Reporte de faltas, medidas formativas y citaciones según Acuerdo Ministerial 01-2011.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <button type="button" onclick="abrirModalReporte('disciplina_historial')"
+                    class="w-full mt-4 inline-flex items-center justify-center gap-2 px-3.5 py-2 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-xs cursor-pointer">
+                <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                <span>Configurar y Emitir</span>
+            </button>
+        </div>
+
+        <!-- 14. Inventario Físico Institucional de Activos -->
+        <div class="tarjeta-reporte bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+             data-categoria="inventario"
+             data-titulo="inventario fisico institucional activos bienes bodega aulas"
+             data-desc="catalogo de bienes mobiliario equipo computo existencias stock">
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                        Inventario
+                    </span>
+                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500">
+                        <i data-lucide="package" class="w-3.5 h-3.5 text-slate-600"></i> PDF / Excel
+                    </span>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-800 flex items-center justify-center font-bold flex-shrink-0">
+                        <i data-lucide="boxes" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-slate-900 text-sm">Inventario Físico Institucional</h3>
+                        <p class="text-xs text-slate-500 mt-1">
+                            Catálogo clasificado de activos fijos, mobiliario, equipo de cómputo y stock de bodega.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 mt-4">
+                <a href="{% url 'reportes:inventario_valorado' %}?formato=pdf" target="_blank"
+                   class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-xs">
+                    <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                    <span>PDF</span>
+                </a>
+                <a href="{% url 'reportes:inventario_valorado' %}?formato=csv"
+                   class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-700 transition-all shadow-xs">
+                    <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i>
+                    <span>Excel</span>
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Sección de Procesamiento en Lote: Boletas por Sección en ZIP -->
+    <div class="bg-indigo-50/70 border border-indigo-200 rounded-3xl p-6 shadow-xs space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-indigo-100 pb-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
+                    <i data-lucide="cpu" class="w-5 h-5"></i>
                 </div>
                 <div>
-                    <h2 class="text-base font-extrabold text-slate-900">3. Recursos Humanos y Planilla de Sueldos</h2>
-                    <p class="text-xs text-slate-500">Consolidado oficial de planillas con Decreto 37-2001 e IGSS.</p>
+                    <h2 class="text-base font-extrabold text-slate-900">Emisión Masiva de Boletas por Sección (Lote ZIP)</h2>
+                    <p class="text-xs text-slate-600 mt-0.5">Genera en segundo plano todas las boletas de la sección empaquetadas en un único archivo comprimido.</p>
                 </div>
             </div>
-
-            <div class="space-y-4 text-xs">
-                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="font-bold text-slate-900 flex items-center gap-1.5 text-xs">
-                            <i data-lucide="file-check" class="w-3.5 h-3.5 text-rose-600"></i>
-                            Consolidado General de Planilla Mensual
-                        </span>
-                        <span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold text-[10px]">PDF / CSV</span>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Ciclo Escolar</label>
-                            <select id="select-ciclo-planilla" class="w-full text-xs bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-slate-800">
-                                {% for c in ciclos %}
-                                <option value="{{ c.id }}" {% if c.estado_activo %}selected{% endif %}>Ciclo {{ c.anio }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Mes a Liquidar</label>
-                            <select id="select-mes-planilla" class="w-full text-xs bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-slate-800">
-                                <option value="1">Enero</option>
-                                <option value="2">Febrero</option>
-                                <option value="3" selected>Marzo</option>
-                                <option value="4">Abril</option>
-                                <option value="5">Mayo</option>
-                                <option value="6">Junio</option>
-                                <option value="7">Julio</option>
-                                <option value="8">Agosto</option>
-                                <option value="9">Septiembre</option>
-                                <option value="10">Octubre</option>
-                                <option value="11">Noviembre</option>
-                                <option value="12">Diciembre</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center gap-2 pt-1">
-                        <button type="button" onclick="descargarPlanilla('pdf')" 
-                                class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-[#1E6532] text-white rounded-xl font-bold hover:bg-[#1E6532]/90 transition-all shadow-xs cursor-pointer">
-                            <i data-lucide="printer" class="w-3.5 h-3.5"></i>
-                            <span>Descargar PDF</span>
-                        </button>
-                        <button type="button" onclick="descargarPlanilla('csv')" 
-                                class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-700 transition-all shadow-xs cursor-pointer">
-                            <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i>
-                            <span>Exportar CSV</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-indigo-100 text-indigo-800 self-start sm:self-auto flex items-center gap-1.5">
+                <i data-lucide="zap" class="w-3 h-3 text-indigo-600"></i>
+                Proceso Asíncrono
+            </span>
         </div>
 
-        <!-- ================================================================== -->
-        <!-- CUADRANTE 4: INVENTARIO Y CONTROL DE ACTIVOS -->
-        <!-- ================================================================== -->
-        <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-6">
-            <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
-                <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
-                    <i data-lucide="package" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <h2 class="text-base font-extrabold text-slate-900">4. Inventario y Control de Activos</h2>
-                    <p class="text-xs text-slate-500">Catálogo institucional de bienes, existencias y resguardo.</p>
-                </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-end">
+            <div>
+                <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Ciclo Escolar</label>
+                <select id="select-ciclo-zip" class="w-full text-xs bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-800">
+                    {% for c in ciclos %}
+                    <option value="{{ c.id }}" {% if c.estado_activo %}selected{% endif %}>Ciclo {{ c.anio }}</option>
+                    {% endfor %}
+                </select>
             </div>
-
-            <div class="space-y-4 text-xs">
-                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="font-bold text-slate-900 flex items-center gap-1.5 text-xs">
-                            <i data-lucide="boxes" class="w-3.5 h-3.5 text-amber-600"></i>
-                            Inventario Físico Institucional de Activos
-                        </span>
-                        <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-bold text-[10px]">PDF / CSV</span>
-                    </div>
-                    <p class="text-slate-500 text-[11px]">Listado clasificado de equipos de cómputo, mobiliario y materiales de bodega.</p>
-
-                    <div class="flex items-center gap-2 pt-2">
-                        <a href="{% url 'reportes:inventario_valorado' %}?formato=pdf" 
-                           class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-[#1E6532] text-white rounded-xl font-bold hover:bg-[#1E6532]/90 transition-all shadow-xs">
-                            <i data-lucide="printer" class="w-3.5 h-3.5"></i>
-                            <span>Descargar PDF</span>
-                        </a>
-                        <a href="{% url 'reportes:inventario_valorado' %}?formato=csv" 
-                           class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-700 transition-all shadow-xs">
-                            <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i>
-                            <span>Exportar CSV</span>
-                        </a>
-                    </div>
-                </div>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-600 uppercase mb-1">Grado y Sección</label>
+                <select id="select-seccion-zip" class="w-full text-xs bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-800">
+                    {% for s in secciones %}
+                    <option value="{{ s.id }}">{{ s.grado.nombre }} '{{ s.letra }}'</option>
+                    {% endfor %}
+                </select>
             </div>
+            <button type="button" id="btn-iniciar-zip" onclick="iniciarGeneracionZip()"
+                    class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-extrabold hover:bg-indigo-700 transition-all shadow-xs cursor-pointer">
+                <i data-lucide="play" class="w-4 h-4"></i>
+                <span>Generar Lote de Boletas</span>
+            </button>
         </div>
 
+        <!-- Progreso en Vivo -->
+        <div id="celery-progress-panel" class="hidden p-4 bg-white rounded-2xl border border-indigo-200 space-y-3 shadow-xs">
+            <div class="flex items-center justify-between text-xs">
+                <span id="celery-status-badge" class="font-bold text-indigo-700 flex items-center gap-2">
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                    </span>
+                    <span id="celery-status-text">Procesando lote en segundo plano...</span>
+                </span>
+                <span id="celery-progress-percent" class="font-extrabold text-indigo-900 text-sm">0%</span>
+            </div>
+
+            <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200">
+                <div id="celery-progress-bar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%;"></div>
+            </div>
+
+            <div class="flex items-center justify-between text-[11px] text-slate-500">
+                <span id="celery-estudiante-detail" class="truncate max-w-[280px]">Iniciando generación...</span>
+                <span id="celery-count-detail" class="font-bold">0 / 0</span>
+            </div>
+
+            <a id="celery-download-btn" href="#" target="_blank"
+               class="hidden w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-extrabold hover:bg-emerald-700 transition-all shadow-xs">
+                <i data-lucide="download-cloud" class="w-4 h-4"></i>
+                <span id="celery-download-label">Descargar Archivo ZIP</span>
+            </a>
+
+            <div id="celery-error-alert" class="hidden p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
+                <span id="celery-error-text">Ocurrió un error en la generación del lote.</span>
+            </div>
+        </div>
     </div>
 
 </div>
 
-<!-- Scripts de Interacción para Generación Paramétrica -->
+<!-- ============================================================================== -->
+<!-- MODAL INTERACTIVO Y CONTEXTUAL DE PARÁMETROS DE EMISIÓN -->
+<!-- ============================================================================== -->
+<div id="modal-reporte" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden transform transition-all">
+        <!-- Encabezado del Modal -->
+        <div class="bg-slate-50/90 border-b border-slate-200 p-5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div id="modal-icon-container" class="w-10 h-10 rounded-2xl bg-emerald-100 text-[#1E6532] flex items-center justify-center font-bold">
+                    <i data-lucide="sliders" id="modal-icon" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 id="modal-titulo" class="font-extrabold text-slate-900 text-base">Parámetros del Reporte</h3>
+                    <p id="modal-subtitulo" class="text-xs text-slate-500">Seleccione los criterios para emitir el documento.</p>
+                </div>
+            </div>
+            <button type="button" onclick="cerrarModalReporte()" class="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Formulario del Modal -->
+        <div class="p-6 space-y-4 text-xs">
+            <!-- Ciclo Escolar -->
+            <div id="campo-ciclo" class="space-y-1">
+                <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px]">Ciclo Escolar</label>
+                <select id="modal-select-ciclo" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800">
+                    {% for c in ciclos %}
+                    <option value="{{ c.id }}" {% if c.estado_activo %}selected{% endif %}>Ciclo Lectivo {{ c.anio }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Grado y Sección (Jerárquico) -->
+            <div id="campo-grado-seccion" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="space-y-1">
+                    <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px]">Grado</label>
+                    <select id="modal-select-grado" onchange="cargarSeccionesPorGrado(this.value)" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800">
+                        <option value="">-- Seleccionar Grado --</option>
+                        {% for g in grados %}
+                        <option value="{{ g.id }}">{{ g.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px]">Sección</label>
+                    <select id="modal-select-seccion" onchange="onSeccionCambiada(this.value)" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800">
+                        <option value="">-- Primero elija el Grado --</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Estudiante (Dependiente de Sección) -->
+            <div id="campo-estudiante" class="space-y-1">
+                <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px]">Estudiante</label>
+                <select id="modal-select-estudiante" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800">
+                    <option value="">-- Seleccione una sección primero --</option>
+                </select>
+                <p id="estudiante-ayuda" class="text-[10px] text-slate-400">Elija el grado y la sección para listar los estudiantes asignados.</p>
+            </div>
+
+            <!-- Rango de Fechas (Para Caja) -->
+            <div id="campo-fechas" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="space-y-1">
+                    <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px]">Fecha Inicial</label>
+                    <input type="date" id="modal-fecha-ini" value="{{ hoy|date:'Y-m-d' }}" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800">
+                </div>
+                <div class="space-y-1">
+                    <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px]">Fecha Final</label>
+                    <input type="date" id="modal-fecha-fin" value="{{ hoy|date:'Y-m-d' }}" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800">
+                </div>
+            </div>
+
+            <!-- Mes a Liquidar (Para Planillas) -->
+            <div id="campo-mes" class="space-y-1">
+                <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px]">Mes a Liquidar</label>
+                <select id="modal-select-mes" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800">
+                    <option value="1">Enero</option>
+                    <option value="2">Febrero</option>
+                    <option value="3">Marzo</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Mayo</option>
+                    <option value="6">Junio</option>
+                    <option value="7">Julio</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Septiembre</option>
+                    <option value="10">Octubre</option>
+                    <option value="11">Noviembre</option>
+                    <option value="12">Diciembre</option>
+                </select>
+            </div>
+
+            <!-- Planilla Individual de Personal -->
+            <div id="campo-planilla-individual" class="space-y-1">
+                <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px]">Seleccionar Boleta del Colaborador</label>
+                <select id="modal-select-planilla-id" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800">
+                    {% for pl in planillas_recientes %}
+                    <option value="{{ pl.id }}">{{ pl.personal.persona.nombre_completo }} — {{ pl.get_mes_pagado_display }} {{ pl.ciclo_escolar.anio }} (Q{{ pl.total_pagar|floatformat:2 }})</option>
+                    {% empty %}
+                    <option value="">No hay registros de planillas generadas</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Alerta de Validación -->
+            <div id="modal-error" class="hidden p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 font-semibold text-xs flex items-center gap-2">
+                <i data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0"></i>
+                <span id="modal-error-text">Por favor complete todos los campos requeridos.</span>
+            </div>
+        </div>
+
+        <!-- Botones de Acción del Modal -->
+        <div class="bg-slate-50/90 border-t border-slate-200 p-4 flex items-center justify-end gap-2.5">
+            <button type="button" onclick="cerrarModalReporte()" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-100 transition-colors cursor-pointer">
+                Cancelar
+            </button>
+            <button type="button" id="modal-btn-excel" onclick="ejecutarEmision('excel')"
+                    class="hidden inline-flex items-center gap-1.5 px-4 py-2 bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-700 transition-all shadow-xs cursor-pointer">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
+                <span>Exportar Excel</span>
+            </button>
+            <button type="button" id="modal-btn-pdf" onclick="ejecutarEmision('pdf')"
+                    class="inline-flex items-center gap-1.5 px-5 py-2 bg-[#1E6532] text-white rounded-xl font-extrabold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20 cursor-pointer">
+                <i data-lucide="printer" class="w-4 h-4"></i>
+                <span>Generar PDF</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================================== -->
+<!-- SCRIPTS DE INTERACCIÓN, BÚSQUEDA Y EMISIÓN PARAMÉTRICA -->
+<!-- ============================================================================== -->
 <script>
-    function descargarBoletaPDF() {
-        const estId = document.getElementById('select-estudiante-boleta').value;
-        const cicloId = document.getElementById('select-ciclo-boleta').value;
-        if (!estId || !cicloId) return;
-        window.open(`/reportes/academico/boleta/${estId}/${cicloId}/`, '_blank');
+    let reporteActual = null;
+
+    // Configuración de los campos requeridos y formatos para cada reporte
+    const CONFIG_REPORTES = {
+        'boleta_individual': {
+            titulo: 'Boleta Oficial de Calificaciones',
+            subtitulo: 'Seleccione grado, sección y estudiante para generar la boleta.',
+            campos: ['ciclo', 'grado_seccion', 'estudiante'],
+            permitePDF: true,
+            permiteExcel: false
+        },
+        'cuadro_calificaciones': {
+            titulo: 'Cuadro General de Calificaciones por Sección',
+            subtitulo: 'Matriz consolidada de cursos y calificaciones acumuladas.',
+            campos: ['ciclo', 'grado_seccion'],
+            permitePDF: true,
+            permiteExcel: true
+        },
+        'listado_estudiantes': {
+            titulo: 'Listado Oficial de Estudiantes Inscritos',
+            subtitulo: 'Padrón escolar de la sección con datos de contacto y encargado.',
+            campos: ['ciclo', 'grado_seccion'],
+            permitePDF: true,
+            permiteExcel: true
+        },
+        'cuadro_honor': {
+            titulo: 'Cuadro de Honor y Excelencia Académica',
+            subtitulo: 'Ranking de los mejores promedios acumulados de la sección.',
+            campos: ['ciclo', 'grado_seccion'],
+            permitePDF: true,
+            permiteExcel: true
+        },
+        'constancia_inscripcion': {
+            titulo: 'Constancia Oficial de Inscripción Escolar',
+            subtitulo: 'Seleccione el estudiante para extender la constancia oficial.',
+            campos: ['ciclo', 'grado_seccion', 'estudiante'],
+            permitePDF: true,
+            permiteExcel: false
+        },
+        'antiguedad_saldos': {
+            titulo: 'Antigüedad de Saldos y Morosidad',
+            subtitulo: 'Corte de cartera estratificado en Quetzales.',
+            campos: ['ciclo'],
+            permitePDF: true,
+            permiteExcel: true
+        },
+        'cuadre_caja': {
+            titulo: 'Arqueo y Cuadre Diario de Caja',
+            subtitulo: 'Consolidado de cobros y recibos por rango de fechas.',
+            campos: ['fechas'],
+            permitePDF: true,
+            permiteExcel: true
+        },
+        'estado_cuenta': {
+            titulo: 'Estado de Cuenta y Solvencia',
+            subtitulo: 'Registro de cuotas y abonos del estudiante.',
+            campos: ['ciclo', 'grado_seccion', 'estudiante'],
+            permitePDF: true,
+            permiteExcel: false
+        },
+        'consolidado_planilla': {
+            titulo: 'Consolidado Mensual de Planilla',
+            subtitulo: 'Nómina general de sueldos, Decreto 37-2001 e IGSS.',
+            campos: ['ciclo', 'mes'],
+            permitePDF: true,
+            permiteExcel: true
+        },
+        'boleta_pago_individual': {
+            titulo: 'Boleta Oficial de Pago de Salario',
+            subtitulo: 'Comprobante individual para firma del colaborador.',
+            campos: ['planilla_individual'],
+            permitePDF: true,
+            permiteExcel: false
+        },
+        'disciplina_historial': {
+            titulo: 'Historial de Disciplina y Convivencia',
+            subtitulo: 'Faltas tipificadas y medidas formativas aplicadas.',
+            campos: ['ciclo', 'grado_seccion'],
+            permitePDF: true,
+            permiteExcel: true
+        }
+    };
+
+    function abrirModalReporte(tipoReporte) {
+        reporteActual = tipoReporte;
+        const conf = CONFIG_REPORTES[tipoReporte];
+        if (!conf) return;
+
+        document.getElementById('modal-titulo').innerText = conf.titulo;
+        document.getElementById('modal-subtitulo').innerText = conf.subtitulo;
+        document.getElementById('modal-error').classList.add('hidden');
+
+        // Mostrar u ocultar campos según corresponda
+        document.getElementById('campo-ciclo').style.display = conf.campos.includes('ciclo') ? 'block' : 'none';
+        document.getElementById('campo-grado-seccion').style.display = conf.campos.includes('grado_seccion') ? 'grid' : 'none';
+        document.getElementById('campo-estudiante').style.display = conf.campos.includes('estudiante') ? 'block' : 'none';
+        document.getElementById('campo-fechas').style.display = conf.campos.includes('fechas') ? 'grid' : 'none';
+        document.getElementById('campo-mes').style.display = conf.campos.includes('mes') ? 'block' : 'none';
+        document.getElementById('campo-planilla-individual').style.display = conf.campos.includes('planilla_individual') ? 'block' : 'none';
+
+        // Botones de salida
+        document.getElementById('modal-btn-pdf').style.display = conf.permitePDF ? 'inline-flex' : 'none';
+        document.getElementById('modal-btn-excel').style.display = conf.permiteExcel ? 'inline-flex' : 'none';
+
+        // Resetear selectores dependientes
+        document.getElementById('modal-select-grado').selectedIndex = 0;
+        document.getElementById('modal-select-seccion').innerHTML = '<option value="">-- Primero elija el Grado --</option>';
+        document.getElementById('modal-select-estudiante').innerHTML = '<option value="">-- Seleccione una sección primero --</option>';
+
+        document.getElementById('modal-reporte').classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
     }
 
-    function descargarCuadroHonor() {
-        const secId = document.getElementById('select-seccion-rendimiento').value;
-        const cicloId = document.getElementById('select-ciclo-rendimiento').value;
-        window.location.href = `/reportes/academico/cuadro-honor/?seccion_id=${secId}&ciclo_id=${cicloId}`;
+    function cerrarModalReporte() {
+        document.getElementById('modal-reporte').classList.add('hidden');
+        reporteActual = null;
     }
 
-    function descargarSabanaNotas() {
-        const secId = document.getElementById('select-seccion-rendimiento').value;
-        const cicloId = document.getElementById('select-ciclo-rendimiento').value;
-        window.location.href = `/reportes/academico/sabana/?seccion_id=${secId}&ciclo_id=${cicloId}`;
+    // Carga dinámica de Secciones según el Grado elegido
+    function cargarSeccionesPorGrado(gradoId) {
+        const selectSec = document.getElementById('modal-select-seccion');
+        selectSec.innerHTML = '<option value="">Cargando secciones...</option>';
+        document.getElementById('modal-select-estudiante').innerHTML = '<option value="">-- Seleccione una sección primero --</option>';
+
+        if (!gradoId) {
+            selectSec.innerHTML = '<option value="">-- Primero elija el Grado --</option>';
+            return;
+        }
+
+        fetch(`/reportes/api/secciones-por-grado/${gradoId}/`)
+            .then(r => r.json())
+            .then(data => {
+                selectSec.innerHTML = '<option value="">-- Seleccionar Sección --</option>';
+                if (data.secciones && data.secciones.length > 0) {
+                    data.secciones.forEach(s => {
+                        const opt = document.createElement('option');
+                        opt.value = s.id;
+                        opt.textContent = s.nombre;
+                        selectSec.appendChild(opt);
+                    });
+                } else {
+                    selectSec.innerHTML = '<option value="">No hay secciones en este grado</option>';
+                }
+            })
+            .catch(err => {
+                selectSec.innerHTML = '<option value="">Error al cargar secciones</option>';
+                console.error(err);
+            });
     }
 
-    function descargarAntiguedad(formato) {
-        const cicloId = document.getElementById('select-ciclo-antiguedad').value;
-        const url = `/reportes/financiero/antiguedad-saldos/?formato=${formato}&ciclo_id=${cicloId}`;
-        if (formato === 'pdf') {
-            window.open(url, '_blank');
-        } else {
-            window.location.href = url;
+    // Carga dinámica de Estudiantes según la Sección y Ciclo elegidos
+    function onSeccionCambiada(seccionId) {
+        const conf = CONFIG_REPORTES[reporteActual];
+        if (!conf || !conf.campos.includes('estudiante')) return;
+
+        const selectEst = document.getElementById('modal-select-estudiante');
+        const cicloId = document.getElementById('modal-select-ciclo').value;
+
+        if (!seccionId) {
+            selectEst.innerHTML = '<option value="">-- Seleccione una sección primero --</option>';
+            return;
+        }
+
+        selectEst.innerHTML = '<option value="">Cargando estudiantes...</option>';
+        fetch(`/reportes/api/estudiantes-por-seccion/${seccionId}/${cicloId}/`)
+            .then(r => r.json())
+            .then(data => {
+                selectEst.innerHTML = '<option value="">-- Seleccionar Estudiante --</option>';
+                if (data.estudiantes && data.estudiantes.length > 0) {
+                    data.estudiantes.forEach(e => {
+                        const opt = document.createElement('option');
+                        opt.value = e.id;
+                        opt.textContent = `${e.nombre_completo} | CUI: ${e.cui}`;
+                        selectEst.appendChild(opt);
+                    });
+                } else {
+                    selectEst.innerHTML = '<option value="">No hay estudiantes inscritos en esta sección</option>';
+                }
+            })
+            .catch(err => {
+                selectEst.innerHTML = '<option value="">Error al cargar estudiantes</option>';
+                console.error(err);
+            });
+    }
+
+    // Ejecución de la emisión paramétrica del reporte
+    function ejecutarEmision(formato) {
+        const conf = CONFIG_REPORTES[reporteActual];
+        if (!conf) return;
+
+        const cicloId = document.getElementById('modal-select-ciclo').value;
+        const seccionId = document.getElementById('modal-select-seccion').value;
+        const estudianteId = document.getElementById('modal-select-estudiante').value;
+        const fechaIni = document.getElementById('modal-fecha-ini').value;
+        const fechaFin = document.getElementById('modal-fecha-fin').value;
+        const mes = document.getElementById('modal-select-mes').value;
+        const planillaId = document.getElementById('modal-select-planilla-id').value;
+        const errBox = document.getElementById('modal-error');
+        const errText = document.getElementById('modal-error-text');
+
+        errBox.classList.add('hidden');
+
+        // Validaciones según el reporte
+        if (conf.campos.includes('grado_seccion') && !seccionId && reporteActual !== 'disciplina_historial') {
+            errText.innerText = 'Debe seleccionar el grado y la sección.';
+            errBox.classList.remove('hidden');
+            return;
+        }
+
+        if (conf.campos.includes('estudiante') && !estudianteId) {
+            errText.innerText = 'Debe seleccionar un estudiante.';
+            errBox.classList.remove('hidden');
+            return;
+        }
+
+        if (conf.campos.includes('planilla_individual') && !planillaId) {
+            errText.innerText = 'Debe seleccionar una boleta de planilla válida.';
+            errBox.classList.remove('hidden');
+            return;
+        }
+
+        let url = '';
+        if (reporteActual === 'boleta_individual') {
+            url = `/reportes/academico/boleta/${estudianteId}/${cicloId}/`;
+        } else if (reporteActual === 'cuadro_calificaciones') {
+            url = `/reportes/academico/cuadro-calificaciones/?seccion_id=${seccionId}&ciclo_id=${cicloId}&formato=${formato}`;
+        } else if (reporteActual === 'listado_estudiantes') {
+            url = `/reportes/academico/listado-estudiantes/?seccion_id=${seccionId}&ciclo_id=${cicloId}&formato=${formato}`;
+        } else if (reporteActual === 'cuadro_honor') {
+            url = `/reportes/academico/cuadro-honor/?seccion_id=${seccionId}&ciclo_id=${cicloId}&formato=${formato}`;
+        } else if (reporteActual === 'constancia_inscripcion') {
+            url = `/reportes/academico/constancia-inscripcion/${estudianteId}/${cicloId}/`;
+        } else if (reporteActual === 'antiguedad_saldos') {
+            url = `/reportes/financiero/antiguedad-saldos/?ciclo_id=${cicloId}&formato=${formato}`;
+        } else if (reporteActual === 'cuadre_caja') {
+            url = `/reportes/financiero/cuadre-caja/?fecha_inicio=${fechaIni}&fecha_fin=${fechaFin}&formato=${formato}`;
+        } else if (reporteActual === 'estado_cuenta') {
+            url = `/reportes/financiero/estado-cuenta/${estudianteId}/${cicloId}/`;
+        } else if (reporteActual === 'consolidado_planilla') {
+            url = `/reportes/rrhh/consolidado-planillas/?ciclo_id=${cicloId}&mes=${mes}&formato=${formato}`;
+        } else if (reporteActual === 'boleta_pago_individual') {
+            url = `/reportes/rrhh/boleta-pago/${planillaId}/`;
+        } else if (reporteActual === 'disciplina_historial') {
+            const secParam = seccionId ? `&seccion_id=${seccionId}` : '';
+            url = `/reportes/disciplina/historial/?ciclo_id=${cicloId}${secParam}&formato=${formato}`;
+        }
+
+        if (url) {
+            if (formato === 'pdf') {
+                window.open(url, '_blank');
+            } else {
+                window.location.href = url;
+            }
+            cerrarModalReporte();
         }
     }
 
-    function descargarCuadreCaja() {
-        const ini = document.getElementById('input-cuadre-ini').value;
-        const fin = document.getElementById('input-cuadre-fin').value;
-        window.location.href = `/reportes/financiero/cuadre-caja/?fecha_inicio=${ini}&fecha_fin=${fin}`;
-    }
+    // Buscador interactivo en vivo y filtro por categorías
+    document.addEventListener('DOMContentLoaded', function () {
+        const buscador = document.getElementById('buscador-reportes');
+        const tarjetas = Array.from(document.querySelectorAll('.tarjeta-reporte'));
+        const tabBtns = Array.from(document.querySelectorAll('.btn-tab-categoria'));
+        let categoriaActiva = 'todos';
 
-    function descargarPlanilla(formato) {
-        const cicloId = document.getElementById('select-ciclo-planilla').value;
-        const mes = document.getElementById('select-mes-planilla').value;
-        const url = `/reportes/rrhh/consolidado-planillas/?formato=${formato}&ciclo_id=${cicloId}&mes=${mes}`;
-        if (formato === 'pdf') {
-            window.open(url, '_blank');
-        } else {
-            window.location.href = url;
+        function filtrarCatalogo() {
+            const query = buscador.value.trim().toLowerCase();
+
+            tarjetas.forEach(t => {
+                const cat = t.getAttribute('data-categoria') || '';
+                const tit = t.getAttribute('data-titulo') || '';
+                const desc = t.getAttribute('data-desc') || '';
+
+                const coincideCat = (categoriaActiva === 'todos' || cat === categoriaActiva);
+                const coincideTexto = !query || tit.includes(query) || desc.includes(query);
+
+                if (coincideCat && coincideTexto) {
+                    t.style.display = 'flex';
+                } else {
+                    t.style.display = 'none';
+                }
+            });
         }
-    }
 
+        buscador.addEventListener('input', filtrarCatalogo);
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', function () {
+                tabBtns.forEach(b => {
+                    b.className = 'btn-tab-categoria px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 cursor-pointer';
+                });
+                this.className = 'btn-tab-categoria px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-[#1E6532] text-white shadow-xs cursor-pointer';
+                categoriaActiva = this.getAttribute('data-categoria') || 'todos';
+                filtrarCatalogo();
+            });
+        });
+    });
+
+    // Control del procesamiento asíncrono en segundo plano (Celery)
     let celeryPollInterval = null;
 
     function iniciarGeneracionZip() {
@@ -490,11 +1076,10 @@
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : '';
 
         if (!secId || !cicloId) {
-            alert('Por favor selecciona la sección y el ciclo escolar.');
+            alert('Por favor seleccione la sección y el ciclo escolar.');
             return;
         }
 
-        // Limpiar estado previo
         if (celeryPollInterval) clearInterval(celeryPollInterval);
         btn.disabled = true;
         btn.classList.add('opacity-50', 'cursor-not-allowed');
@@ -502,7 +1087,7 @@
         bar.style.width = '0%';
         percentTxt.innerText = '0%';
         statusTxt.innerText = 'Iniciando proceso en segundo plano...';
-        estDetail.innerText = 'En cola...';
+        estDetail.innerText = 'En cola de procesamiento...';
         countDetail.innerText = '';
         downloadBtn.classList.add('hidden');
         errorAlert.classList.add('hidden');
@@ -514,9 +1099,7 @@
         fetch("{% url 'reportes:boletas_zip_iniciar' %}", {
             method: 'POST',
             body: formData,
-            headers: {
-                'X-CSRFToken': csrfToken
-            }
+            headers: { 'X-CSRFToken': csrfToken }
         })
         .then(res => res.json())
         .then(data => {
@@ -524,7 +1107,7 @@
                 throw new Error(data.error || 'No se pudo iniciar la tarea asíncrona.');
             }
             const taskId = data.task_id;
-            statusTxt.innerText = 'Tarea iniciada, procesando en segundo plano...';
+            statusTxt.innerText = 'Tarea en ejecución, procesando boletas...';
 
             celeryPollInterval = setInterval(() => {
                 fetch(`/reportes/asincrono/tarea/${taskId}/estado/`)
@@ -534,8 +1117,8 @@
                         const pct = taskData.percent || 0;
                         bar.style.width = pct + '%';
                         percentTxt.innerText = pct + '%';
-                        statusTxt.innerText = 'Generando boletas en PDF...';
-                        estDetail.innerText = taskData.estudiante_actual ? `Procesando: ${taskData.estudiante_actual}` : '';
+                        statusTxt.innerText = 'Generando boletas oficiales en PDF...';
+                        estDetail.innerText = taskData.estudiante_actual ? `Estudiante: ${taskData.estudiante_actual}` : '';
                         countDetail.innerText = `${taskData.current || 0} de ${taskData.total || 0}`;
                     } else if (taskData.state === 'SUCCESS') {
                         clearInterval(celeryPollInterval);

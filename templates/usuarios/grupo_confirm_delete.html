@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirmar Eliminación de Rol | IBACOOP EL PROGRESO{% endblock %}
+{% block page_title %}Eliminar Rol Institucional{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto space-y-6">
+
+    <!-- Migas de Pan -->
+    <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider">
+        <a href="{% url 'core:home' %}" class="hover:underline">Dashboard</a>
+        <span>/</span>
+        <a href="{% url 'usuarios:usuario_list' %}" class="hover:underline">Usuarios</a>
+        <span>/</span>
+        <a href="{% url 'usuarios:grupo_list' %}" class="hover:underline">Roles y Permisos</a>
+        <span>/</span>
+        <span class="text-slate-500">Eliminar Rol</span>
+    </div>
+
+    <!-- Tarjeta de Confirmación -->
+    <div class="bg-white rounded-2xl border border-rose-200 p-6 shadow-sm space-y-5">
+        <div class="flex items-start gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center flex-shrink-0">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h2 class="text-lg font-extrabold text-slate-900 tracking-tight">¿Eliminar el rol de permisos?</h2>
+                <p class="text-xs text-slate-500 mt-1">Esta acción eliminará el grupo del sistema de control de accesos.</p>
+            </div>
+        </div>
+
+        <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2 text-xs">
+            <div class="flex justify-between py-1 border-b border-slate-200/60">
+                <span class="font-bold text-slate-500">Nombre del Rol:</span>
+                <span class="font-extrabold text-slate-900">{{ grupo.name }}</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-200/60">
+                <span class="font-bold text-slate-500">Permisos asignados:</span>
+                <span class="font-extrabold text-slate-900">{{ grupo.permissions.count }}</span>
+            </div>
+            <div class="flex justify-between py-1">
+                <span class="font-bold text-slate-500">Usuarios con este rol:</span>
+                <span class="font-extrabold {% if total_usuarios > 0 %}text-amber-700{% else %}text-slate-900{% endif %}">
+                    {{ total_usuarios }} cuenta{{ total_usuarios|pluralize }}
+                </span>
+            </div>
+        </div>
+
+        {% if total_usuarios > 0 %}
+        <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-center gap-2">
+            <i data-lucide="info" class="w-4 h-4 text-amber-600 flex-shrink-0"></i>
+            <span>Las <strong>{{ total_usuarios }} cuentas</strong> vinculadas conservarán su usuario institucional, pero perderán los permisos conferidos por este rol específico.</span>
+        </div>
+        {% endif %}
+
+        <form method="post" class="flex items-center justify-end gap-3 pt-2">
+            {% csrf_token %}
+            <a href="{% url 'usuarios:grupo_list' %}" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors cursor-pointer">
+                Cancelar
+            </a>
+            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-rose-600/20 cursor-pointer">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                Confirmar y Eliminar
+            </button>
+        </form>
+    </div>
+
+</div>
+{% endblock %}

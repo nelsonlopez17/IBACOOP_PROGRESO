@@ -8,7 +8,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="max-w-3xl space-y-4">
             <span class="text-xs font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-400/30">
-                Plan de Estudios Oficial MINEDUC
+                Ciclo de Educación Básica
             </span>
             <h1 class="text-3xl sm:text-5xl font-black tracking-tight">
                 Oferta Académica — Ciclo Básico
@@ -45,13 +45,17 @@
                     </div>
                     <h3 class="text-2xl font-bold text-slate-900">Primero Básico</h3>
                     <p class="text-sm text-slate-600 leading-relaxed">
-                        Enfoque especial en la nivelación académica de los egresados de Primaria. Adaptación al ritmo de múltiples catedráticos por materia, refuerzo de la lectura comprensiva y el cálculo numérico.
+                        {{ config_portal.descripcion_primero_basico|default:"Enfoque especial en la nivelación académica de los egresados de Primaria. Adaptación al ritmo de múltiples catedráticos por materia, refuerzo de la lectura comprensiva y el cálculo numérico." }}
                     </p>
                     <div class="space-y-2 pt-4 border-t border-slate-200 text-xs text-slate-700">
                         <div class="font-bold text-slate-900 mb-1">Aspectos clave:</div>
+                        {% for punto in config_portal.lista_puntos_primero_basico %}
+                        <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600"></i> {{ punto }}</div>
+                        {% empty %}
                         <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600"></i> Hábitos y técnicas de estudio</div>
                         <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600"></i> Introducción a la ofimática en laboratorio</div>
                         <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-600"></i> Integración a la vida cooperativa escolar</div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
@@ -65,13 +69,17 @@
                     </div>
                     <h3 class="text-2xl font-bold text-slate-900">Segundo Básico</h3>
                     <p class="text-sm text-slate-600 leading-relaxed">
-                        Fortalecimiento de la capacidad investigativa y el razonamiento abstracto en ciencias y álgebra. Fomento del debate respetuoso, proyectos grupales y habilidades socioemocionales.
+                        {{ config_portal.descripcion_segundo_basico|default:"Fortalecimiento de la capacidad investigativa y el razonamiento abstracto en ciencias y álgebra. Fomento del debate respetuoso, proyectos grupales y habilidades socioemocionales." }}
                     </p>
                     <div class="space-y-2 pt-4 border-t border-slate-200 text-xs text-slate-700">
                         <div class="font-bold text-slate-900 mb-1">Aspectos clave:</div>
+                        {% for punto in config_portal.lista_puntos_segundo_basico %}
+                        <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-blue-600"></i> {{ punto }}</div>
+                        {% empty %}
                         <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-blue-600"></i> Álgebra y geometría básica</div>
                         <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-blue-600"></i> Método científico y experimentos</div>
                         <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-blue-600"></i> Emprendimiento y formulación de ideas</div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
@@ -85,13 +93,17 @@
                     </div>
                     <h3 class="text-2xl font-bold text-slate-900">Tercero Básico</h3>
                     <p class="text-sm text-slate-600 leading-relaxed">
-                        Consolidación académica para la culminación del ciclo. Asesoría y orientación vocacional hacia las diferentes carreras del Nivel Diversificado (Perito, Bachillerato, Magisterio).
+                        {{ config_portal.descripcion_tercero_basico|default:"Consolidación académica para la culminación del ciclo. Asesoría y orientación vocacional hacia las diferentes carreras del Nivel Diversificado (Perito, Bachillerato, Magisterio)." }}
                     </p>
                     <div class="space-y-2 pt-4 border-t border-slate-200 text-xs text-slate-700">
                         <div class="font-bold text-slate-900 mb-1">Aspectos clave:</div>
-                        <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-rose-600"></i> Evaluación diagnóstica oficial MINEDUC</div>
+                        {% for punto in config_portal.lista_puntos_tercero_basico %}
+                        <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-rose-600"></i> {{ punto }}</div>
+                        {% empty %}
+                        <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-rose-600"></i> Evaluación diagnóstica y formativa continua</div>
                         <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-rose-600"></i> Test vocacional y ferias de orientación</div>
                         <div class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-rose-600"></i> Diploma de Conclusión de Estudios Básicos</div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
@@ -110,7 +122,7 @@
                 Áreas y Subáreas del Currículo Nacional Base
             </h2>
             <p class="text-slate-600 mt-4 leading-relaxed">
-                Todas las asignaturas impartidas en IBACOOP corresponden estrictamente al plan de estudios oficial del Ministerio de Educación de Guatemala.
+                Malla curricular estructurada para el desarrollo equilibrado de competencias científicas, humanísticas y tecnológicas.
             </p>
         </div>
 

@@ -36,13 +36,13 @@
                     El <strong>Instituto Básico por Cooperativa de Enseñanza de Colonia El Progreso</strong> fue fundado con el propósito fundamental de brindar a las familias de Colonia El Progreso y sectores aledaños en Escuintla una alternativa educativa de excelencia al culminar la educación primaria.
                 </p>
                 <p class="text-slate-600 leading-relaxed text-sm sm:text-base">
-                    Bajo el modelo legal de institutos por cooperativa en Guatemala —donde convergen el apoyo del Ministerio de Educación (MINEDUC), el gobierno local y las familias agrupadas en cooperativa de enseñanza—, hemos consolidado un entorno de aprendizaje digno, moderno e incluyente.
+                    Bajo el modelo solidario de enseñanza por cooperativa —donde convergen el esfuerzo de las familias, el apoyo comunitario y un equipo docente comprometido—, hemos consolidado un entorno formativo digno, moderno e incluyente.
                 </p>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                     <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
                         <div class="text-xl font-black text-[#1E6532]">Comunidad Activa</div>
-                        <p class="text-xs text-slate-500 mt-1">Padres y docentes unidos en la toma democrática de decisiones formativas.</p>
+                        <p class="text-xs text-slate-500 mt-1">Padres de familia y docentes unidos en el acompañamiento formativo.</p>
                     </div>
                     <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200">
                         <div class="text-xl font-black text-[#7A1C21]">Sin Ánimo de Lucro</div>
@@ -54,24 +54,24 @@
             <div class="lg:col-span-5">
                 <div class="bg-gradient-to-br from-emerald-50 to-slate-100 p-8 rounded-3xl border border-emerald-200 shadow-sm space-y-6">
                     <div class="w-12 h-12 rounded-2xl bg-[#1E6532] text-white flex items-center justify-center shadow-md">
-                        <i data-lucide="shield-check" class="w-6 h-6"></i>
+                        <i data-lucide="compass" class="w-6 h-6"></i>
                     </div>
-                    <h3 class="text-xl font-bold text-slate-900">Acreditación y Marco Legal</h3>
+                    <h3 class="text-xl font-bold text-slate-900">Pilares Institucionales</h3>
                     <p class="text-xs text-slate-600 leading-relaxed">
-                        IBACOOP opera formalmente avalado por el Ministerio de Educación de la República de Guatemala, rigiéndose bajo el Decreto Legislativo No. 17-95 (Ley de Institutos de Educación Básica por Cooperativa de Enseñanza) y el Currículo Nacional Base (CNB).
+                        IBACOOP fundamenta su labor educativa en la excelencia pedagógica, el desarrollo personal y el espíritu comunitario que acompaña a cada estudiante.
                     </p>
                     <ul class="text-xs text-slate-700 space-y-2.5 pt-2 border-t border-emerald-200/60">
                         <li class="flex items-center gap-2">
                             <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>
-                            Acreditación oficial del Ministerio de Educación
+                            Cuerpo docente calificado y con vocación de servicio
                         </li>
                         <li class="flex items-center gap-2">
                             <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>
-                            Títulos y diplomas con validez nacional
+                            Laboratorio de computación y formación tecnológica
                         </li>
                         <li class="flex items-center gap-2">
                             <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>
-                            Supervisión técnica de la Dirección Departamental
+                            Acompañamiento cercano y orientación formativa continua
                         </li>
                     </ul>
                 </div>
@@ -94,7 +94,7 @@
                 <span class="text-xs font-bold uppercase tracking-wider text-[#1E6532]">Nuestro Compromiso</span>
                 <h3 class="text-2xl font-black text-slate-900 mt-1 mb-4">Misión Institucional</h3>
                 <p class="text-slate-600 leading-relaxed text-sm sm:text-base">
-                    Formar integralmente a las y los estudiantes del Ciclo de Educación Básica mediante un modelo pedagógico de alta calidad científica, tecnológica y humanística, fundamentado en los valores cooperativos, para que egresen con capacidades que les permitan continuar con éxito su educación diversificada y aportar positivamente a la sociedad.
+                    {{ config_portal.mision|linebreaksbr|default:'Formar integralmente a las y los estudiantes del Ciclo de Educación Básica mediante un modelo pedagógico de alta calidad científica, tecnológica y humanística, fundamentado en los valores cooperativos, para que egresen con capacidades que les permitan continuar con éxito su educación diversificada y aportar positivamente a la sociedad.' }}
                 </p>
             </div>
 
@@ -106,7 +106,7 @@
                 <span class="text-xs font-bold uppercase tracking-wider text-[#7A1C21]">Nuestra Meta</span>
                 <h3 class="text-2xl font-black text-slate-900 mt-1 mb-4">Visión de Futuro</h3>
                 <p class="text-slate-600 leading-relaxed text-sm sm:text-base">
-                    Ser el instituto de educación básica por cooperativa referente en el departamento y a nivel nacional, reconocido por su excelencia académica, su permanente innovación tecnológica en las aulas y su sólida formación en principios éticos, ciudadanos y de liderazgo cooperativo.
+                    {{ config_portal.vision|linebreaksbr|default:'Ser el instituto de educación básica por cooperativa referente en el departamento y a nivel nacional, reconocido por su excelencia académica, su permanente innovación tecnológica en las aulas y su sólida formación en principios éticos, ciudadanos y de liderazgo cooperativo.' }}
                 </p>
             </div>
 

@@ -5,7 +5,7 @@
 {% block content %}
 <div class="space-y-6">
 
-    <!-- Encabezado con Migas de Pan -->
+    <!-- Encabezado con Migas de Pan y Navegación de Versiones -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
             <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
@@ -24,11 +24,33 @@
             </p>
         </div>
 
-        <a href="{% url 'auditoria:dashboard' %}" 
-           class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl text-xs font-bold transition-all shadow-xs self-start sm:self-auto">
-            <i data-lucide="arrow-left" class="w-4 h-4"></i>
-            Regresar a la Pista
-        </a>
+        <div class="flex items-center gap-2 self-start sm:self-auto">
+            <!-- Botón Versión Anterior -->
+            {% if diff_data.prev_id %}
+            <a href="{% url 'auditoria:diff_detail' model_key diff_data.prev_id %}" 
+               class="inline-flex items-center gap-1.5 px-3 py-2 bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold transition-all shadow-xs"
+               title="Ver versión inmediatamente anterior de este registro">
+                <i data-lucide="chevron-left" class="w-4 h-4 text-slate-500"></i>
+                <span>Versión Anterior</span>
+            </a>
+            {% endif %}
+
+            <!-- Botón Versión Siguiente -->
+            {% if diff_data.next_id %}
+            <a href="{% url 'auditoria:diff_detail' model_key diff_data.next_id %}" 
+               class="inline-flex items-center gap-1.5 px-3 py-2 bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold transition-all shadow-xs"
+               title="Ver versión inmediatamente posterior de este registro">
+                <span>Versión Siguiente</span>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500"></i>
+            </a>
+            {% endif %}
+
+            <a href="{% url 'auditoria:dashboard' %}" 
+               class="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl text-xs font-bold transition-all shadow-xs">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                Regresar a la Pista
+            </a>
+        </div>
     </div>
 
     <!-- Tarjeta de Metadatos del Evento -->
@@ -124,9 +146,10 @@
                 <tbody class="divide-y divide-slate-100 font-medium">
                     {% for c in diff_data.changes %}
                     <tr class="hover:bg-slate-50/50 transition-colors">
-                        <!-- Campo -->
-                        <td class="py-3.5 px-4 font-bold text-slate-800">
-                            <code>{{ c.field }}</code>
+                        <!-- Campo con etiqueta legible y código técnico -->
+                        <td class="py-3.5 px-4">
+                            <span class="font-bold text-slate-800 block text-xs">{{ c.field }}</span>
+                            <code class="text-[10px] text-slate-400 font-mono">{{ c.field_name }}</code>
                         </td>
 
                         <!-- Valor Anterior -->
@@ -136,7 +159,7 @@
                             </span>
                         </td>
 
-                        <!-- Flecha -->
+                        <!-- Flecha de transición -->
                         <td class="py-3.5 px-2 text-center text-slate-400">
                             <i data-lucide="arrow-right" class="w-4 h-4 mx-auto text-emerald-600"></i>
                         </td>

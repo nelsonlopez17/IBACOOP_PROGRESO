@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}Publicaciones y Noticias — Gestión del Portal{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Encabezado con Migas de Pan -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+                <a href="{% url 'portal:gestion_dashboard' %}" class="hover:underline">Portal Web</a>
+                <span>/</span>
+                <span class="text-slate-500">Publicaciones</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+                <i data-lucide="newspaper" class="w-7 h-7 text-[#1E6532]"></i>
+                Publicaciones, Noticias y Comunicados
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">
+                Redacción y difusión de avisos oficiales, actividades y comunicados para la comunidad educativa.
+            </p>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="{% url 'portal:gestion_dashboard' %}"
+               class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50">
+                <i data-lucide="arrow-left" class="w-4 h-4 text-slate-400"></i>
+                <span>Volver al Panel</span>
+            </a>
+            <a href="{% url 'portal:publicaciones_create' %}"
+               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1E6532] hover:bg-[#164c25] text-white text-xs font-bold shadow-xs transition-all">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span>Redactar Comunicado</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <form method="get" class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <select name="seccion" onchange="this.form.submit()" 
+                    class="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-semibold text-slate-700">
+                <option value="">Todas las Secciones</option>
+                {% for val, txt in secciones %}
+                <option value="{{ val }}" {% if seccion_actual == val %}selected{% endif %}>{{ txt }}</option>
+                {% endfor %}
+            </select>
+            <div class="relative flex-1 sm:w-64">
+                <input type="text" name="q" value="{{ busqueda }}" placeholder="Buscar por título o contenido..."
+                       class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-slate-700 focus:bg-white">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+            </div>
+            <button type="submit" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold">
+                Filtrar
+            </button>
+            {% if seccion_actual or busqueda %}
+            <a href="{% url 'portal:publicaciones_list' %}" class="text-xs text-rose-600 font-bold hover:underline px-2">Limpiar</a>
+            {% endif %}
+        </form>
+        <span class="text-xs font-bold text-slate-500 shrink-0">
+            {{ publicaciones|length }} registros
+        </span>
+    </div>
+
+    <!-- Tabla de Publicaciones -->
+    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                    <tr>
+                        <th class="py-3 px-4">Fecha</th>
+                        <th class="py-3 px-4">Sección</th>
+                        <th class="py-3 px-4">Título del Comunicado</th>
+                        <th class="py-3 px-4">Autor</th>
+                        <th class="py-3 px-4 text-center">Estado</th>
+                        <th class="py-3 px-4 text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                    {% for pub in publicaciones %}
+                    <tr class="hover:bg-slate-50/70 transition-colors">
+                        <td class="py-3.5 px-4 text-slate-500 whitespace-nowrap">
+                            {{ pub.fecha_publicacion|date:"d/m/Y H:i" }}
+                        </td>
+                        <td class="py-3.5 px-4 whitespace-nowrap">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-700 border border-slate-200">
+                                {{ pub.get_seccion_display }}
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-4">
+                            <span class="font-bold text-slate-900 block">{{ pub.titulo }}</span>
+                            <span class="text-slate-400 text-[11px] line-clamp-1">{{ pub.cuerpo|truncatechars:100 }}</span>
+                        </td>
+                        <td class="py-3.5 px-4 text-slate-600 whitespace-nowrap">
+                            {{ pub.autor.username|default:"Institucional" }}
+                        </td>
+                        <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                            {% if pub.publicado %}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> Publicado
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-600 border border-slate-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Borrador
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                            <div class="inline-flex items-center gap-1.5">
+                                <a href="{% url 'portal:publicaciones_update' pub.pk %}"
+                                   class="p-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+                                   title="Editar">
+                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                </a>
+                                <a href="{% url 'portal:publicaciones_delete' pub.pk %}"
+                                   class="p-2 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors"
+                                   title="Eliminar">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="py-12 text-center text-slate-400">
+                            <p class="font-bold">No se encontraron comunicados con los filtros aplicados.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if is_paginated %}
+        <div class="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+            <span>Página {{ page_obj.number }} de {{ paginator.num_pages }}</span>
+            <div class="flex items-center gap-1">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if seccion_actual %}&seccion={{ seccion_actual }}{% endif %}{% if busqueda %}&q={{ busqueda }}{% endif %}"
+                   class="px-3 py-1.5 rounded-lg bg-slate-100 font-bold text-slate-700">Anterior</a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if seccion_actual %}&seccion={{ seccion_actual }}{% endif %}{% if busqueda %}&q={{ busqueda }}{% endif %}"
+                   class="px-3 py-1.5 rounded-lg bg-slate-100 font-bold text-slate-700">Siguiente</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

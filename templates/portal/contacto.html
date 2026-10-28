@@ -48,7 +48,7 @@
                         <div>
                             <h4 class="font-bold text-slate-900 text-sm">Dirección del Instituto</h4>
                             <p class="text-xs text-slate-600 mt-1 leading-relaxed">
-                                1ª Avenida 10-30, Colonia El Progreso, Escuintla, Guatemala.
+                                {{ config_portal.direccion_fisica|default:"1ª Avenida 10-30, Colonia El Progreso, Escuintla, Guatemala." }}
                             </p>
                             <span class="text-[11px] font-semibold text-emerald-700 mt-1 block">Colonia El Progreso, municipio de Escuintla</span>
                         </div>
@@ -61,20 +61,20 @@
                         <div>
                             <h4 class="font-bold text-slate-900 text-sm">Teléfono y WhatsApp</h4>
                             <p class="text-xs text-slate-600 mt-1 leading-relaxed">
-                                PBX Secretaría: <strong>+(502) 7889-5918</strong><br>
-                                WhatsApp Consultas: <strong>+(502) 7889-5918</strong>
+                                PBX Secretaría: <strong>+(502) {{ config_portal.telefono_principal|default:"7889-5918" }}</strong><br>
+                                WhatsApp Consultas: <strong>+(502) {{ config_portal.telefono_whatsapp|default:"7889-5918" }}</strong>
                             </p>
                         </div>
                     </div>
 
                     <div class="flex items-start gap-4 p-5 rounded-2xl bg-slate-50 border border-slate-200">
-                        <div class="w-12 h-12 rounded-xl bg-rose-100 text-[#7A1C21] flex items-center justify-center shrink-0">
+                        <div class="w-12 h-12 rounded-2xl bg-rose-100 text-[#7A1C21] flex items-center justify-center shrink-0">
                             <i data-lucide="mail" class="w-6 h-6"></i>
                         </div>
                         <div>
                             <h4 class="font-bold text-slate-900 text-sm">Correo Institucional</h4>
                             <p class="text-xs text-slate-600 mt-1 leading-relaxed">
-                                ibacoop.elprogreso@gmail.com
+                                {{ config_portal.correo_contacto|default:"ibacoop.elprogreso@gmail.com" }}
                             </p>
                         </div>
                     </div>
@@ -86,8 +86,8 @@
                         <div>
                             <h4 class="font-bold text-slate-900 text-sm">Horario de Atención Administrativa</h4>
                             <p class="text-xs text-slate-600 mt-1 leading-relaxed">
-                                Lunes a Viernes: <strong>13:00 a 18:00 hrs</strong><br>
-                                Sábados y Domingos: Cerrado
+                                {{ config_portal.horario_atencion|default:"Lunes a Viernes de 13:00 a 18:00 hrs" }}<br>
+                                Jornada: <strong>{{ config_portal.jornada|default:"Vespertina" }}</strong>
                             </p>
                         </div>
                     </div>
@@ -108,6 +108,7 @@
                         {% csrf_token %}
                         <div style="display:none !important;" aria-hidden="true">
                             {{ form.website_url }}
+                            {{ form.token_seguridad }}
                         </div>
 
                         {% if form.non_field_errors %}

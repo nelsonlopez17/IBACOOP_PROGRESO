@@ -8,7 +8,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="max-w-3xl space-y-4">
             <span class="text-xs font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/20 px-3 py-1 rounded-full border border-emerald-400/30">
-                Ciclo Escolar 2026
+                {{ config_portal.ciclo_escolar_activo|default:"Ciclo Escolar 2026" }}
             </span>
             <h1 class="text-3xl sm:text-5xl font-black tracking-tight">
                 Admisiones e Inscripciones
@@ -62,7 +62,7 @@
                 </div>
                 <h3 class="text-lg font-bold text-slate-900">Asignación Escolar</h3>
                 <p class="text-xs text-slate-600 leading-relaxed">
-                    La Dirección y Secretaría formalizan la inscripción en el Sistema ERP del colegio y en el SIRE (Sistema del MINEDUC).
+                    La Dirección y Secretaría formalizan la inscripción en el Sistema ERP del colegio y en los registros del sistema escolar.
                 </p>
             </div>
 
@@ -90,7 +90,7 @@
                 Requisitos Oficiales de Admisión
             </h2>
             <p class="text-slate-600 mt-4 leading-relaxed">
-                Toda la papelería responde a los lineamientos legales del Ministerio de Educación de Guatemala.
+                {{ config_portal.requisitos_subtitulo|default:"Expediente físico reglamentario requerido para formalizar la inscripción en secretaría escolar." }}
             </p>
         </div>
 
@@ -108,13 +108,19 @@
                 </div>
 
                 <ul class="space-y-3.5 text-sm text-slate-700">
+                    {% for req in config_portal.lista_requisitos_primero_basico %}
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5"></i>
+                        <span>{{ req }}</span>
+                    </li>
+                    {% empty %}
                     <li class="flex items-start gap-3">
                         <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5"></i>
                         <span><strong>Certificado original de 6to Grado de Primaria:</strong> Firmado y sellado por la dirección del centro educativo de procedencia.</span>
                     </li>
                     <li class="flex items-start gap-3">
                         <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5"></i>
-                        <span><strong>Diploma oficial de conclusión de Primaria:</strong> Emitido por el MINEDUC.</span>
+                        <span><strong>Diploma de conclusión de Primaria:</strong> Original y copia para cotejo en secretaría.</span>
                     </li>
                     <li class="flex items-start gap-3">
                         <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5"></i>
@@ -132,6 +138,7 @@
                         <i data-lucide="check-circle" class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5"></i>
                         <span><strong>2 Fotografías recientes tamaño cédula:</strong> De frente, formales para expediente escolar.</span>
                     </li>
+                    {% endfor %}
                 </ul>
             </div>
 
@@ -148,6 +155,12 @@
                 </div>
 
                 <ul class="space-y-3.5 text-sm text-slate-700">
+                    {% for req in config_portal.lista_requisitos_traslados %}
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="check-circle" class="w-5 h-5 text-blue-600 shrink-0 mt-0.5"></i>
+                        <span>{{ req }}</span>
+                    </li>
+                    {% empty %}
                     <li class="flex items-start gap-3">
                         <i data-lucide="check-circle" class="w-5 h-5 text-blue-600 shrink-0 mt-0.5"></i>
                         <span><strong>Certificados oficiales de todos los grados previos:</strong> Certificado de 6to Primaria y certificados aprobados de 1ro o 2do Básico.</span>
@@ -168,7 +181,35 @@
                         <i data-lucide="check-circle" class="w-5 h-5 text-blue-600 shrink-0 mt-0.5"></i>
                         <span><strong>Fotocopia de DPI de los padres o encargados:</strong> Acompañado de los datos de contacto vigentes.</span>
                     </li>
+                    {% endfor %}
                 </ul>
+            </div>
+        </div>
+
+        <!-- Cuotas Escolares Oficiales -->
+        <div class="mt-12 bg-white rounded-3xl border border-slate-200 p-8 shadow-xs">
+            <div class="text-center max-w-2xl mx-auto mb-8">
+                <span class="text-xs font-bold uppercase tracking-wider text-[#1E6532] bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                    Aportes Solidarios
+                </span>
+                <h3 class="text-2xl font-extrabold text-slate-900 mt-2">
+                    Estructura de Cuotas Escolares — {{ config_portal.ciclo_escolar_activo|default:"Ciclo Escolar 2026" }}
+                </h3>
+                <p class="text-xs text-slate-500 mt-1">
+                    Valores fijados en asamblea cooperativa para el sostenimiento del centro de estudios.
+                </p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
+                <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-center space-y-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Inscripción Anual</span>
+                    <div class="text-3xl font-black text-[#1E6532]">Q {{ config_portal.cuota_inscripcion|default:"150.00" }}</div>
+                    <p class="text-[11px] text-slate-500">Pago único por estudiante al formalizar el expediente escolar.</p>
+                </div>
+                <div class="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-center space-y-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Cuota Escolar Mensual</span>
+                    <div class="text-3xl font-black text-[#1E6532]">Q {{ config_portal.cuota_mensual|default:"100.00" }}</div>
+                    <p class="text-[11px] text-slate-500">Aporte mensual para sostenimiento de aulas y material docente.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -193,7 +234,7 @@
                     <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 group-open:rotate-180 transition-transform"></i>
                 </summary>
                 <div class="mt-4 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-200/80 pt-3">
-                    Bajo el Decreto 17-95, los institutos por cooperativa cuentan con aporte del Ministerio de Educación, la Municipalidad local y las familias asociadas. Al ser una entidad sin fines de lucro, los costos son significativamente menores a los de un colegio privado tradicional, manteniendo el estándar de calidad docente.
+                    El modelo de enseñanza por cooperativa opera sin fines de lucro, uniendo el esfuerzo de las familias y la comunidad educativa para mantener cuotas solidarias y accesibles destinadas exclusivamente al mantenimiento de las instalaciones y al material didáctico de los estudiantes.
                 </div>
             </details>
 

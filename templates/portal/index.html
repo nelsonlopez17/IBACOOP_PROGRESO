@@ -8,21 +8,20 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="max-w-3xl mx-auto text-center space-y-6">
             
-            <!-- Sello Oficial MINEDUC -->
+            <!-- Distintivo Formativo -->
             <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold uppercase tracking-wider">
-                <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
-                <span>Acreditación y Validez Oficial MINEDUC</span>
+                <i data-lucide="award" class="w-4 h-4 text-emerald-600"></i>
+                <span>Ciclo de Educación Básica • Escuintla</span>
             </div>
 
             <!-- Titular Principal -->
             <h1 class="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight leading-tight">
-                Instituto Básico por Cooperativa de Enseñanza <br class="hidden sm:inline">
-                <span class="text-[#1E6532]">Colonia El Progreso • Escuintla</span>
+                {{ config_portal.hero_titulo|linebreaksbr|default:'Instituto Básico por Cooperativa de Enseñanza <br class="hidden sm:inline"><span class="text-[#1E6532]">Colonia El Progreso • Escuintla</span>'|safe }}
             </h1>
 
             <!-- Descripción Concreta -->
             <p class="text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto">
-                Formación integral para el <strong>Ciclo de Educación Básica</strong> en Escuintla, Guatemala. Impartimos educación de excelencia bajo el Currículo Nacional Base (CNB), valores éticos y principios cooperativos al alcance de las familias.
+                {{ config_portal.hero_descripcion|default:'Formación integral para el Ciclo de Educación Básica en Escuintla, Guatemala. Impartimos educación de excelencia bajo el Currículo Nacional Base (CNB), valores éticos y principios cooperativos al alcance de las familias.' }}
             </p>
 
             <!-- Botones de Acción Directa -->
@@ -32,18 +31,26 @@
                     <i data-lucide="file-text" class="w-4 h-4"></i>
                     <span>Requisitos de Admisión</span>
                 </a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'core:home' %}" 
+                   class="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4 text-[#1E6532]"></i>
+                    <span>Volver a Mi Panel</span>
+                </a>
+                {% else %}
                 <a href="{% url 'usuarios:login' %}" 
                    class="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all">
                     <i data-lucide="lock" class="w-4 h-4 text-slate-500"></i>
                     <span>Acceso al Sistema Escolar</span>
                 </a>
+                {% endif %}
             </div>
 
             <!-- Indicadores Clave en Línea -->
             <div class="pt-8 border-t border-slate-100 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs font-semibold text-slate-500">
                 <span class="flex items-center gap-2">
                     <i data-lucide="sun" class="w-4 h-4 text-amber-500"></i>
-                    Jornada Vespertina (13:00 a 18:00 hrs)
+                    {{ config_portal.jornada|default:"Jornada Vespertina (13:00 a 18:00 hrs)" }}
                 </span>
                 <span class="flex items-center gap-2">
                     <i data-lucide="book-open" class="w-4 h-4 text-emerald-600"></i>
@@ -71,7 +78,7 @@
                 Plan de Estudios — Ciclo Básico
             </h2>
             <p class="text-xs sm:text-sm text-slate-600 mt-2">
-                Alineado rigurosamente con los lineamientos oficiales del Ministerio de Educación de Guatemala.
+                {{ config_portal.plan_estudios_subtitulo|default:"Enseñanza integral orientada al desarrollo de competencias cognitivas, humanísticas y tecnológicas." }}
             </p>
         </div>
 
@@ -84,9 +91,15 @@
                 </div>
                 <h3 class="text-lg font-bold text-slate-900 mb-2">Primero Básico</h3>
                 <p class="text-xs text-slate-600 leading-relaxed mb-4">
-                    Etapa de transición y adaptación pedagógica. Nivelación en habilidades cuantitativas y de comprensión verbal.
+                    {{ config_portal.descripcion_primero_basico|default:"Etapa de transición y adaptación pedagógica. Nivelación en habilidades cuantitativas y de comprensión verbal." }}
                 </p>
                 <ul class="space-y-2 text-xs text-slate-600 border-t border-slate-100 pt-3">
+                    {% for punto in config_portal.lista_puntos_primero_basico %}
+                    <li class="flex items-center gap-2">
+                        <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600 shrink-0"></i>
+                        <span>{{ punto }}</span>
+                    </li>
+                    {% empty %}
                     <li class="flex items-center gap-2">
                         <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600 shrink-0"></i>
                         <span>Matemáticas y Razonamiento Lógico</span>
@@ -99,6 +112,7 @@
                         <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600 shrink-0"></i>
                         <span>Iniciación en Laboratorio Digital de Cómputo</span>
                     </li>
+                    {% endfor %}
                 </ul>
             </div>
 
@@ -109,9 +123,15 @@
                 </div>
                 <h3 class="text-lg font-bold text-slate-900 mb-2">Segundo Básico</h3>
                 <p class="text-xs text-slate-600 leading-relaxed mb-4">
-                    Desarrollo del pensamiento crítico y experimental. Fortalecimiento del trabajo colaborativo y cooperativo.
+                    {{ config_portal.descripcion_segundo_basico|default:"Desarrollo del pensamiento crítico y experimental. Fortalecimiento del trabajo colaborativo y cooperativo." }}
                 </p>
                 <ul class="space-y-2 text-xs text-slate-600 border-t border-slate-100 pt-3">
+                    {% for punto in config_portal.lista_puntos_segundo_basico %}
+                    <li class="flex items-center gap-2">
+                        <i data-lucide="check" class="w-3.5 h-3.5 text-blue-600 shrink-0"></i>
+                        <span>{{ punto }}</span>
+                    </li>
+                    {% empty %}
                     <li class="flex items-center gap-2">
                         <i data-lucide="check" class="w-3.5 h-3.5 text-blue-600 shrink-0"></i>
                         <span>Ciencias Naturales y Experimentación</span>
@@ -124,6 +144,7 @@
                         <i data-lucide="check" class="w-3.5 h-3.5 text-blue-600 shrink-0"></i>
                         <span>Emprendimiento para la Productividad</span>
                     </li>
+                    {% endfor %}
                 </ul>
             </div>
 
@@ -134,9 +155,15 @@
                 </div>
                 <h3 class="text-lg font-bold text-slate-900 mb-2">Tercero Básico</h3>
                 <p class="text-xs text-slate-600 leading-relaxed mb-4">
-                    Culminación del ciclo y preparación sólida hacia el Nivel Diversificado y carreras técnicas o científicas.
+                    {{ config_portal.descripcion_tercero_basico|default:"Culminación del ciclo y preparación sólida hacia el Nivel Diversificado y carreras técnicas o científicas." }}
                 </p>
                 <ul class="space-y-2 text-xs text-slate-600 border-t border-slate-100 pt-3">
+                    {% for punto in config_portal.lista_puntos_tercero_basico %}
+                    <li class="flex items-center gap-2">
+                        <i data-lucide="check" class="w-3.5 h-3.5 text-purple-600 shrink-0"></i>
+                        <span>{{ punto }}</span>
+                    </li>
+                    {% empty %}
                     <li class="flex items-center gap-2">
                         <i data-lucide="check" class="w-3.5 h-3.5 text-purple-600 shrink-0"></i>
                         <span>Álgebra, Geometría y Estadística</span>
@@ -147,8 +174,9 @@
                     </li>
                     <li class="flex items-center gap-2">
                         <i data-lucide="check" class="w-3.5 h-3.5 text-purple-600 shrink-0"></i>
-                        <span>Diploma Oficial de Educación Básica MINEDUC</span>
+                        <span>Diploma de Conclusión del Ciclo Básico</span>
                     </li>
+                    {% endfor %}
                 </ul>
             </div>
 
@@ -167,17 +195,25 @@
             <div class="lg:col-span-7 space-y-6">
                 <div>
                     <span class="text-xs font-bold uppercase tracking-wider text-[#1E6532] bg-emerald-100/60 px-3 py-1 rounded-full">
-                        Admisiones 2026
+                        {{ config_portal.ciclo_escolar_activo|default:"Ciclo Escolar 2026" }}
                     </span>
                     <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2 tracking-tight">
                         Requisitos de Inscripción
                     </h2>
                     <p class="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
-                        Para formalizar la inscripción en Secretaría, es indispensable presentar el expediente físico completo conforme a la normativa ministerial:
+                        {{ config_portal.requisitos_subtitulo|default:"Para formalizar la inscripción en Secretaría, es indispensable presentar el expediente físico completo para su debido registro:" }}
                     </p>
                 </div>
 
                 <div class="space-y-3">
+                    {% for req in config_portal.lista_requisitos_primero_basico %}
+                    <div class="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                        <div class="w-6 h-6 rounded-full bg-[#1E6532] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">{{ forloop.counter }}</div>
+                        <div>
+                            <p class="text-xs font-semibold text-slate-800 leading-snug">{{ req }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
                     <div class="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200">
                         <div class="w-6 h-6 rounded-full bg-[#1E6532] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">1</div>
                         <div>
@@ -185,7 +221,6 @@
                             <p class="text-[11px] text-slate-500">Documento original y vigente emitido por el Registro Nacional de las Personas.</p>
                         </div>
                     </div>
-
                     <div class="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200">
                         <div class="w-6 h-6 rounded-full bg-[#1E6532] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">2</div>
                         <div>
@@ -193,7 +228,6 @@
                             <p class="text-[11px] text-slate-500">Fotocopia legible de ambos lados del padre, madre o encargado.</p>
                         </div>
                     </div>
-
                     <div class="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200">
                         <div class="w-6 h-6 rounded-full bg-[#1E6532] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">3</div>
                         <div>
@@ -201,22 +235,7 @@
                             <p class="text-[11px] text-slate-500">Original extendido por el centro educativo primario de procedencia.</p>
                         </div>
                     </div>
-
-                    <div class="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-                        <div class="w-6 h-6 rounded-full bg-[#1E6532] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">4</div>
-                        <div>
-                            <h4 class="text-xs font-bold text-slate-900">Diploma de Conclusión de Educación Primaria</h4>
-                            <p class="text-[11px] text-slate-500">Original y copia para cotejo en secretaría del establecimiento.</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-                        <div class="w-6 h-6 rounded-full bg-[#1E6532] text-white flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">5</div>
-                        <div>
-                            <h4 class="text-xs font-bold text-slate-900">Constancia de Código Personal</h4>
-                            <p class="text-[11px] text-slate-500">Constancia oficial de estudiante registrada en el sistema SIRE.</p>
-                        </div>
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
 
@@ -229,16 +248,20 @@
 
                 <div class="space-y-3 text-xs text-slate-600">
                     <div class="flex items-center justify-between py-1.5 border-b border-slate-200/60">
-                        <span class="font-medium">Días de atención:</span>
-                        <span class="font-bold text-slate-900">Lunes a Viernes</span>
-                    </div>
-                    <div class="flex items-center justify-between py-1.5 border-b border-slate-200/60">
-                        <span class="font-medium">Horario continuo:</span>
-                        <span class="font-bold text-slate-900">13:00 a 18:00 hrs</span>
+                        <span class="font-medium">Horario de atención:</span>
+                        <span class="font-bold text-slate-900">{{ config_portal.horario_atencion|default:"Lunes a Viernes 13:00 a 18:00 hrs" }}</span>
                     </div>
                     <div class="flex items-center justify-between py-1.5 border-b border-slate-200/60">
                         <span class="font-medium">Jornada escolar:</span>
-                        <span class="font-bold text-slate-900">Vespertina</span>
+                        <span class="font-bold text-slate-900">{{ config_portal.jornada|default:"Vespertina" }}</span>
+                    </div>
+                    <div class="flex items-center justify-between py-1.5 border-b border-slate-200/60">
+                        <span class="font-medium">Inscripción anual:</span>
+                        <span class="font-bold text-emerald-700">Q {{ config_portal.cuota_inscripcion|default:"150.00" }}</span>
+                    </div>
+                    <div class="flex items-center justify-between py-1.5 border-b border-slate-200/60">
+                        <span class="font-medium">Cuota escolar mensual:</span>
+                        <span class="font-bold text-emerald-700">Q {{ config_portal.cuota_mensual|default:"100.00" }}</span>
                     </div>
                     <div class="flex items-center justify-between py-1.5">
                         <span class="font-medium">Modelo institucional:</span>
@@ -249,10 +272,10 @@
                 <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 space-y-1">
                     <p class="font-bold flex items-center gap-1.5">
                         <i data-lucide="info" class="w-4 h-4 text-emerald-600"></i>
-                        Cuotas Accesibles
+                        Aporte Solidario y Accesible
                     </p>
                     <p class="text-[11px] text-emerald-700 leading-relaxed">
-                        El modelo por cooperativa garantiza aportes mensuales económicos orientados al sostenimiento de las instalaciones y material docente.
+                        El modelo por cooperativa garantiza cuotas mensuales reducidas que se destinan en su totalidad al mantenimiento de las instalaciones y material didáctico.
                     </p>
                 </div>
 
@@ -267,6 +290,141 @@
 
     </div>
 </section>
+
+<!-- SECCIÓN: ÚLTIMAS PUBLICACIONES Y COMUNICADOS -->
+{% if publicaciones_recientes %}
+<section id="publicaciones" class="py-16 sm:py-20 bg-slate-50 border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
+            <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-[#1E6532] bg-emerald-100/60 px-3 py-1 rounded-full">
+                    Avisos Oficiales
+                </span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2 tracking-tight">
+                    Últimas Publicaciones y Comunicados
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-600 mt-2 max-w-xl">
+                    Información actualizada, avisos de secretaría, actividades académicas y eventos del instituto.
+                </p>
+            </div>
+            {% if total_publicaciones_publicadas > 3 or publicaciones_recientes|length > 3 %}
+            <a href="{% url 'portal:publicaciones_todas' %}"
+               class="inline-flex items-center gap-2 text-xs font-bold text-[#1E6532] hover:text-[#164c25] hover:underline shrink-0">
+                <span>Ver Todas las Publicaciones</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </a>
+            {% endif %}
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for pub in publicaciones_recientes %}
+            <article class="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group">
+                <div>
+                    {% if pub.url_directa_imagen %}
+                    <div class="aspect-16/9 bg-slate-100 relative overflow-hidden">
+                        <img src="{{ pub.url_directa_imagen }}" alt="{{ pub.titulo }}"
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                             loading="lazy"
+                             onerror="this.parentElement.style.display='none';">
+                        <span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-[#1E6532] text-white shadow-xs">
+                            {{ pub.get_seccion_display }}
+                        </span>
+                    </div>
+                    {% endif %}
+                    <div class="p-5 space-y-3">
+                        <div class="flex items-center justify-between text-[11px] text-slate-400">
+                            <span class="flex items-center gap-1.5 font-medium text-slate-500">
+                                <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400"></i>
+                                {{ pub.fecha_publicacion|date:"d de F, Y" }}
+                            </span>
+                            {% if not pub.url_directa_imagen %}
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                {{ pub.get_seccion_display }}
+                            </span>
+                            {% endif %}
+                        </div>
+
+                        <h3 class="text-base font-bold text-slate-900 group-hover:text-[#1E6532] transition-colors leading-snug">
+                            <a href="{% url 'portal:publicacion_detalle' pub.pk %}">
+                                {{ pub.titulo }}
+                            </a>
+                        </h3>
+
+                        <p class="text-xs text-slate-600 line-clamp-3 leading-relaxed">
+                            {{ pub.cuerpo|linebreaksbr }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="p-5 pt-0 border-t border-slate-100 mt-2 flex items-center justify-between">
+                    <a href="{% url 'portal:publicacion_detalle' pub.pk %}"
+                       class="inline-flex items-center gap-1.5 text-xs font-bold text-[#1E6532] hover:text-[#164c25] hover:underline pt-3">
+                        <span>Leer comunicado</span>
+                        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                    </a>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+
+    </div>
+</section>
+{% endif %}
+
+<!-- SECCIÓN GALERÍA DE FOTOS DESTACADAS -->
+{% if fotos_portada %}
+<section id="galeria" class="py-16 sm:py-20 bg-white border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
+            <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-[#1E6532] bg-emerald-100/60 px-3 py-1 rounded-full">
+                    Vida Institucional
+                </span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2 tracking-tight">
+                    Nuestras Instalaciones y Actividades
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-600 mt-2 max-w-xl">
+                    Ambiente pedagógico, tecnología, deportes y convivencia cooperativa de nuestros estudiantes.
+                </p>
+            </div>
+            <a href="{% url 'portal:galeria' %}"
+               class="inline-flex items-center gap-2 text-xs font-bold text-[#1E6532] hover:text-[#164c25] hover:underline shrink-0">
+                <span>Explorar Galería Completa</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for foto in fotos_portada %}
+            <div class="bg-slate-50 rounded-2xl overflow-hidden border border-slate-200 shadow-xs hover:shadow-md transition-all group flex flex-col justify-between">
+                <div>
+                    <div class="aspect-4/3 bg-slate-100 relative overflow-hidden">
+                        <img src="{{ foto.url_directa }}" alt="{{ foto.titulo }}"
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                             loading="lazy"
+                             onerror="this.onerror=null; this.src='https://placehold.co/600x450/f1f5f9/64748b?text=Fotografía+Institucional';">
+                        <span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-black/60 backdrop-blur-md text-white">
+                            {{ foto.get_categoria_display }}
+                        </span>
+                    </div>
+                    <div class="p-4 space-y-1">
+                        <h3 class="font-bold text-sm text-slate-900 leading-snug">{{ foto.titulo }}</h3>
+                        {% if foto.descripcion %}
+                        <p class="text-xs text-slate-500 line-clamp-2 leading-relaxed">{{ foto.descripcion }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="px-4 py-2 border-t border-slate-200/60 text-[11px] text-slate-400 flex items-center justify-between">
+                    <span>{{ foto.fecha|date:"d/m/Y" }}</span>
+                    <span class="text-[#1E6532] font-bold">IBACOOP</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
 
 <!-- SECCIÓN 3: CONTACTO Y COMUNICACIÓN -->
 <section id="contacto" class="py-16 sm:py-20 bg-slate-50">
@@ -298,7 +456,7 @@
                             </div>
                             <div>
                                 <span class="font-bold text-slate-800 block">Dirección</span>
-                                <span>1ª Avenida 10-30, Colonia El Progreso, Escuintla, Guatemala</span>
+                                <span>{{ config_portal.direccion_fisica|default:"1ª Avenida 10-30, Colonia El Progreso, Escuintla, Guatemala" }}</span>
                             </div>
                         </div>
 
@@ -308,7 +466,7 @@
                             </div>
                             <div>
                                 <span class="font-bold text-slate-800 block">Teléfono / Secretaría</span>
-                                <span>+(502) 7889-5918</span>
+                                <span>+(502) {{ config_portal.telefono_principal|default:"7889-5918" }}</span>
                             </div>
                         </div>
 
@@ -318,7 +476,7 @@
                             </div>
                             <div>
                                 <span class="font-bold text-slate-800 block">Correo Electrónico</span>
-                                <span>ibacoop.elprogreso@gmail.com</span>
+                                <span>{{ config_portal.correo_contacto|default:"ibacoop.elprogreso@gmail.com" }}</span>
                             </div>
                         </div>
                     </div>
@@ -345,6 +503,7 @@
                     {% csrf_token %}
                     <div style="display:none !important;" aria-hidden="true">
                         {{ form.website_url }}
+                        {{ form.token_seguridad }}
                     </div>
 
                     {% if form.non_field_errors %}

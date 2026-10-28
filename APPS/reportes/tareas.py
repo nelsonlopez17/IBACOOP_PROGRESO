@@ -96,7 +96,8 @@ def generar_boletas_seccion_zip(task_id, seccion_id, ciclo_id):
                 })
 
                 try:
-                    pdf_bytes = generar_pdf_boleta_calificaciones(estudiante, ciclo)
+                    pdf_result = generar_pdf_boleta_calificaciones(estudiante, ciclo)
+                    pdf_bytes = pdf_result.content if hasattr(pdf_result, 'content') else pdf_result
                     pdf_filename = f"Boleta_{persona.apellidos.replace(' ', '_')}_{persona.nombres.replace(' ', '_')}.pdf"
                     zip_file.writestr(pdf_filename, pdf_bytes)
                 except Exception as e:

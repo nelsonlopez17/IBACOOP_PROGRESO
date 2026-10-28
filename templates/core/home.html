@@ -6,6 +6,26 @@
 {% block content %}
 <div class="space-y-8">
 
+    {% if mensajes_portal_pendientes_count and mensajes_portal_pendientes_count > 0 %}
+    <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                <i data-lucide="mail-warning" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-amber-800">Mensajes de Visitantes Pendientes</span>
+                <p class="text-xs text-amber-700 mt-0.5">
+                    Hay <strong>{{ mensajes_portal_pendientes_count }}</strong> mensaje{{ mensajes_portal_pendientes_count|pluralize:"s" }} de contacto enviado{{ mensajes_portal_pendientes_count|pluralize:"s" }} desde el portal web pendiente{{ mensajes_portal_pendientes_count|pluralize:"s" }} de atención.
+                </p>
+            </div>
+        </div>
+        <a href="{% url 'portal:solicitudes_list' %}" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shrink-0 shadow-xs transition-all">
+            <i data-lucide="inbox" class="w-4 h-4"></i>
+            <span>Atender Mensajes</span>
+        </a>
+    </div>
+    {% endif %}
+
     <!-- Mensaje de bienvenida -->
     <div
         class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#1E6532] via-[#185429] to-[#12421f] text-white p-8 shadow-xl">

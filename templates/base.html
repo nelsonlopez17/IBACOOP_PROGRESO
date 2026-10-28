@@ -162,7 +162,7 @@
                     <span>Gestión Académica</span>
                 </a>
                 {% elif perms.academico.change_notabloque or perms.academico.view_asignaciondocente %}
-                <a href="{% url 'academico:docente_mis_cursos' %}"
+                <a href="{% url 'academico:notas_lista' %}"
                     class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if request.resolver_match.app_name == 'academico' %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
                     <i data-lucide="book-open"
                         class="w-4 h-4 {% if request.resolver_match.app_name == 'academico' %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
@@ -223,6 +223,23 @@
                 <div class="pt-4 px-3 pb-1 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
                     Sistema y Control
                 </div>
+
+                <!-- Portal Web Institucional -->
+                {% if user.rol == 'ADMINISTRADOR' or user.rol == 'DIRECTOR' or user.rol == 'SECRETARIA' or user.is_superuser %}
+                <a href="{% url 'portal:gestion_dashboard' %}"
+                    class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if request.resolver_match.app_name == 'portal' and 'gestion' in request.path %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="globe"
+                            class="w-4 h-4 {% if request.resolver_match.app_name == 'portal' and 'gestion' in request.path %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
+                        <span>Portal Web</span>
+                    </div>
+                    {% if mensajes_portal_pendientes_count and mensajes_portal_pendientes_count > 0 %}
+                    <span class="px-2 py-0.5 text-[10px] font-black rounded-full bg-amber-500 text-white animate-pulse" title="{{ mensajes_portal_pendientes_count }} mensaje(s) pendiente(s)">
+                        {{ mensajes_portal_pendientes_count }}
+                    </span>
+                    {% endif %}
+                </a>
+                {% endif %}
 
                 <!-- Centro de Reportes -->
                 {% if user.rol == 'ADMINISTRADOR' or user.rol == 'DIRECTOR' or user.rol == 'SECRETARIA' or user.rol == 'CONTADOR' or user.is_superuser %}

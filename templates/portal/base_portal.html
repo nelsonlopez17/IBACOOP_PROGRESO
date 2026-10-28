@@ -120,24 +120,37 @@
         <div class="max-w-7xl mx-auto flex items-center justify-between">
             <div class="flex items-center gap-6">
                 <span class="flex items-center gap-1.5 font-medium">
-                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-300"></i>
-                    Acreditación y Validez Oficial MINEDUC
+                    <i data-lucide="award" class="w-3.5 h-3.5 text-emerald-300"></i>
+                    Formación Integral y Valores Cooperativos
                 </span>
                 <span class="flex items-center gap-1.5 font-medium text-emerald-200">
                     <i data-lucide="clock" class="w-3.5 h-3.5 text-emerald-300"></i>
-                    Atención: Lunes a Viernes 13:00 a 18:00 hrs
+                    {{ config_portal.horario_atencion|default:"Lunes a Viernes 13:00 a 18:00 hrs" }}
                 </span>
             </div>
             <div class="flex items-center gap-4 text-emerald-200 font-medium">
                 <span class="flex items-center gap-1.5">
                     <i data-lucide="phone" class="w-3.5 h-3.5 text-emerald-300"></i>
-                    +(502) 7889-5918
+                    +(502) {{ config_portal.telefono_principal|default:"7888-1234" }}
                 </span>
                 <span>•</span>
-                <span>Colonia El Progreso, Escuintla, Guatemala</span>
+                <span>{{ config_portal.direccion_fisica|default:"Colonia El Progreso, Escuintla, Guatemala" }}</span>
             </div>
         </div>
     </div>
+
+    <!-- CINTILLO DINÁMICO DE AVISO O ALERTA INSTITUCIONAL -->
+    {% if config_portal.mostrar_cintillo_alerta and config_portal.texto_cintillo_alerta %}
+    <div class="{% if config_portal.tipo_cintillo_alerta == 'URGENTE' %}bg-rose-700 text-white{% elif config_portal.tipo_cintillo_alerta == 'INFO' %}bg-[#3C7DA8] text-white{% else %}bg-amber-500 text-slate-900{% endif %} px-4 py-2.5 text-xs font-bold text-center border-b border-black/10 shadow-xs">
+        <div class="max-w-7xl mx-auto flex items-center justify-center gap-2">
+            <i data-lucide="bell" class="w-4 h-4 shrink-0"></i>
+            <span>{{ config_portal.texto_cintillo_alerta }}</span>
+            {% if config_portal.enlace_cintillo %}
+            <a href="{{ config_portal.enlace_cintillo }}" class="underline ml-1 hover:opacity-80">Más información &rarr;</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 
     <!-- ENCABEZADO Y NAVEGACIÓN LIMPIA -->
     <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
@@ -175,6 +188,14 @@
                     <a href="{% url 'portal:index' %}#admisiones" 
                        class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:text-[#1E6532] hover:bg-slate-100/70 transition-colors">
                         Admisiones
+                    </a>
+                    <a href="{% url 'portal:index' %}#publicaciones" 
+                       class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:text-[#1E6532] hover:bg-slate-100/70 transition-colors">
+                        Publicaciones
+                    </a>
+                    <a href="{% url 'portal:galeria' %}" 
+                       class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:text-[#1E6532] hover:bg-slate-100/70 transition-colors">
+                        Galería
                     </a>
                     <a href="{% url 'portal:index' %}#contacto" 
                        class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:text-[#1E6532] hover:bg-slate-100/70 transition-colors">
@@ -219,6 +240,12 @@
             <a href="{% url 'portal:index' %}#admisiones" class="block px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-100">
                 Admisiones
             </a>
+            <a href="{% url 'portal:index' %}#publicaciones" class="block px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                Publicaciones
+            </a>
+            <a href="{% url 'portal:galeria' %}" class="block px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                Galería de Fotos
+            </a>
             <a href="{% url 'portal:index' %}#contacto" class="block px-3 py-2.5 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-100">
                 Contacto
             </a>
@@ -259,9 +286,6 @@
                     <p class="text-xs text-slate-400 leading-relaxed">
                         Instituto Básico por Cooperativa de Enseñanza de Colonia El Progreso, Escuintla. Formación académica integral bajo el Currículo Nacional Base de Guatemala.
                     </p>
-                    <span class="inline-block text-[11px] text-emerald-400 font-medium">
-                        Autorizado bajo el Decreto Legislativo No. 17-95
-                    </span>
                 </div>
 
                 <!-- Columna 2: Enlaces Rápidos -->
@@ -271,6 +295,7 @@
                         <li><a href="{% url 'portal:index' %}#inicio" class="hover:text-emerald-400 transition-colors">Inicio</a></li>
                         <li><a href="{% url 'portal:index' %}#grados" class="hover:text-emerald-400 transition-colors">Plan de Estudios (1ro, 2do y 3ro Básico)</a></li>
                         <li><a href="{% url 'portal:index' %}#admisiones" class="hover:text-emerald-400 transition-colors">Requisitos de Admisión e Inscripción</a></li>
+                        <li><a href="{% url 'portal:index' %}#publicaciones" class="hover:text-emerald-400 transition-colors">Publicaciones y Avisos</a></li>
                         <li><a href="{% url 'portal:index' %}#contacto" class="hover:text-emerald-400 transition-colors">Contacto y Ubicación</a></li>
                         <li><a href="{% url 'usuarios:login' %}" class="text-emerald-400 hover:text-emerald-300 font-semibold">Acceso al Sistema ERP</a></li>
                     </ul>
@@ -372,6 +397,18 @@
             }
         });
     </script>
+    <!-- Botón Flotante de WhatsApp para Visitantes -->
+    {% if config_portal.telefono_whatsapp %}
+    <a href="{{ config_portal.link_whatsapp }}" target="_blank" rel="noopener noreferrer"
+       class="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 group"
+       title="Chatear por WhatsApp">
+        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+            <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86.173.086.275.072.376-.044.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.043.072.043.419-.101.824z"/>
+        </svg>
+        <span class="text-xs font-bold hidden sm:inline">WhatsApp</span>
+    </a>
+    {% endif %}
+
 </body>
 
 </html>

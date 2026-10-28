@@ -1,0 +1,89 @@
+{% extends 'portal/base_portal.html' %}
+
+{% block title %}{{ publicacion.titulo }} — IBACOOP El Progreso{% endblock %}
+
+{% block content %}
+<article class="py-12 sm:py-16 bg-slate-50 min-h-screen">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+
+        <!-- Migas de Pan y Botón de Retorno -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <nav class="flex items-center gap-2 text-xs font-semibold text-slate-500">
+                <a href="{% url 'portal:index' %}" class="hover:text-[#1E6532] transition-colors">Inicio</a>
+                <span>/</span>
+                <a href="{% url 'portal:publicaciones_todas' %}" class="hover:text-[#1E6532] transition-colors">Publicaciones</a>
+                <span>/</span>
+                <span class="text-slate-700 truncate max-w-xs">{{ publicacion.titulo }}</span>
+            </nav>
+            <a href="{% url 'portal:index' %}#publicaciones"
+               class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-[#1E6532] transition-colors self-start sm:self-auto">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                <span>Volver al Portal</span>
+            </a>
+        </div>
+
+        <!-- Encabezado de la Publicación -->
+        <header class="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-xs space-y-4">
+            <div class="flex flex-wrap items-center gap-3">
+                <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-[#1E6532] border border-emerald-200">
+                    {{ publicacion.get_seccion_display }}
+                </span>
+                <span class="text-xs text-slate-500 flex items-center gap-1.5">
+                    <i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i>
+                    {{ publicacion.fecha_publicacion|date:"d de F, Y" }}
+                </span>
+            </div>
+
+            <h1 class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+                {{ publicacion.titulo }}
+            </h1>
+
+            <div class="pt-4 border-t border-slate-100 flex items-center gap-3 text-xs text-slate-500">
+                <div class="w-8 h-8 rounded-full bg-[#1E6532] text-white flex items-center justify-center font-bold text-xs">
+                    <i data-lucide="graduation-cap" class="w-4 h-4"></i>
+                </div>
+                <div>
+                    <span class="font-bold text-slate-800 block">Instituto El Progreso (IBACOOP)</span>
+                    <span>Comunicación y Dirección Institucional</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Imagen Destacada si existe -->
+        {% if publicacion.url_directa_imagen %}
+        <div class="rounded-3xl overflow-hidden border border-slate-200 shadow-xs bg-white">
+            <img src="{{ publicacion.url_directa_imagen }}" alt="{{ publicacion.titulo }}"
+                 class="w-full max-h-[500px] object-cover"
+                 onerror="this.parentElement.style.display='none';">
+        </div>
+        {% endif %}
+
+        <!-- Cuerpo del Comunicado -->
+        <div class="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-xs prose prose-slate max-w-none text-slate-700 leading-relaxed text-sm sm:text-base">
+            {{ publicacion.cuerpo|linebreaks }}
+        </div>
+
+        <!-- Publicaciones Recientes Relacionadas -->
+        {% if otras_publicaciones %}
+        <div class="pt-8 border-t border-slate-200 space-y-4">
+            <h3 class="text-lg font-bold text-slate-900">Otras Publicaciones Recientes</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {% for otra in otras_publicaciones %}
+                <a href="{% url 'portal:publicacion_detalle' otra.pk %}"
+                   class="bg-white p-4 rounded-2xl border border-slate-200 hover:border-emerald-300 hover:shadow-xs transition-all block group">
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                        {{ otra.get_seccion_display }}
+                    </span>
+                    <h4 class="font-bold text-xs text-slate-900 group-hover:text-[#1E6532] mt-2 line-clamp-2">
+                        {{ otra.titulo }}
+                    </h4>
+                    <span class="text-[10px] text-slate-400 mt-2 block">{{ otra.fecha_publicacion|date:"d/m/Y" }}</span>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</article>
+{% endblock %}

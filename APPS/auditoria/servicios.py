@@ -1,5 +1,5 @@
 """
-auditoria/services.py
+auditoria/servicios.py
 
 Servicio unificado para la consulta, agregación y cálculo de diferencias (diffs)
 de la pista de auditoría empresarial basada en django-simple-history.
@@ -7,11 +7,14 @@ de la pista de auditoría empresarial basada en django-simple-history.
 from datetime import datetime, time
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.db.models import Count, Case, When, IntegerField
+
 from APPS.academico.models import NotaBloque, AsignacionEstudiante
 from APPS.financiero.models import Abono, CuentaPorCobrar
 from APPS.inventario.models import ArticuloInventario
 from APPS.rrhh.models import Planilla
-from APPS.disciplina.models import IncidenteDisciplinario
+from APPS.disciplina.models import IncidenteDisciplinario, CitacionPadre
+from APPS.portal.models import ConfiguracionPortal, ContenidoWeb, FotoGaleria, SolicitudContacto
 
 Usuario = get_user_model()
 
@@ -25,9 +28,17 @@ AUDITED_MODELS = {
         'badge_color': 'bg-emerald-100 text-emerald-800 border-emerald-200',
         'model_class': NotaBloque,
     },
+    'asignacionestudiante': {
+        'clave': 'asignacionestudiante',
+        'nombre': 'Inscripción de Estudiantes',
+        'modulo': 'Académico',
+        'icono': 'users',
+        'badge_color': 'bg-teal-100 text-teal-800 border-teal-200',
+        'model_class': AsignacionEstudiante,
+    },
     'abono': {
         'clave': 'abono',
-        'nombre': 'Pagos y Abonos',
+        'nombre': 'Pagos y Boletas de Abono',
         'modulo': 'Financiero',
         'icono': 'receipt',
         'badge_color': 'bg-blue-100 text-blue-800 border-blue-200',
@@ -35,7 +46,7 @@ AUDITED_MODELS = {
     },
     'cuentaporcobrar': {
         'clave': 'cuentaporcobrar',
-        'nombre': 'Cuentas por Cobrar',
+        'nombre': 'Cuentas por Cobrar (Cuotas)',
         'modulo': 'Financiero',
         'icono': 'credit-card',
         'badge_color': 'bg-indigo-100 text-indigo-800 border-indigo-200',
@@ -51,35 +62,67 @@ AUDITED_MODELS = {
     },
     'planilla': {
         'clave': 'planilla',
-        'nombre': 'Planillas y Sueldos',
+        'nombre': 'Planilla de Sueldos',
         'modulo': 'Recursos Humanos',
         'icono': 'file-text',
         'badge_color': 'bg-rose-100 text-rose-800 border-rose-200',
         'model_class': Planilla,
     },
-    'asignacionestudiante': {
-        'clave': 'asignacionestudiante',
-        'nombre': 'Inscripción de Estudiantes',
-        'modulo': 'Académico',
-        'icono': 'users',
-        'badge_color': 'bg-teal-100 text-teal-800 border-teal-200',
-        'model_class': AsignacionEstudiante,
-    },
     'incidentedisciplinario': {
         'clave': 'incidentedisciplinario',
-        'nombre': 'Disciplina y Faltas',
-        'modulo': 'Disciplina',
+        'nombre': 'Incidentes Disciplinarios',
+        'modulo': 'Disciplina y Convivencia',
         'icono': 'shield-alert',
         'badge_color': 'bg-purple-100 text-purple-800 border-purple-200',
         'model_class': IncidenteDisciplinario,
     },
-    'incidenteconductual': {
-        'clave': 'incidentedisciplinario',
-        'nombre': 'Disciplina y Faltas',
-        'modulo': 'Disciplina',
-        'icono': 'shield-alert',
+    'citacionpadre': {
+        'clave': 'citacionpadre',
+        'nombre': 'Citaciones a Encargados',
+        'modulo': 'Disciplina y Convivencia',
+        'icono': 'mail',
+        'badge_color': 'bg-violet-100 text-violet-800 border-violet-200',
+        'model_class': CitacionPadre,
+    },
+    'usuario': {
+        'clave': 'usuario',
+        'nombre': 'Cuentas y Usuarios del Sistema',
+        'modulo': 'Seguridad y Acceso',
+        'icono': 'user-check',
+        'badge_color': 'bg-sky-100 text-sky-800 border-sky-200',
+        'model_class': Usuario,
+    },
+    'configuracionportal': {
+        'clave': 'configuracionportal',
+        'nombre': 'Ajustes del Portal Web',
+        'modulo': 'Portal Web',
+        'icono': 'sliders',
+        'badge_color': 'bg-emerald-100 text-emerald-800 border-emerald-200',
+        'model_class': ConfiguracionPortal,
+    },
+    'contenidoweb': {
+        'clave': 'contenidoweb',
+        'nombre': 'Publicaciones y Comunicados',
+        'modulo': 'Portal Web',
+        'icono': 'newspaper',
+        'badge_color': 'bg-blue-100 text-blue-800 border-blue-200',
+        'model_class': ContenidoWeb,
+    },
+    'fotogaleria': {
+        'clave': 'fotogaleria',
+        'nombre': 'Galería de Fotos',
+        'modulo': 'Portal Web',
+        'icono': 'image',
         'badge_color': 'bg-purple-100 text-purple-800 border-purple-200',
-        'model_class': IncidenteDisciplinario,
+        'model_class': FotoGaleria,
+    },
+    'solicitudcontacto': {
+        'clave': 'solicitudcontacto',
+        'nombre': 'Mensajes de Contacto (Web)',
+        'modulo': 'Portal Web',
+        'icono': 'inbox',
+        'badge_color': 'bg-amber-100 text-amber-800 border-amber-200',
+        'model_class': SolicitudContacto,
     },
 }
 
@@ -95,7 +138,7 @@ class AuditoriaService:
     @staticmethod
     def get_model_info(model_key):
         """Devuelve la configuración y metadatos de un modelo auditado."""
-        return AUDITED_MODELS.get(model_key.lower())
+        return AUDITED_MODELS.get(model_key.lower()) if model_key else None
 
     @classmethod
     def get_history_records(cls, model_key=None, usuario_id=None, action_type=None, date_from=None, date_to=None, limit=100):
@@ -105,7 +148,6 @@ class AuditoriaService:
         keys_to_query = [model_key.lower()] if model_key and model_key.lower() in AUDITED_MODELS else list(AUDITED_MODELS.keys())
         all_records = []
 
-        # conversion de fechas considerando la zona horaria local
         tz = timezone.get_current_timezone()
         dt_from = timezone.make_aware(datetime.combine(date_from, time.min), tz) if date_from else None
         dt_to = timezone.make_aware(datetime.combine(date_to, time.max), tz) if date_to else None
@@ -124,7 +166,6 @@ class AuditoriaService:
             if dt_to:
                 qs = qs.filter(history_date__lte=dt_to)
 
-            # limitar registros por modelo antes del ordenamiento global
             for record in qs.order_by('-history_date')[:limit]:
                 all_records.append({
                     'history_id': record.history_id,
@@ -170,7 +211,7 @@ class AuditoriaService:
     def get_record_diff(cls, model_key, history_id):
         """
         Obtiene el detalle de diferencias (diff) entre la versión seleccionada
-        y su versión predecesora inmediata.
+        y su versión predecesora inmediata, traduciendo campos técnicos a nombres legibles.
         """
         cfg = cls.get_model_info(model_key)
         if not cfg:
@@ -182,48 +223,75 @@ class AuditoriaService:
         except model_cls.history.model.DoesNotExist:
             return None
 
+        pk_name = model_cls._meta.pk.name
+        pk_val = getattr(current_record, pk_name, None)
+
+        prev_id = None
+        next_id = None
+        if pk_val is not None:
+            instancia_historial = list(
+                model_cls.history
+                .filter(**{pk_name: pk_val})
+                .order_by('history_id')
+                .values_list('history_id', flat=True)
+            )
+            if current_record.history_id in instancia_historial:
+                cur_idx = instancia_historial.index(current_record.history_id)
+                if cur_idx > 0:
+                    prev_id = instancia_historial[cur_idx - 1]
+                if cur_idx < len(instancia_historial) - 1:
+                    next_id = instancia_historial[cur_idx + 1]
+
         prev_record = current_record.prev_record
-        if not prev_record and current_record.history_type != '+':
-            # busqueda del registro previo en caso de colision de tiempo
-            pk_name = model_cls._meta.pk.name
-            pk_val = getattr(current_record, pk_name, None)
-            if pk_val is not None:
-                prev_record = (
-                    model_cls.history
-                    .filter(**{pk_name: pk_val, 'history_id__lt': current_record.history_id})
-                    .order_by('history_id')
-                    .last()
-                )
+        if not prev_record and current_record.history_type != '+' and prev_id:
+            try:
+                prev_record = model_cls.history.get(history_id=prev_id)
+            except model_cls.history.model.DoesNotExist:
+                pass
+
+        # Mapeo de verbose_name de los campos del modelo original
+        field_verbose_map = {}
+        for f in model_cls._meta.get_fields():
+            if hasattr(f, 'verbose_name'):
+                field_verbose_map[f.name] = str(f.verbose_name)
 
         changes = []
 
         if prev_record:
             delta = current_record.diff_against(prev_record)
             for change in delta.changes:
-                # omitir campos tecnicos de auditoria interna
-                if change.field in ['actualizado_en', 'history_id', 'history_date', 'history_user', 'history_type', 'history_change_reason']:
+                if change.field in ['actualizado_en', 'creado_en', 'history_id', 'history_date', 'history_user', 'history_type', 'history_change_reason']:
                     continue
 
+                label = field_verbose_map.get(change.field, change.field.replace('_', ' ').capitalize())
+                old_val = change.old
+                new_val = change.new
+
                 changes.append({
-                    'field': change.field,
-                    'old_value': change.old if change.old is not None else '(Vacío)',
-                    'new_value': change.new if change.new is not None else '(Vacío)',
+                    'field_name': change.field,
+                    'field': label,
+                    'old_value': cls._format_diff_val(old_val),
+                    'new_value': cls._format_diff_val(new_val),
                 })
         else:
             for field in current_record._meta.fields:
-                if field.name.startswith('history_') or field.name in ['actualizado_en']:
+                if field.name.startswith('history_') or field.name in ['actualizado_en', 'creado_en']:
                     continue
                 val = getattr(current_record, field.name, None)
                 if val not in [None, '']:
+                    label = field_verbose_map.get(field.name, getattr(field, 'verbose_name', field.name))
                     changes.append({
-                        'field': field.verbose_name or field.name,
+                        'field_name': field.name,
+                        'field': label,
                         'old_value': '(Registro inicial)',
-                        'new_value': str(val),
+                        'new_value': cls._format_diff_val(val),
                     })
 
         return {
             'record': current_record,
             'prev_record': prev_record,
+            'prev_id': prev_id,
+            'next_id': next_id,
             'cfg': cfg,
             'changes': changes,
             'history_type_display': cls.get_action_display(current_record.history_type),
@@ -231,12 +299,20 @@ class AuditoriaService:
             'instance_repr': str(current_record.instance) if hasattr(current_record, 'instance') and current_record.instance else f"{cfg['nombre']} #{current_record.history_id}",
         }
 
+    @staticmethod
+    def _format_diff_val(val):
+        if val is None or val == '':
+            return '(Vacío)'
+        if isinstance(val, bool):
+            return 'Sí' if val else 'No'
+        return str(val)
+
     @classmethod
     def get_dashboard_metrics(cls):
-        """Calcula métricas globales de actividad para el panel de auditoría."""
+        """Calcula métricas globales de actividad para el panel de auditoría de forma agregada."""
         ahora = timezone.now()
         hace_24h = ahora - timezone.timedelta(hours=24)
-        
+
         total_hoy = 0
         creaciones_hoy = 0
         modificaciones_hoy = 0
@@ -245,16 +321,23 @@ class AuditoriaService:
 
         for cfg in AUDITED_MODELS.values():
             model_cls = cfg['model_class']
-            qs = model_cls.history.filter(history_date__gte=hace_24h)
-            total_hoy += qs.count()
-            creaciones_hoy += qs.filter(history_type='+').count()
-            modificaciones_hoy += qs.filter(history_type='~').count()
-            eliminaciones_hoy += qs.filter(history_type='-').count()
-            
-            user_ids = qs.values_list('history_user_id', flat=True)
-            for uid in user_ids:
-                if uid:
-                    usuarios_activos.add(uid)
+            agg = model_cls.history.filter(history_date__gte=hace_24h).aggregate(
+                total=Count('history_id'),
+                creaciones=Count(Case(When(history_type='+', then=1), output_field=IntegerField())),
+                modificaciones=Count(Case(When(history_type='~', then=1), output_field=IntegerField())),
+                eliminaciones=Count(Case(When(history_type='-', then=1), output_field=IntegerField())),
+            )
+            total_hoy += agg['total'] or 0
+            creaciones_hoy += agg['creaciones'] or 0
+            modificaciones_hoy += agg['modificaciones'] or 0
+            eliminaciones_hoy += agg['eliminaciones'] or 0
+
+            if agg['total']:
+                user_ids = model_cls.history.filter(
+                    history_date__gte=hace_24h,
+                    history_user__isnull=False
+                ).values_list('history_user_id', flat=True).distinct()
+                usuarios_activos.update(user_ids)
 
         return {
             'total_24h': total_hoy,

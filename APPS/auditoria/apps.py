@@ -5,3 +5,6 @@ class AuditoriaConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'APPS.auditoria'
     verbose_name = 'Auditoría y Trazabilidad'
+
+    def ready(self):
+        import APPS.auditoria.signals

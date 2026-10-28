@@ -104,7 +104,7 @@ def generar_pdf_credenciales_bytes(usuario, clave_temporal: str) -> bytes:
 
     elements = []
 
-    elements.append(Paragraph("INSTITUTO DIVERSIFICADO POR COOPERATIVA EL PROGRESO", header_title_style))
+    elements.append(Paragraph("INSTITUTO BÁSICO POR COOPERATIVA EL PROGRESO", header_title_style))
     elements.append(Spacer(1, 4))
     elements.append(Paragraph("HOJA OFICIAL DE CREDENCIALES Y CONSTANCIA DE ACCESO AL SISTEMA", header_subtitle_style))
     elements.append(Spacer(1, 10))

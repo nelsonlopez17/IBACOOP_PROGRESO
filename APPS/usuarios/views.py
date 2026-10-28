@@ -202,6 +202,13 @@ class UsuarioResetPasswordView(LoginRequiredMixin, PermissionRequiredMixin, Temp
         usuario.debe_cambiar_password = True
         usuario.save(update_fields=['password', 'debe_cambiar_password'])
 
+        from APPS.auditoria.models import registrar_evento_seguridad, TipoEventoSeguridad
+        registrar_evento_seguridad(
+            tipo=TipoEventoSeguridad.CAMBIO_PASSWORD,
+            request=request,
+            usuario=request.user,
+            descripcion=f"Restablecimiento administrativo de credenciales temporales para el usuario '{usuario.username}'"
+        )
         # guardar en sesion para permitir la descarga de la constancia
         request.session[f'temp_pass_{usuario.pk}'] = clave_temporal
 
@@ -295,6 +302,13 @@ class CambiarMiPasswordView(LoginRequiredMixin, PasswordChangeView):
             user.debe_cambiar_password = False
             user.save(update_fields=['debe_cambiar_password'])
 
+        from APPS.auditoria.models import registrar_evento_seguridad, TipoEventoSeguridad
+        registrar_evento_seguridad(
+            tipo=TipoEventoSeguridad.CAMBIO_PASSWORD,
+            request=self.request,
+            usuario=user,
+            descripcion='Actualización voluntaria de contraseña de acceso'
+        )
         # mantener la sesion activa tras el cambio de clave
         update_session_auth_hash(self.request, user)
         messages.success(self.request, "Su contraseña se ha actualizado correctamente. La cuenta ha sido asegurada.")
@@ -335,3 +349,160 @@ def lockout_view(request, credentials=None, *args, **kwargs):
     }
     return render(request, 'usuarios/lockout.html', context, status=429)
 
+
+
+
+# ==============================================================================
+# VISTAS DE GESTIÓN INTUITIVA DE ROLES Y GRUPOS DE PERMISOS
+# ==============================================================================
+
+from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib.auth.models import Group
+from django.db.models import Count
+from APPS.usuarios.forms import GrupoPermisosForm
+from APPS.usuarios.permisos import (
+    obtener_matriz_permisos_ui,
+    es_grupo_base_protegido,
+    NOMBRE_GRUPO_POR_ROL,
+)
+
+
+class AdministradorRolesMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """
+    Control de acceso exclusivo para administradores institucionales y superusuarios
+    para gestionar la matriz de roles y permisos.
+    """
+    raise_exception = True
+
+    def test_func(self):
+        usuario = self.request.user
+        if not usuario.is_authenticated:
+            return False
+        return bool(
+            usuario.is_superuser
+            or getattr(usuario, 'rol', None) == RolChoices.ADMINISTRADOR
+            or usuario.groups.filter(name='Administradores').exists()
+            or usuario.has_perm('auth.change_group')
+        )
+
+
+class GrupoListView(AdministradorRolesMixin, ListView):
+    """
+    Directorio de Roles y Grupos de Permisos del sistema con métricas y estado institucional.
+    """
+    model = Group
+    template_name = 'usuarios/grupo_list.html'
+    context_object_name = 'grupos'
+    paginate_by = 15
+
+    def get_queryset(self):
+        qs = Group.objects.annotate(
+            total_usuarios=Count('user', distinct=True),
+            total_permisos=Count('permissions', distinct=True),
+        ).order_by('name')
+
+        q = self.request.GET.get('q', '').strip()
+        if q:
+            qs = qs.filter(name__icontains=q)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        nombres_base = set(NOMBRE_GRUPO_POR_ROL.values())
+
+        for grupo in context['grupos']:
+            grupo.es_base = grupo.name in nombres_base
+
+        context['total_roles'] = Group.objects.count()
+        context['roles_base_count'] = len(nombres_base)
+        context['roles_personalizados_count'] = max(0, context['total_roles'] - len(nombres_base))
+        context['q_actual'] = self.request.GET.get('q', '').strip()
+        return context
+
+
+class GrupoCreateView(AdministradorRolesMixin, SuccessMessageMixin, CreateView):
+    """
+    Creación interactiva de nuevos roles institucionales con asignación modular de permisos.
+    """
+    model = Group
+    form_class = GrupoPermisosForm
+    template_name = 'usuarios/grupo_form.html'
+    success_url = reverse_lazy('usuarios:grupo_list')
+    success_message = "El rol institucional '%(name)s' fue registrado exitosamente."
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['matriz_modulos'] = obtener_matriz_permisos_ui()
+        context['accion'] = 'Crear Rol'
+        context['titulo_pagina'] = 'Crear Nuevo Rol / Grupo de Permisos'
+        context['es_nuevo'] = True
+        return context
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        ids_raw = self.request.POST.getlist('permisos')
+        ids_permisos = [int(x) for x in ids_raw if x.isdigit()]
+        self.object.permissions.set(ids_permisos)
+        return response
+
+
+class GrupoUpdateView(AdministradorRolesMixin, SuccessMessageMixin, UpdateView):
+    """
+    Modificación visual de la lista de permisos de un rol institucional o grupo existente.
+    """
+    model = Group
+    form_class = GrupoPermisosForm
+    template_name = 'usuarios/grupo_form.html'
+    success_url = reverse_lazy('usuarios:grupo_list')
+    success_message = "Los permisos asignados al rol '%(name)s' fueron guardados correctamente."
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['matriz_modulos'] = obtener_matriz_permisos_ui(self.object)
+        context['accion'] = 'Guardar Permisos'
+        context['titulo_pagina'] = f"Configuración de Permisos: {self.object.name}"
+        context['es_nuevo'] = False
+        context['es_base'] = es_grupo_base_protegido(self.object.name)
+        context['usuarios_asignados'] = self.object.user_set.count()
+        return context
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        ids_raw = self.request.POST.getlist('permisos')
+        ids_permisos = [int(x) for x in ids_raw if x.isdigit()]
+        self.object.permissions.set(ids_permisos)
+        return response
+
+
+class GrupoDeleteView(AdministradorRolesMixin, View):
+    """
+    Eliminación de roles personalizados con salvaguarda para roles base institucionales.
+    """
+    def get(self, request, pk, *args, **kwargs):
+        grupo = get_object_or_404(Group, pk=pk)
+        if es_grupo_base_protegido(grupo.name):
+            messages.error(
+                request,
+                f"El rol '{grupo.name}' es un rol institucional base protegido y no puede ser eliminado del sistema."
+            )
+            return redirect('usuarios:grupo_list')
+
+        total_usuarios = grupo.user_set.count()
+        return render(request, 'usuarios/grupo_confirm_delete.html', {
+            'grupo': grupo,
+            'total_usuarios': total_usuarios,
+        })
+
+    def post(self, request, pk, *args, **kwargs):
+        grupo = get_object_or_404(Group, pk=pk)
+        if es_grupo_base_protegido(grupo.name):
+            messages.error(
+                request,
+                f"El rol '{grupo.name}' es un rol institucional base protegido y no puede ser eliminado del sistema."
+            )
+            return redirect('usuarios:grupo_list')
+
+        nombre = grupo.name
+        grupo.delete()
+        messages.success(request, f"El rol institucional '{nombre}' fue eliminado exitosamente.")
+        return redirect('usuarios:grupo_list')

@@ -21,10 +21,36 @@
             <p class="text-xs text-slate-500 mt-1">Gestión de cuentas institucionales, reseteo de claves y asignación de permisos de seguridad.</p>
         </div>
         
-        {% if perms.usuarios.add_usuario %}
-        <a href="{% url 'usuarios:usuario_create' %}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20 self-start sm:self-auto">
-            <i data-lucide="user-plus" class="w-4 h-4"></i>
-            Crear Cuenta TI
+        <div class="flex items-center gap-2.5 self-start sm:self-auto">
+            {% if user.is_superuser or user.rol == 'ADMINISTRADOR' or perms.auth.view_group %}
+            <a href="{% url 'usuarios:grupo_list' %}" class="inline-flex items-center gap-2 px-3.5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all shadow-xs">
+                <i data-lucide="shield-check" class="w-4 h-4 text-[#1E6532]"></i>
+                Roles y Permisos
+            </a>
+            {% endif %}
+            {% if perms.usuarios.add_usuario %}
+            <a href="{% url 'usuarios:usuario_create' %}" class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
+                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                Crear Cuenta TI
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Pestañas Principales del Módulo de Usuarios -->
+    <div class="flex items-center gap-2 border-b border-slate-200 pb-2">
+        <a href="{% url 'usuarios:usuario_list' %}"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all bg-[#1E6532] text-white shadow-md shadow-[#1E6532]/20">
+            <i data-lucide="users" class="w-4 h-4"></i>
+            <span>Cuentas de Usuarios</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-white/20 text-white">{{ total_usuarios }}</span>
+        </a>
+
+        {% if user.is_superuser or user.rol == 'ADMINISTRADOR' or perms.auth.view_group %}
+        <a href="{% url 'usuarios:grupo_list' %}"
+           class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">
+            <i data-lucide="shield-check" class="w-4 h-4"></i>
+            <span>Roles y Grupos de Permisos</span>
         </a>
         {% endif %}
     </div>

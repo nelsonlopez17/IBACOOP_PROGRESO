@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo_pagina }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+
+    <!-- Encabezado con Migas de Pan -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+                <a href="{% url 'portal:gestion_dashboard' %}" class="hover:underline">Portal Web</a>
+                <span>/</span>
+                <a href="{% url 'portal:galeria_list' %}" class="hover:underline">Galería</a>
+                <span>/</span>
+                <span class="text-slate-500">Registro</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+                <i data-lucide="image" class="w-7 h-7 text-[#1E6532]"></i>
+                {{ titulo_pagina }}
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">
+                Ingrese el enlace compartido de Google Drive o la URL de la imagen externa.
+            </p>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="{% url 'portal:gestion_dashboard' %}" 
+               class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Volver al Panel
+            </a>
+            <a href="{% url 'portal:galeria_list' %}" 
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50">
+                <i data-lucide="images" class="w-4 h-4"></i> Volver a Galería
+            </a>
+        </div>
+    </div>
+
+    <!-- Guía rápida para Google Drive -->
+    <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-xs text-blue-900 flex items-start gap-3">
+        <i data-lucide="info" class="w-5 h-5 text-blue-600 shrink-0 mt-0.5"></i>
+        <div class="space-y-1">
+            <p class="font-bold">¿Cómo enlazar fotos desde Google Drive?</p>
+            <p class="text-blue-800 leading-relaxed">
+                En Google Drive, haga clic derecho en la foto &rarr; <em>Compartir</em> &rarr; en <em>Acceso general</em> elija <strong>"Cualquier persona con el enlace"</strong> &rarr; <em>Copiar enlace</em>. Péguelo en la casilla de abajo; el sistema lo convertirá automáticamente en fotografía visible.
+            </p>
+        </div>
+    </div>
+
+    <form method="post" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-5">
+        {% csrf_token %}
+
+        <!-- Título -->
+        <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Título de la Fotografía *</label>
+            {{ form.titulo }}
+            {% if form.titulo.errors %}
+            <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.titulo.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- URL Externa -->
+        <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Enlace de la Imagen (Google Drive u otro servicio) *</label>
+            {{ form.url_imagen }}
+            {% if form.url_imagen.help_text %}
+            <p class="text-[11px] text-slate-400 mt-1">{{ form.url_imagen.help_text }}</p>
+            {% endif %}
+            {% if form.url_imagen.errors %}
+            <p class="text-xs text-rose-600 font-semibold mt-1">{{ form.url_imagen.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Caja de Previsualización en Vivo -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+            <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                Previsualización Inmediata
+            </span>
+            <div class="aspect-video bg-white rounded-lg border border-slate-200 overflow-hidden flex items-center justify-center relative">
+                <img id="live-preview-img" 
+                     src="{% if form.instance.pk %}{{ form.instance.url_directa }}{% endif %}" 
+                     alt="Previsualización" 
+                     class="w-full h-full object-cover {% if not form.instance.pk %}hidden{% endif %}"
+                     onerror="this.classList.add('hidden'); document.getElementById('preview-placeholder').classList.remove('hidden');">
+                <div id="preview-placeholder" class="text-center p-6 text-slate-400 {% if form.instance.pk %}hidden{% endif %}">
+                    <i data-lucide="image" class="w-8 h-8 mx-auto mb-1 text-slate-300"></i>
+                    <p class="text-xs font-semibold">Pegue un enlace arriba para previsualizar la fotografía</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categoría y Fecha -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Categoría</label>
+                {{ form.categoria }}
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Fecha de la Fotografía</label>
+                {{ form.fecha }}
+            </div>
+        </div>
+
+        <!-- Descripción -->
+        <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Descripción o Pie de Foto (Opcional)</label>
+            {{ form.descripcion }}
+        </div>
+
+        <!-- Opciones de Publicación -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-slate-100">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Orden de Prioridad</label>
+                {{ form.orden }}
+                <p class="text-[10px] text-slate-400 mt-0.5">Menor número aparece primero (ej. 0, 1, 2)</p>
+            </div>
+            <div class="flex items-center pt-4">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    {{ form.destacada_portada }}
+                    <span class="text-xs font-bold text-slate-800">Destacar en portada</span>
+                </label>
+            </div>
+            <div class="flex items-center pt-4">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    {{ form.activo }}
+                    <span class="text-xs font-bold text-slate-800">Publicar en galería</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+            <a href="{% url 'portal:galeria_list' %}" 
+               class="px-5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50">
+                Cancelar
+            </a>
+            <button type="submit" 
+                    class="px-6 py-2.5 rounded-xl bg-[#1E6532] hover:bg-[#164c25] text-white text-xs font-bold shadow-xs">
+                Guardar Fotografía
+            </button>
+        </div>
+    </form>
+
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlInput = document.querySelector('input[name="url_imagen"]');
+        const previewImg = document.getElementById('live-preview-img');
+        const placeholder = document.getElementById('preview-placeholder');
+
+        function actualizarPreview(url) {
+            if (!url || !url.trim()) {
+                previewImg.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+                return;
+            }
+            url = url.trim();
+
+            // Transformar URL de Google Drive si aplica
+            const driveFileMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+            const driveIdMatch = url.match(/drive\.google\.com\/[^?]+\?id=([a-zA-Z0-9_-]+)/);
+            let finalUrl = url;
+
+            if (driveFileMatch) {
+                finalUrl = 'https://drive.google.com/thumbnail?id=' + driveFileMatch[1] + '&sz=w1200';
+            } else if (driveIdMatch) {
+                finalUrl = 'https://drive.google.com/thumbnail?id=' + driveIdMatch[1] + '&sz=w1200';
+            }
+
+            previewImg.src = finalUrl;
+            previewImg.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+        }
+
+        if (urlInput) {
+            urlInput.addEventListener('input', function() {
+                actualizarPreview(this.value);
+            });
+            urlInput.addEventListener('paste', function() {
+                setTimeout(() => actualizarPreview(urlInput.value), 50);
+            });
+        }
+    });
+</script>
+{% endblock %}
