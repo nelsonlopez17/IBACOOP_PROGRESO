@@ -25,7 +25,7 @@ class CicloEscolarForm(TailwindFormMixin, forms.ModelForm):
         model = CicloEscolar
         fields = ['anio', 'fecha_inicio', 'fecha_fin', 'estado_activo']
         labels = {
-            'anio': 'Año Lectivo / Ciclo Escolar',
+            'anio': 'Año del Ciclo Escolar',
             'fecha_inicio': 'Fecha de Inicio',
             'fecha_fin': 'Fecha de Finalización',
             'estado_activo': '¿Marcar como Ciclo Activo en el Sistema?',
@@ -40,7 +40,7 @@ class CicloEscolarForm(TailwindFormMixin, forms.ModelForm):
         anio = self.cleaned_data.get('anio')
         if anio is not None:
             if anio < 2000 or anio > 2100:
-                raise forms.ValidationError('El año lectivo debe estar comprendido entre 2000 y 2100.')
+                raise forms.ValidationError('El año del ciclo escolar debe estar comprendido entre 2000 y 2100.')
             qs = CicloEscolar.objects.filter(anio=anio, esta_eliminado=False)
             if self.instance and self.instance.pk:
                 qs = qs.exclude(pk=self.instance.pk)
@@ -215,7 +215,7 @@ class CursoForm(TailwindFormMixin, forms.ModelForm):
 
 
 class AsignacionEstudianteForm(TailwindFormMixin, forms.ModelForm):
-    """Formulario para inscribir a un estudiante en una Sección para un Ciclo Lectivo."""
+    """Formulario para inscribir a un estudiante en una Sección para un Ciclo Escolar."""
 
     class Meta:
         model = AsignacionEstudiante
@@ -223,7 +223,7 @@ class AsignacionEstudianteForm(TailwindFormMixin, forms.ModelForm):
         labels = {
             'estudiante': 'Estudiante a Inscribir',
             'seccion': 'Grado y Sección Asignada',
-            'ciclo_escolar': 'Ciclo Escolar Lectivo',
+            'ciclo_escolar': 'Ciclo Escolar',
         }
 
     def __init__(self, *args, **kwargs):
@@ -291,7 +291,7 @@ class AsignacionDocenteForm(TailwindFormMixin, forms.ModelForm):
             'personal': 'Docente Asignado',
             'curso': 'Curso / Materia del Pensum',
             'seccion': 'Grado y Sección',
-            'ciclo_escolar': 'Ciclo Escolar Lectivo',
+            'ciclo_escolar': 'Ciclo Escolar',
         }
 
     def __init__(self, *args, **kwargs):

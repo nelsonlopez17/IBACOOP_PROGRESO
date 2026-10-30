@@ -1,4 +1,4 @@
-{% load static %}
+{% load static tailwind_tags %}
 <!DOCTYPE html>
 <html lang="es" class="h-full bg-slate-50 font-sans antialiased text-slate-800">
 
@@ -14,62 +14,13 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <!-- Tailwind CSS CDN Config con Paleta Institucional IBACOOP EL PROGRESO -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            red: '#7A1C21',         /* Rojo Granate / Burdeos */
-                            darkgreen: '#1E6532',   /* Verde Oscuro / Hoja */
-                            ocean: '#3C7DA8',       /* Azul Océano */
-                            sky: '#5D9CEC',         /* Azul Claro / Celeste */
-                            lightgreen: '#42A855',  /* Verde Claro / Manzana */
-                            bg: '#FFFFFF',          /* Blanco / Fondo */
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <!-- Tailwind CSS compilado localmente con paleta institucional -->
+    {% tailwind_css %}
     <!-- Tom Select (Busqueda predictiva y filtrado en desplegables) -->
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        /* Estilos corporativos IBACOOP para Tom Select */
-        .ts-control {
-            border-radius: 0.5rem !important;
-            border-color: #cbd5e1 !important;
-            padding: 0.625rem 1rem !important;
-            font-size: 0.875rem !important;
-            line-height: 1.25rem !important;
-            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
-            background-color: #ffffff !important;
-        }
-        .ts-control.focus {
-            border-color: #1E6532 !important;
-            box-shadow: 0 0 0 2px rgba(30, 101, 50, 0.2) !important;
-        }
-        .ts-dropdown {
-            border-radius: 0.5rem !important;
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
-            border-color: #e2e8f0 !important;
-            font-size: 0.875rem !important;
-            z-index: 50 !important;
-        }
-        .ts-dropdown .active {
-            background-color: #1E6532 !important;
-            color: #ffffff !important;
-        }
-        .ts-dropdown .option {
-            padding: 0.5rem 1rem !important;
-        }
-    </style>
+    <!-- Estilos de componentes corporativos IBACOOP -->
+    <link rel="stylesheet" href="{% static 'css/componentes.css' %}">
 </head>
 
 <body class="h-full flex flex-col bg-slate-50 text-slate-800">
@@ -123,6 +74,12 @@
                 <div class="pt-4 px-3 pb-1 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
                     Mi Portal Estudiantil
                 </div>
+                <a href="{% url 'academico:estudiante_mis_calificaciones' %}"
+                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if request.resolver_match.view_name == 'academico:estudiante_mis_calificaciones' %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
+                    <i data-lucide="award"
+                        class="w-4 h-4 {% if request.resolver_match.view_name == 'academico:estudiante_mis_calificaciones' %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
+                    <span>Mis Calificaciones</span>
+                </a>
                 <a href="{% url 'estudiantes:estudiante_detail' user.mi_estudiante_id %}"
                     class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if request.resolver_match.view_name == 'estudiantes:estudiante_detail' %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
                     <i data-lucide="folder-user"
@@ -361,118 +318,13 @@
     {% endif %}
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
-    <style>
-        .notyf { padding: 1.25rem !important; }
-        .notyf__toast {
-            border-radius: 0.875rem !important;
-            box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.32), 0 4px 10px -2px rgba(15, 23, 42, 0.15) !important;
-            font-family: 'Inter', sans-serif !important;
-            font-size: 0.8125rem !important;
-            font-weight: 600 !important;
-            max-width: 420px !important;
-            width: auto !important;
-            color: #FFFFFF !important;
-            border: 1px solid rgba(255, 255, 255, 0.18) !important;
-            overflow: hidden !important;
-            padding: 0 !important;
-        }
-        .notyf__toast--success { background-color: #1E6532 !important; }
-        .notyf__toast--error { background-color: #7A1C21 !important; }
-        .notyf__toast--warning { background-color: #D97706 !important; }
-        .notyf__toast--info { background-color: #3C7DA8 !important; }
-        .notyf__ripple { display: none !important; }
-        .notyf__wrapper {
-            padding: 0.875rem 1.125rem !important;
-            display: flex !important;
-            align-items: center !important;
-            gap: 0.75rem !important;
-        }
-        .notyf__icon { margin: 0 !important; flex-shrink: 0 !important; }
-        .notyf__icon--success { background: #FFFFFF !important; color: #1E6532 !important; }
-        .notyf__icon--error { background: #FFFFFF !important; color: #7A1C21 !important; }
-        .notyf__message { color: #FFFFFF !important; line-height: 1.4 !important; font-weight: 600 !important; margin: 0 !important; }
-        .notyf__dismiss { border-left: 1px solid rgba(255, 255, 255, 0.2) !important; }
-        .notyf__dismiss-btn { background-color: transparent !important; opacity: 0.85 !important; }
-        .notyf__dismiss-btn:hover { background-color: rgba(255, 255, 255, 0.15) !important; opacity: 1 !important; }
-    </style>
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
-
+    <!-- Script principal de interfaz y componentes -->
+    <script src="{% static 'js/app.js' %}"></script>
     <script>
-        // Inicializar iconos de Lucide
-        lucide.createIcons();
-
-        // Notificaciones Toast (Notyf)
-        document.addEventListener('DOMContentLoaded', function() {
-            const toastItems = document.querySelectorAll('#django-toast-messages .django-toast-item');
-            if (toastItems.length > 0 && typeof Notyf !== 'undefined') {
-                const notyf = new Notyf({
-                    duration: 5000,
-                    position: { x: 'right', y: 'top' },
-                    dismissible: true,
-                    ripple: false,
-                    types: [
-                        { type: 'success', background: '#1E6532', className: 'notyf__toast--success', duration: 5000, icon: { className: 'notyf__icon--success', tagName: 'i' } },
-                        { type: 'error', background: '#7A1C21', className: 'notyf__toast--error', duration: 6500, icon: { className: 'notyf__icon--error', tagName: 'i' } },
-                        { type: 'warning', background: '#D97706', className: 'notyf__toast--warning', duration: 6000, icon: false },
-                        { type: 'info', background: '#3C7DA8', className: 'notyf__toast--info', duration: 5000, icon: false }
-                    ]
-                });
-                toastItems.forEach(function(item) {
-                    const tags = item.getAttribute('data-tags') || 'info';
-                    const text = item.textContent.trim();
-                    if (!text) return;
-                    let type = 'info';
-                    if (tags.includes('error') || tags.includes('danger')) type = 'error';
-                    else if (tags.includes('warning')) type = 'warning';
-                    else if (tags.includes('success')) type = 'success';
-                    notyf.open({ type: type, message: text });
-                });
-            }
-        });
-
-        // Control de Menú Desplegable en Móviles
-        document.addEventListener('DOMContentLoaded', function () {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            const toggleBtn = document.getElementById('sidebar-toggle-btn');
-            const closeBtn = document.getElementById('sidebar-close-btn');
-
-            function openSidebar() {
-                if (sidebar) sidebar.classList.remove('-translate-x-full');
-                if (overlay) overlay.classList.remove('hidden');
-            }
-
-            function closeSidebar() {
-                if (sidebar) sidebar.classList.add('-translate-x-full');
-                if (overlay) overlay.classList.add('hidden');
-            }
-
-            if (toggleBtn) toggleBtn.addEventListener('click', openSidebar);
-            if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
-            if (overlay) overlay.addEventListener('click', closeSidebar);
-        });
-
-        // Inicializar TomSelect en campos con clase .searchable-select
-        function initSearchableSelects() {
-            if (typeof TomSelect === 'undefined') return;
-            document.querySelectorAll('select.searchable-select, select[data-searchable="true"]').forEach(function(el) {
-                if (!el.tomselect) {
-                    new TomSelect(el, {
-                        create: false,
-                        maxOptions: 500,
-                        placeholder: el.getAttribute('data-placeholder') || el.getAttribute('placeholder') || 'Escriba para buscar por nombre, CUI/DPI o código...',
-                        allowEmptyOption: true,
-                        render: {
-                            no_results: function(data, escape) {
-                                return '<div class="no-results p-3 text-sm text-slate-500 text-center">No se encontraron resultados para "' + escape(data.input) + '"</div>';
-                            }
-                        }
-                    });
-                }
-            });
+        if (window.lucide && typeof lucide.createIcons === 'function') {
+            lucide.createIcons();
         }
-        document.addEventListener('DOMContentLoaded', initSearchableSelects);
-        document.body.addEventListener('htmx:afterSwap', initSearchableSelects);
     </script>
 </body>
 

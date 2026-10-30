@@ -432,7 +432,7 @@ def generar_pdf_comprobante_planilla(planilla):
         [Paragraph("CONCEPTO SALARIAL / DETALLE", style_head_tbl), Paragraph("INGRESOS (+)", style_head_tbl), Paragraph("DESCUENTOS (-)", style_head_tbl)],
     ]
 
-    # Ingreso principal
+    # ingreso principal
     if planilla.tipo_planilla == 'BONO_14':
         prop_str = f" ({planilla.dias_laborados}/365 días)" if planilla.dias_laborados < 365 else ""
         items_tabla.append([Paragraph(f"Bono 14 (Decreto 42-92 del Congreso de la República){prop_str}", style_val), Paragraph(f"Q {sueldo_devengado:,.2f}", style_val), Paragraph("-", style_val)])
@@ -449,7 +449,7 @@ def generar_pdf_comprobante_planilla(planilla):
     if bono_extra > 0:
         items_tabla.append([Paragraph("Otras Bonificaciones / Horas Extras / Complementos", style_val), Paragraph(f"Q {bono_extra:,.2f}", style_val), Paragraph("-", style_val)])
 
-    # Deducciones desglosadas
+    # deducciones desglosadas
     if d_igss > 0:
         items_tabla.append([Paragraph("Retención Cuota Laboral IGSS (4.83%)", style_val), Paragraph("-", style_val), Paragraph(f"Q {d_igss:,.2f}", style_val)])
 
@@ -466,7 +466,7 @@ def generar_pdf_comprobante_planilla(planilla):
         motivo_str = f" — {planilla.motivo_otros_descuentos}" if planilla.motivo_otros_descuentos else ""
         items_tabla.append([Paragraph(f"Otros Descuentos / Faltas{motivo_str}", style_val), Paragraph("-", style_val), Paragraph(f"Q {d_otr:,.2f}", style_val)])
 
-    # Si no tiene desglose pero tiene descuentos heredados
+    # si no tiene desglose pero tiene descuentos heredados
     if (d_igss + r_isr + d_ant + d_jud + d_otr) == Decimal('0.00') and planilla.descuentos > Decimal('0.00'):
         items_tabla.append([Paragraph("Deducciones Salariales Generales", style_val), Paragraph("-", style_val), Paragraph(f"Q {planilla.descuentos:,.2f}", style_val)])
 
@@ -487,7 +487,7 @@ def generar_pdf_comprobante_planilla(planilla):
     story.append(t_desglose)
     story.append(Spacer(1, 10))
 
-    # Resumen Informativo de Cargas Patronales (12.67%)
+    # resumen informativo de cargas patronales (12.67%)
     if planilla.total_cuota_patronal > 0:
         story.append(Paragraph("<b>INFORMACIÓN DE CARGAS PATRONALES DE LEY (12.67% INSTITUCIONAL)</b>", style_label))
         story.append(Spacer(1, 4))

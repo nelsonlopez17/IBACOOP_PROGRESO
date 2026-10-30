@@ -47,7 +47,7 @@ class AuditoriaPermisosTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, reverse('core:home'))
 
-        # Verificación de captura de evento de seguridad por acceso denegado
+        # verificacion de captura de evento de seguridad por acceso denegado
         evento = EventoSeguridad.objects.filter(
             tipo=TipoEventoSeguridad.ACCESO_DENEGADO,
             usuario=self.docente_user
@@ -114,7 +114,7 @@ class AuditoriaDiffAndExportTestCase(TestCase):
         diff = AuditoriaService.get_record_diff('configuracionportal', ultimo.history_id)
         self.assertIsNotNone(diff)
 
-        # Verificar presencia en la vista del panel
+        # verificar presencia en la vista del panel
         resp = self.client.get(reverse('auditoria:dashboard') + '?modelo=configuracionportal')
         self.assertEqual(resp.status_code, 200)
         self.assertContains(resp, 'Ajustes del Portal Web')
@@ -131,7 +131,7 @@ class AuditoriaDiffAndExportTestCase(TestCase):
             unidad_medida='unidades'
         )
 
-        # Modificación de existencia en inventario
+        # modificacion de existencia en inventario
         articulo.stock_actual = 6
         articulo.save()
 
@@ -145,7 +145,7 @@ class AuditoriaDiffAndExportTestCase(TestCase):
         field_names = [c['field_name'] for c in diff['changes']]
         self.assertIn('stock_actual', field_names)
 
-        # Inspección de diferencias en la vista de detalle
+        # inspeccion de diferencias en la vista de detalle
         url_diff = reverse('auditoria:diff_detail', kwargs={
             'modelo': 'articuloinventario',
             'history_id': ultimo_registro.history_id
@@ -189,7 +189,7 @@ class AuditoriaDiffAndExportTestCase(TestCase):
         self.assertFalse(AccessAttempt.objects.filter(pk=intento.id).exists())
         self.assertContains(response, 'Se ha desbloqueado exitosamente')
 
-        # Verificación del registro del evento de desbloqueo
+        # verificacion del registro del evento de desbloqueo
         self.assertTrue(EventoSeguridad.objects.filter(
             tipo=TipoEventoSeguridad.DESBLOQUEO_CUENTA
         ).exists())

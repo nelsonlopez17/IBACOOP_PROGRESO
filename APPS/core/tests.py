@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q, Sum
 from django.db.models.deletion import RestrictedError
 from django.test import TestCase
+from django.urls import reverse
 
 from APPS.academico.models import (
     AsignacionDocente,
@@ -256,4 +257,38 @@ class ValidacionFormulariosGuatemalaTestCase(TestCase):
         )
         self.assertEqual(beca.calcular_monto_con_descuento(Decimal('150.00')), Decimal('120.00'))
         self.assertEqual(beca.motivo, 'Hijo de Cooperativista')
+
+
+class ManejadorError403TestCase(TestCase):
+    """
+    pruebas del manejador personalizado de error 403 para redireccion
+    al dashboard o al portal del visitante.
+    """
+
+    def setUp(self):
+        self.usuario_sin_permiso = Usuario.objects.create_user(
+            username='estudiante_403',
+            email='est403@ibacoop.edu.gt',
+            password='Password123!',
+            rol=RolChoices.ESTUDIANTE,
+            debe_cambiar_password=False,
+        )
+
+    def test_visitante_no_autenticado_es_redirigido_al_portal(self):
+        # solicitud a modulo protegido sin haber iniciado sesion
+        res = self.client.get(reverse('estudiantes:estudiante_list'))
+        self.assertRedirects(res, reverse('portal:index'))
+
+    def test_usuario_autenticado_sin_permiso_es_redirigido_al_dashboard(self):
+        # usuario autenticado pero sin permisos del modulo rrhh o usuarios
+        self.client.force_login(self.usuario_sin_permiso)
+        res = self.client.get(reverse('rrhh:personal_list'))
+        self.assertRedirects(res, reverse('core:home'))
+
+    def test_solicitud_ajax_sin_permiso_retorna_403_json(self):
+        # peticion asincrona denegada debe retornar 403 json
+        self.client.force_login(self.usuario_sin_permiso)
+        res = self.client.get(reverse('rrhh:personal_list'), HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(res.status_code, 403)
+        self.assertIn('error', res.json())
 

@@ -25,3 +25,5 @@ urlpatterns = [
 # servir archivos multimedia en modo de desarrollo
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+handler403 = 'APPS.core.views.error_403'

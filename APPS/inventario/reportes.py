@@ -171,7 +171,7 @@ def generar_pdf_comprobante_movimiento(movimiento):
 
     t_firmas = Table([
         [
-            Paragraph("___________________________________<br/><b>Entregado por / Dirección</b>", ParagraphStyle('F1', parent=styles['Normal'], fontName='Helvetica', fontSize=9, alignment=1)),
+            Paragraph("___________________________________<br/><b>Director (a)</b>", ParagraphStyle('F1', parent=styles['Normal'], fontName='Helvetica', fontSize=9, alignment=1)),
             Paragraph("___________________________________<br/><b>Firma de Recibido / Responsable</b><br/>"
                       f"<font size=8 color='#64748B'>{movimiento.personal_responsable.persona.nombre_completo}</font>", ParagraphStyle('F2', parent=styles['Normal'], fontName='Helvetica', fontSize=9, alignment=1))
         ]

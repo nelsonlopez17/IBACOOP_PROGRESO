@@ -140,7 +140,7 @@ def generar_pdf_antiguedad_saldos(ciclo_escolar=None):
     story.append(ReportLabHelper.build_signature_block([
         "Encargado(a) de Cartera y Cobros",
         "Contador(a) General",
-        "Director(a) Técnico Pedagógico"
+        "Director (a)"
     ], orientation_landscape=True))
 
     doc.build(story, canvasmaker=NumberedCanvas)
@@ -278,7 +278,7 @@ def generar_pdf_cuadre_caja(fecha_inicio, fecha_fin):
     story.append(t_cuadre)
     story.append(Spacer(1, 15))
 
-    # Resumen por método de pago
+    # resumen por metodo de pago
     resumen_data = [
         [Paragraph("<b>FORMA DE PAGO</b>", styles['th']), Paragraph("<b>TOTAL INGRESADO (Q)</b>", styles['th'])]
     ]
@@ -370,11 +370,11 @@ def generar_pdf_estado_cuenta_estudiante(estudiante, ciclo_escolar):
 
     story.append(ReportLabHelper.build_header(
         doc_title="ESTADO DE CUENTA Y REGISTRO DE PAGOS",
-        subtitle=f"Ciclo Lectivo {ciclo_escolar.anio} • Moneda: Quetzales (Q)"
+        subtitle=f"{ciclo_escolar.anio} • Moneda: Quetzales (Q)"
     ))
     story.append(Spacer(1, 10))
 
-    # Cuadro datos del estudiante
+    # cuadro datos del estudiante
     datos_est = [
         [
             Paragraph(f"<b>ESTUDIANTE:</b> {p.nombre_completo.upper()}", styles['td']),

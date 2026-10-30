@@ -228,7 +228,7 @@ class PersonalBajaForm(TailwindFormMixin, forms.Form):
         label='Motivo Detallado de la Baja o Retiro',
         widget=forms.Textarea(attrs={
             'rows': 3,
-            'placeholder': 'Indique la justificación formal (ej. Renuncia voluntaria, término de contrato lectivo, despido con causa, traslado, etc.).',
+            'placeholder': 'Indique la justificación formal (ej. Renuncia voluntaria, término de contrato escolar, despido con causa, traslado, etc.).',
         }),
         required=True
     )
@@ -406,7 +406,7 @@ class PlanillaUpdateForm(TailwindFormMixin, forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
 
-        # Validación de inmutabilidad financiera: una boleta pagada no puede ser alterada
+        # validacion de inmutabilidad financiera: una boleta pagada no puede ser alterada
         if self.instance and self.instance.pk:
             pagado_original = Planilla.objects.filter(pk=self.instance.pk).values_list('pagado', flat=True).first()
             if pagado_original:

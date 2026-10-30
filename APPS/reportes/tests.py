@@ -271,6 +271,15 @@ class ReportesEmisionTestCase(TestCase):
         self.assertEqual(resp_dir_csv.status_code, 200)
         self.assertEqual(resp_dir_csv['Content-Type'], 'text/csv; charset=utf-8')
 
+        # directorio filtrado por estado (activo, retirado, etc.)
+        url_dir_activo_pdf = reverse('reportes:rrhh_directorio') + "?formato=pdf&estado=ACTIVO"
+        resp_dir_activo = self.client.get(url_dir_activo_pdf)
+        self.assertEqual(resp_dir_activo.status_code, 200)
+
+        url_dir_retirado_csv = reverse('reportes:rrhh_directorio') + "?formato=csv&estado=RETIRADO"
+        resp_dir_retirado = self.client.get(url_dir_retirado_csv)
+        self.assertEqual(resp_dir_retirado.status_code, 200)
+
     def test_generar_disciplina_pdf_y_csv(self):
         """Verifica el Historial de Incidentes Disciplinarios en PDF y CSV."""
         IncidenteDisciplinario.objects.create(
@@ -383,7 +392,7 @@ class GeneracionBoletasZipTestCase(TestCase):
         self.assertIn('.zip', resultado['filename'])
         self.assertTrue(resultado['archivo_url'].startswith('/media/reportes_lotes/'))
 
-        # Validar contenido interno del archivo ZIP generado
+        # validar contenido interno del archivo zip generado
         zip_path = Path(settings.MEDIA_ROOT) / 'reportes_lotes' / resultado['filename']
         self.assertTrue(zip_path.exists())
         with zipfile.ZipFile(zip_path, 'r') as zf:

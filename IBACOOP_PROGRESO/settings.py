@@ -7,9 +7,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-^59f-cp@#)$ez20opmvdr@rk%3sr-*az6(9s+a@(3o#$h*8*#)')
 
-DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 't')
+TESTING = 'test' in sys.argv
 
-ALLOWED_HOSTS = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',') if h.strip()]
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 't')
+
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost,testserver,ibacoopprogreso.edu.gt,www.ibacoopprogreso.edu.gt').split(',') if h.strip()]
+
+CSRF_TRUSTED_ORIGINS = [
+    o.strip() for o in os.environ.get(
+        'CSRF_TRUSTED_ORIGINS',
+        'https://ibacoopprogreso.edu.gt,https://www.ibacoopprogreso.edu.gt,http://127.0.0.1,http://localhost'
+    ).split(',') if o.strip()
+]
 
 AUTH_USER_MODEL = 'usuarios.Usuario'
 
@@ -84,7 +93,7 @@ DATABASES = {
         'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.postgresql'),
         'NAME': os.environ.get('DB_NAME', 'IBACOOP_PROGRESO'),
         'USER': os.environ.get('DB_USER', 'postgres'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'admin'),
         'HOST': os.environ.get('DB_HOST', 'localhost'),
         'PORT': os.environ.get('DB_PORT', '5432'),
     }
@@ -110,7 +119,7 @@ TIME_ZONE = 'America/Guatemala'
 USE_I18N = True
 USE_TZ = True
 
-# Estandarización de formato numérico y monetario de Guatemala
+# estandarizacion de formato numerico y monetario de guatemala
 USE_THOUSAND_SEPARATOR = False
 DECIMAL_SEPARATOR = '.'
 THOUSAND_SEPARATOR = ','
@@ -121,6 +130,7 @@ FORMAT_MODULE_PATH = [
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [BASE_DIR / 'static']
 WHITENOISE_MANIFEST_STRICT = False
 STORAGES = {
     "default": {
@@ -149,23 +159,35 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AXES_FAILURE_LIMIT = 3
 # periodo de espera tras superar los intentos permitidos
-AXES_COOLOFF_TIME = timedelta(seconds=10)
+AXES_COOLOFF_TIME = timedelta(minutes=int(os.environ.get('AXES_COOLOFF_MINUTES', '15'))) if (not DEBUG and not TESTING) else timedelta(seconds=10)
 AXES_RESET_ON_SUCCESS = True
 AXES_LOCKOUT_TEMPLATE = 'usuarios/lockout.html'
 AXES_LOCKOUT_CALLABLE = 'APPS.usuarios.views.lockout_view'
 AXES_ENABLE_ADMIN = True
 AXES_LOCKOUT_PARAMETERS = ['username', 'ip_address']
 
-# duracion maxima de la sesion en segundos
-SESSION_COOKIE_AGE = 3600
+# duracion y seguridad de sesion
+SESSION_COOKIE_AGE = 14400 # 4 horas
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
 
-if not DEBUG:
+if not DEBUG and not TESTING:
+    if not os.environ.get('SECRET_KEY') or 'django-insecure' in SECRET_KEY:
+        from django.core.exceptions import ImproperlyConfigured
+        raise ImproperlyConfigured("La variable de entorno SECRET_KEY es obligatoria en producción y no debe ser la clave predeterminada.")
+    SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'True').lower() in ('true', '1', 't')
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
     X_FRAME_OPTIONS = 'DENY'
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_HSTS_SECONDS = int(os.environ.get('SECURE_HSTS_SECONDS', '31536000'))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 LOGS_DIR = BASE_DIR / 'logs'
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
@@ -208,6 +230,11 @@ LOGGING = {
             'propagate': False,
         },
         'axes': {
+            'handlers': ['security_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'APPS.auditoria': {
             'handlers': ['security_file', 'console'],
             'level': 'INFO',
             'propagate': False,

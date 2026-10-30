@@ -73,7 +73,7 @@ def mapear_rol_segun_puesto(puesto: Puesto) -> str:
     elif any(k in nombre_puesto for k in ["DOCENTE", "PROFESOR", "PROFESORA", "CATEDRATICO", "MAESTRO"]):
         return RolChoices.DOCENTE
     else:
-        return RolChoices.PERSONAL  # Personal general / operativo sin acceso a notas ni finanzas
+        return RolChoices.PERSONAL  # personal general / operativo sin acceso a notas ni finanzas
 
 
 
@@ -536,7 +536,7 @@ class PlanillaGenerarMasivaView(LoginRequiredMixin, PermissionRequiredMixin, For
 
                 if tipo_planilla == TipoPlanillaChoices.BONO_14:
                     mes = MesChoices.JULIO
-                    # Cómputo legal Dec. 42-92: Del 1 de julio año anterior al 30 de junio ciclo escolar (365 días)
+                    # computo legal dec. 42-92: del 1 de julio ano anterior al 30 de junio ciclo escolar (365 dias)
                     fecha_inicio_periodo = date(ciclo.anio - 1, 7, 1)
                     fecha_fin_periodo = date(ciclo.anio, 6, 30)
                     if emp.fecha_contratacion and emp.fecha_contratacion > fecha_inicio_periodo:
@@ -549,7 +549,7 @@ class PlanillaGenerarMasivaView(LoginRequiredMixin, PermissionRequiredMixin, For
 
                 elif tipo_planilla == TipoPlanillaChoices.AGUINALDO:
                     mes = MesChoices.DICIEMBRE
-                    # Cómputo legal Dec. 76-78: Del 1 de diciembre año anterior al 30 de noviembre ciclo escolar (365 días)
+                    # computo legal dec. 76-78: del 1 de diciembre ano anterior al 30 de noviembre ciclo escolar (365 dias)
                     fecha_inicio_periodo = date(ciclo.anio - 1, 12, 1)
                     fecha_fin_periodo = date(ciclo.anio, 11, 30)
                     if emp.fecha_contratacion and emp.fecha_contratacion > fecha_inicio_periodo:
@@ -564,8 +564,8 @@ class PlanillaGenerarMasivaView(LoginRequiredMixin, PermissionRequiredMixin, For
                     dias_lab = 30
                     sueldo_ord = sueldo_base
 
-                else:  # TipoPlanillaChoices.ORDINARIA
-                    # Prorrateo si fue contratado en el mes que se está liquidando
+                else:  # tipoplanillachoices.ordinaria
+                    # prorrateo si fue contratado en el mes que se esta liquidando
                     if prorratear_altas and emp.fecha_contratacion and (emp.fecha_contratacion.year == ciclo.anio and emp.fecha_contratacion.month == mes):
                         dia_inicio = emp.fecha_contratacion.day
                         dias_lab = max(1, min(30, 30 - dia_inicio + 1))
@@ -576,11 +576,11 @@ class PlanillaGenerarMasivaView(LoginRequiredMixin, PermissionRequiredMixin, For
                         sueldo_ord = sueldo_base
                         bono_inc = bono_ley
 
-                    # Retención Cuota Laboral IGSS (4.83%)
+                    # retencion cuota laboral igss (4.83%)
                     if descontar_igss:
                         cuota_igss = round(sueldo_ord * Decimal('0.0483'), 2)
 
-                    # Retención mensual ISR Asalariados (Decreto 10-2012)
+                    # retencion mensual isr asalariados (decreto 10-2012)
                     if calcular_retencion_isr and sueldo_base > Decimal('4000.00'):
                         renta_bruta_anual = sueldo_base * Decimal('12')
                         deduccion_sin_comprobacion = Decimal('48000.00')
@@ -589,7 +589,7 @@ class PlanillaGenerarMasivaView(LoginRequiredMixin, PermissionRequiredMixin, For
                         impuesto_anual = renta_imponible * Decimal('0.05')
                         retencion_isr = round(impuesto_anual / Decimal('12'), 2)
 
-                    # Aportes y Cargas Patronales (12.67%)
+                    # aportes y cargas patronales (12.67%)
                     if calcular_cuota_patronal:
                         cuota_patronal_igss = round(sueldo_ord * Decimal('0.1067'), 2)
                         cuota_patronal_irtra = round(sueldo_ord * Decimal('0.0100'), 2)
@@ -718,7 +718,12 @@ def descargar_comprobante_planilla_pdf(request, pk):
         pk=pk,
         esta_eliminado=False
     )
-    es_titular = getattr(planilla.personal.persona, 'usuario_id', None) == request.user.id
+    usuario_id = getattr(planilla.personal.persona, 'usuario_id', None)
+    es_titular = (
+        request.user.is_authenticated
+        and usuario_id is not None
+        and usuario_id == request.user.id
+    )
     if not (request.user.has_perm('rrhh.view_planilla') or es_titular):
         from django.core.exceptions import PermissionDenied
         raise PermissionDenied("No tiene autorización para descargar esta boleta de pago de planilla.")

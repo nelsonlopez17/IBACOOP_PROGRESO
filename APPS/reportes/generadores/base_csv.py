@@ -27,7 +27,7 @@ class IBACOOPReportCSV:
 
         writer.writerow(['INSTITUTO DE EDUCACIÓN BÁSICA EL PROGRESO (IBACOOP)'])
         writer.writerow([f'REPORTE: {filename_prefix.upper()}', f'EMISIÓN: {timezone.now().strftime("%d/%m/%Y %H:%M:%S")}'])
-        writer.writerow([])  # Fila vacía separadora
+        writer.writerow([])  # fila vacia separadora
 
         writer.writerow(headers)
 

@@ -235,9 +235,9 @@ def es_titular_o_encargado_de_estudiante(usuario, estudiante) -> bool:
 
 
 
-# ==============================================================================
-# INTERFAZ INTUITIVA DE GESTIÓN DE ROLES Y PERMISOS
-# ==============================================================================
+
+# interfaz intuitiva de gestion de roles y permisos
+
 
 GRUPOS_BASE_PROTEGIDOS = set(NOMBRE_GRUPO_POR_ROL.values())
 

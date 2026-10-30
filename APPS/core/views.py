@@ -6,6 +6,9 @@ Provee un Dashboard adaptativo según el Rol y Grupo de Permisos del usuario aut
 """
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
+from django.shortcuts import redirect
+from django.contrib import messages
+from django.http import JsonResponse
 from django.views.generic import TemplateView
 from APPS.usuarios.models import Usuario, RolChoices
 
@@ -226,3 +229,26 @@ class HomeView(LoginRequiredMixin, TemplateView):
             'titulo_pagina': 'Dashboard Principal',
         })
         return context
+
+
+def error_403(request, exception=None):
+    """
+    redirecciona al dashboard si el usuario esta autenticado
+    o al portal del visitante si no tiene sesion iniciada.
+    """
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+        return JsonResponse({'error': 'acceso no autorizado. permiso denegado.'}, status=403)
+
+    if request.user.is_authenticated:
+        messages.warning(
+            request,
+            'No cuenta con los permisos necesarios para acceder a este módulo institucional.'
+        )
+        return redirect('core:home')
+
+    messages.info(
+        request,
+        'Debe iniciar sesión para acceder al módulo solicitado.'
+    )
+    return redirect('portal:index')
+

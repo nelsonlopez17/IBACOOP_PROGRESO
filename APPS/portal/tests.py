@@ -172,6 +172,102 @@ class SolicitudContactoTestCase(TestCase):
         self.assertFalse(SolicitudContacto.objects.filter(correo='enlaces@spam.com').exists())
         self.assertFormError(response.context['form'], 'mensaje', 'Por medidas de seguridad escolar, no se permite incluir múltiples enlaces web en el mensaje.')
 
+    def test_antispam_bloqueo_enlace_unico(self):
+        """Prueba que un mensaje con un enlace externo simple también sea bloqueado."""
+        token_humano = signing.dumps(time.time() - 10)
+        datos_enlace = {
+            'nombre_remitente': 'Spammer Unico',
+            'correo': 'link@spam.com',
+            'telefono': '55112233',
+            'asunto': 'Oferta exclusiva',
+            'mensaje': 'Por favor visite https://mi-sitio-externo.com para más información.',
+            'token_seguridad': token_humano,
+        }
+
+        url = reverse('portal:contacto')
+        response = self.client.post(url, datos_enlace)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(SolicitudContacto.objects.filter(correo='link@spam.com').exists())
+        self.assertFormError(response.context['form'], 'mensaje', 'Por medidas de seguridad escolar, no se permite incluir enlaces web en el mensaje.')
+
+    def test_antispam_bloqueo_caracteres_cirilicos(self):
+        """Prueba que mensajes con caracteres cirílicos típicos de bots rusos sean bloqueados."""
+        token_humano = signing.dumps(time.time() - 10)
+        datos_cirilico = {
+            'nombre_remitente': 'Иван Иванов',
+            'correo': 'ivan@mail.ru',
+            'telefono': '55112233',
+            'asunto': 'Продвижение сайтов',
+            'mensaje': 'Здравствуйте, предлагаем качественные услуги продвижения.',
+            'token_seguridad': token_humano,
+        }
+
+        url = reverse('portal:contacto')
+        response = self.client.post(url, datos_cirilico)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(SolicitudContacto.objects.filter(correo='ivan@mail.ru').exists())
+        self.assertFormError(response.context['form'], 'nombre_remitente', 'El nombre contiene caracteres no permitidos.')
+
+    def test_antispam_bloqueo_palabras_prohibidas_asunto(self):
+        """Prueba que palabras clave de spam financiero o apuestas en el asunto sean bloqueadas."""
+        token_humano = signing.dumps(time.time() - 10)
+        datos_spam = {
+            'nombre_remitente': 'Carlos Perez',
+            'correo': 'carlos@gmail.com',
+            'telefono': '55112233',
+            'asunto': 'Ganar dinero con Casino y Crypto trading',
+            'mensaje': 'Mensaje normal sobre admisiones para el ciclo escolar.',
+            'token_seguridad': token_humano,
+        }
+
+        url = reverse('portal:contacto')
+        response = self.client.post(url, datos_spam)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(SolicitudContacto.objects.filter(asunto='Ganar dinero con Casino y Crypto trading').exists())
+        self.assertFormError(response.context['form'], 'asunto', 'El asunto contiene términos bloqueados por el filtro de seguridad.')
+
+    def test_antispam_bloqueo_honeypot_empresa(self):
+        """Prueba que el campo trampa secundario empresa_institucion descarte la solicitud."""
+        token_humano = signing.dumps(time.time() - 10)
+        datos_empresa = {
+            'nombre_remitente': 'Bot Empresarial',
+            'correo': 'bot_empresa@spammer.com',
+            'telefono': '55667788',
+            'asunto': 'Consulta normal',
+            'mensaje': 'Mensaje intentando engañar con segundo campo trampa.',
+            'empresa_institucion': 'Corporación Fantasma Spam LLC',
+            'token_seguridad': token_humano,
+        }
+
+        url = reverse('portal:contacto')
+        response = self.client.post(url, datos_empresa)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(SolicitudContacto.objects.filter(correo='bot_empresa@spammer.com').exists())
+        self.assertFormError(response.context['form'], 'empresa_institucion', 'Solicitud descartada por detección de actividad automatizada (Spam).')
+
+    def test_antispam_bloqueo_mensaje_duplicado(self):
+        """Prueba que un mensaje idéntico reenviado inmediatamente sea rechazado."""
+        token_humano = signing.dumps(time.time() - 10)
+        datos = {
+            'nombre_remitente': 'Remitente Duplicado',
+            'correo': 'duplicado@gmail.com',
+            'telefono': '55119988',
+            'asunto': 'Consulta de cuotas',
+            'mensaje': 'Deseo conocer la cuota mensual de primero básico para este año.',
+            'token_seguridad': token_humano,
+        }
+        url = reverse('portal:contacto')
+        resp1 = self.client.post(url, datos, follow=True)
+        self.assertEqual(resp1.status_code, 200)
+        self.assertTrue(SolicitudContacto.objects.filter(correo='duplicado@gmail.com').exists())
+
+        # segundo envio identico
+        token_humano2 = signing.dumps(time.time() - 10)
+        datos['token_seguridad'] = token_humano2
+        resp2 = self.client.post(url, datos, follow=True)
+        self.assertEqual(resp2.status_code, 200)
+        self.assertContains(resp2, 'Ya hemos recibido esta misma consulta recientemente')
+
     def test_antispam_rate_limit_por_ip(self):
         """Prueba que tras 3 envíos exitosos desde la misma IP, el 4to intento sea bloqueado."""
         url = reverse('portal:contacto')
@@ -188,7 +284,7 @@ class SolicitudContactoTestCase(TestCase):
             resp = self.client.post(url, datos, follow=True)
             self.assertEqual(resp.status_code, 200)
 
-        # 4to intento desde la misma IP: bloqueado por tasa máxima
+        # 4to intento desde la misma ip: bloqueado por tasa maxima
         token_valido = signing.dumps(time.time() - 10)
         datos_bloqueados = {
             'nombre_remitente': 'Remitente Cuatro',
@@ -275,7 +371,7 @@ class PortalConfiguracionYGaleriaTestCase(TestCase):
             'hero_descripcion': 'Formando a las nuevas generaciones con excelencia y principios cooperativos.',
             'mision': 'Misión personalizada de prueba para estudiantes.',
             'vision': 'Visión institucional de liderazgo académico cooperativo.',
-            # Plan de Estudios
+            # plan de estudios
             'plan_estudios_subtitulo': 'Plan formativo actualizado para el ciclo 2026',
             'descripcion_primero_basico': 'Adaptación intensiva y habilidades cuantitativas.',
             'puntos_primero_basico': 'Lógica Matemática\nRobótica Básica\nInglés Práctico',
@@ -283,11 +379,11 @@ class PortalConfiguracionYGaleriaTestCase(TestCase):
             'puntos_segundo_basico': 'Física Experimental\nEmprendimiento y Finanzas',
             'descripcion_tercero_basico': 'Orientación vocacional y transición al diversificado.',
             'puntos_tercero_basico': 'Álgebra Superior\nPrácticas en Laboratorio TAC',
-            # Requisitos de Inscripción
+            # requisitos de inscripcion
             'requisitos_subtitulo': 'Documentos requeridos para inscripción 2026:',
             'requisitos_primero_basico': 'Certificado RENAP CUI\nCertificado de 6to Primaria original\nDiploma de Primaria',
             'requisitos_traslados': 'Certificados de grados cursados\nConstancia de Solvencia\nFotocopia de DPI',
-            # Datos de contacto y cuotas
+            # datos de contacto y cuotas
             'telefono_principal': '78881234',
             'telefono_whatsapp': '55556677',
             'correo_contacto': 'info@ibacoop.edu.gt',
@@ -316,7 +412,7 @@ class PortalConfiguracionYGaleriaTestCase(TestCase):
         self.assertEqual(cfg.lista_puntos_primero_basico[0], 'Lógica Matemática')
         self.assertEqual(len(cfg.lista_requisitos_primero_basico), 3)
 
-        # Verificar reflejo en portada pública
+        # verificar reflejo en portada publica
         resp_publica = self.client.get(reverse('portal:index'))
         self.assertContains(resp_publica, 'Plan formativo actualizado para el ciclo 2026')
         self.assertContains(resp_publica, 'Lógica Matemática')
@@ -324,7 +420,7 @@ class PortalConfiguracionYGaleriaTestCase(TestCase):
         self.assertContains(resp_publica, 'Certificado RENAP CUI')
         self.assertContains(resp_publica, 'Q 125.00')
 
-        # Verificar reflejo en páginas especializadas
+        # verificar reflejo en paginas especializadas
         resp_oferta = self.client.get(reverse('portal:oferta_academica'))
         self.assertContains(resp_oferta, 'Lógica Matemática')
 
@@ -393,13 +489,13 @@ class PortalConfiguracionYGaleriaTestCase(TestCase):
 
         url_rapido = reverse('portal:solicitud_marcar_atendido', kwargs={'pk': sol.pk})
 
-        # Intento anónimo debe redirigir al login
+        # intento anonimo debe redirigir al login
         resp_anon = self.client.post(url_rapido)
         self.assertEqual(resp_anon.status_code, 302)
         sol.refresh_from_db()
         self.assertFalse(sol.atendido)
 
-        # Intento autenticado por director
+        # intento autenticado por director
         self.client.force_login(self.director)
         resp = self.client.post(url_rapido, follow=True)
         self.assertEqual(resp.status_code, 200)
@@ -417,20 +513,20 @@ class PortalConfiguracionYGaleriaTestCase(TestCase):
             autor=self.director
         )
 
-        # Portada pública del portal
+        # portada publica del portal
         resp_index = self.client.get(reverse('portal:index'))
         self.assertEqual(resp_index.status_code, 200)
         self.assertContains(resp_index, "Inauguración de Laboratorio de Computación 2026")
         self.assertContains(resp_index, "Últimas Publicaciones y Comunicados")
 
-        # Detalle público del comunicado
+        # detalle publico del comunicado
         url_detalle = reverse('portal:publicacion_detalle', kwargs={'pk': pub.pk})
         resp_det = self.client.get(url_detalle)
         self.assertEqual(resp_det.status_code, 200)
         self.assertContains(resp_det, "Inauguración de Laboratorio de Computación 2026")
         self.assertContains(resp_det, "Ciclo Básico")
 
-        # Listado público de publicaciones
+        # listado publico de publicaciones
         resp_list = self.client.get(reverse('portal:publicaciones_todas'))
         self.assertEqual(resp_list.status_code, 200)
         self.assertContains(resp_list, "Inauguración de Laboratorio de Computación 2026")

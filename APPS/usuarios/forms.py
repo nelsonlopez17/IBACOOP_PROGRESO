@@ -105,7 +105,7 @@ class CustomUserCreationForm(TailwindFormMixin, UserCreationForm):
 class CustomUserChangeForm(TailwindFormMixin, UserChangeForm):
     """Formulario para editar la información de un usuario por parte de un Administrador."""
 
-    password = None  # No se modifica la contraseña directamente en este formulario
+    password = None  # no se modifica la contrasena directamente en este formulario
     first_name = forms.CharField(
         max_length=100,
         min_length=2,

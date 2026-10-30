@@ -117,5 +117,5 @@ def registrar_evento_seguridad(tipo, request=None, usuario=None, ruta=None, desc
             fecha=timezone.now()
         )
     except Exception:
-        # Se previene que cualquier fallo en auditoría bloquee la respuesta del sistema
+        # se previene que cualquier fallo en auditoria bloquee la respuesta del sistema
         pass

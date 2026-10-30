@@ -45,9 +45,9 @@ def generar_pdf_reporte_disciplina(ciclo_escolar, seccion=None):
         'reportado_por__persona'
     ).order_by('-fecha', '-hora')
 
-    subtitulo = f"Ciclo Lectivo {ciclo_escolar.anio} • Normativa MINEDUC Acuerdo Ministerial 01-2011"
+    subtitulo = f"{ciclo_escolar.anio} • Normativa MINEDUC Acuerdo Ministerial 01-2011"
     if seccion:
-        # Filtrar por seccion a traves de la asignacion del estudiante
+        # filtrar por seccion a traves de la asignacion del estudiante
         estudiantes_seccion = seccion.asignaciones.filter(ciclo_escolar=ciclo_escolar, esta_eliminado=False).values_list('estudiante_id', flat=True)
         incidentes = incidentes.filter(estudiante_id__in=estudiantes_seccion)
         subtitulo += f" • {seccion.grado.nombre} Sección '{seccion.letra}'"
@@ -116,7 +116,7 @@ def generar_pdf_reporte_disciplina(ciclo_escolar, seccion=None):
     story.append(ReportLabHelper.build_signature_block([
         "Comisión de Disciplina y Convivencia",
         "Docente Guía",
-        "Director(a) Técnico Pedagógico"
+        "Director (a)"
     ], orientation_landscape=True))
 
     doc.build(story, canvasmaker=NumberedCanvas)

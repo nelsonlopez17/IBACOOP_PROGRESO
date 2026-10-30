@@ -83,7 +83,7 @@ class DisciplinaDashboardView(LoginRequiredMixin, PermissionRequiredMixin, Templ
             'citaciones_pendientes': citaciones_pendientes_qs.count(),
         }
 
-        # Paginacion limpia de incidentes
+        # paginacion limpia de incidentes
         paginator = Paginator(qs, 25)
         page_number = self.request.GET.get('page')
         page_obj = paginator.get_page(page_number)
@@ -220,7 +220,7 @@ class CitacionUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView
 
     def form_valid(self, form):
         citacion = form.save()
-        # Si la citacion fue debidamente atendida con compromisos, resolver y cerrar el caso automaticamente
+        # si la citacion fue debidamente atendida con compromisos, resolver y cerrar el caso automaticamente
         if citacion.estado == EstadoCitacionChoices.ATENDIDA:
             incidente = citacion.incidente
             if not incidente.esta_resuelto:
@@ -235,6 +235,8 @@ class CitacionUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView
 class DescargarCitacionPDFView(LoginRequiredMixin, View):
     """Descarga el citatorio oficial en formato PDF para entregar al padre o encargado."""
     def get(self, request, pk):
+        if getattr(request.user, 'rol', None) == 'ESTUDIANTE':
+            raise PermissionDenied("Los estudiantes no tienen autorización para descargar citatorios oficiales en PDF.")
         citacion = get_object_or_404(CitacionPadre, pk=pk)
         if not (request.user.has_perm('disciplina.view_citacionpadre') or es_titular_o_encargado_de_estudiante(request.user, citacion.incidente.estudiante)):
             raise PermissionDenied("No tiene autorización para descargar este citatorio.")
@@ -249,6 +251,8 @@ class DescargarCitacionPDFView(LoginRequiredMixin, View):
 class DescargarActaCompromisoPDFView(LoginRequiredMixin, View):
     """Descarga el Acta Oficial de Compromiso y Convivencia Escolar en PDF."""
     def get(self, request, pk):
+        if getattr(request.user, 'rol', None) == 'ESTUDIANTE':
+            raise PermissionDenied("Los estudiantes no tienen autorización para descargar actas de compromiso oficiales en PDF.")
         citacion = get_object_or_404(CitacionPadre, pk=pk)
         if not (request.user.has_perm('disciplina.view_citacionpadre') or es_titular_o_encargado_de_estudiante(request.user, citacion.incidente.estudiante)):
             raise PermissionDenied("No tiene autorización para descargar esta acta de compromiso.")

@@ -76,14 +76,14 @@
             <span>Carga Académica Activa ({{ cursos_asignados.count }} cursos asignados en ciclo activo)</span>
         </div>
         <p class="text-xs text-rose-800 leading-relaxed">
-            Este colaborador tiene asignaturas a su cargo en el ciclo lectivo en curso. Al confirmar la baja, el docente ya no podrá ingresar notas ni asistencia, pero <strong>las calificaciones ya registradas se mantendrán seguras</strong>. Podrá transferir estas materias a un nuevo docente desde <strong>Gestión Académica &gt; Carga Docente</strong>.
+            Este colaborador tiene asignaturas a su cargo en el ciclo escolar en curso. Al confirmar la baja, el docente ya no podrá ingresar notas ni asistencia, pero <strong>las calificaciones ya registradas se mantendrán seguras</strong>. Podrá transferir estas materias a un nuevo docente desde <strong>Gestión Académica &gt; Carga Docente</strong>.
         </p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-medium">
             {% for c in cursos_asignados %}
             <div class="p-2.5 rounded-xl bg-white border border-rose-200 flex items-center justify-between">
                 <div>
                     <span class="font-bold text-slate-900 block">{{ c.curso.nombre_curso }}</span>
-                    <span class="text-[11px] text-slate-500">{{ c.seccion }} — Ciclo {{ c.ciclo_escolar.anio }}</span>
+                    <span class="text-[11px] text-slate-500">{{ c.seccion }} — {{ c.ciclo_escolar.anio }}</span>
                 </div>
                 <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">Requerirá Reasignación</span>
             </div>

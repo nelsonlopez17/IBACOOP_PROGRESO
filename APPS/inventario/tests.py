@@ -78,7 +78,7 @@ class InventarioTestCase(TestCase):
             'motivo': 'Compra de nuevos proyectores para aulas de 2do Básico.',
             'documento_referencia': 'Factura #9874'
         })
-        self.assertEqual(response.status_code, 302)  # Redirige a articulo_detail
+        self.assertEqual(response.status_code, 302)  # redirige a articulo_detail
 
         self.articulo.refresh_from_db()
         self.assertEqual(self.articulo.stock_actual, 15)
@@ -106,11 +106,11 @@ class InventarioTestCase(TestCase):
             'articulo': self.articulo.pk,
             'personal_responsable': self.personal.pk,
             'tipo_movimiento': TipoMovimientoChoices.SALIDA,
-            'cantidad': 50,  # Excede el stock actual de 10
+            'cantidad': 50,  # excede el stock actual de 10
             'motivo': 'Intento desincorporación masiva.',
             'documento_referencia': ''
         })
-        self.assertEqual(response.status_code, 200)  # Re-renders form con error
+        self.assertEqual(response.status_code, 200)  # re-renders form con error
         form = response.context['form']
         self.assertIn('cantidad', form.errors)
         self.assertIn('Stock insuficiente', form.errors['cantidad'][0])

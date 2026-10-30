@@ -133,7 +133,7 @@ class RecursosHumanosTestCase(TestCase):
         """Verifica que en Julio coexistan la Planilla Ordinaria y la Planilla de Bono 14 sin colisión."""
         self.client.force_login(self.admin_user)
 
-        # 1. Generar Planilla Ordinaria de Julio
+        # 1. generar planilla ordinaria de julio
         res_ord = self.client.post(reverse('rrhh:planilla_generar'), {
             'ciclo_escolar': self.ciclo.pk,
             'tipo_planilla': 'ORDINARIA',
@@ -144,7 +144,7 @@ class RecursosHumanosTestCase(TestCase):
         })
         self.assertEqual(res_ord.status_code, 302)
 
-        # 2. Generar Planilla de Bono 14 en Julio (Decreto 42-92, exento de IGSS y sin bono de ley)
+        # 2. generar planilla de bono 14 en julio (decreto 42-92, exento de igss y sin bono de ley)
         res_bono = self.client.post(reverse('rrhh:planilla_generar'), {
             'ciclo_escolar': self.ciclo.pk,
             'tipo_planilla': 'BONO_14',
@@ -155,12 +155,12 @@ class RecursosHumanosTestCase(TestCase):
         })
         self.assertEqual(res_bono.status_code, 302)
 
-        # 3. Verificar que ambas boletas existen para el mismo colaborador en el mismo mes y ciclo
+        # 3. verificar que ambas boletas existen para el mismo colaborador en el mismo mes y ciclo
         pl_ord = Planilla.objects.get(personal=self.emp1, mes_pagado=MesChoices.JULIO, tipo_planilla='ORDINARIA')
         pl_bono14 = Planilla.objects.get(personal=self.emp1, mes_pagado=MesChoices.JULIO, tipo_planilla='BONO_14')
 
-        self.assertEqual(pl_ord.total_pagar, Decimal('3580.95'))  # 3500 + 250 - 169.05 (IGSS)
-        self.assertEqual(pl_bono14.total_pagar, Decimal('3500.00'))  # 100% salario base neto sin IGSS ni bono incentivo
+        self.assertEqual(pl_ord.total_pagar, Decimal('3580.95'))  # 3500 + 250 - 169.05 (igss)
+        self.assertEqual(pl_bono14.total_pagar, Decimal('3500.00'))  # 100% salario base neto sin igss ni bono incentivo
         self.assertEqual(pl_bono14.descuento_igss, Decimal('0.00'))
 
     def test_ajuste_con_descuentos_desglosados_y_motivo(self):
@@ -194,29 +194,29 @@ class RecursosHumanosTestCase(TestCase):
         self.assertEqual(pl.descuento_anticipo, Decimal('300.00'))
         self.assertEqual(pl.descuento_judicial, Decimal('200.00'))
         self.assertEqual(pl.descuento_otros, Decimal('50.00'))
-        # Total descuentos = 169.05 + 300.00 + 200.00 + 50.00 = 719.05
+        # total descuentos = 169.05 + 300.00 + 200.00 + 50.00 = 719.05
         self.assertEqual(pl.descuentos, Decimal('719.05'))
-        # Total pagar = 3500 + 250 - 719.05 = 3030.95
+        # total pagar = 3500 + 250 - 719.05 = 3030.95
         self.assertEqual(pl.total_pagar, Decimal('3030.95'))
 
-        # Comprobante PDF se genera correctamente con los rubros
+        # comprobante pdf se genera correctamente con los rubros
         res_pdf = self.client.get(reverse('rrhh:planilla_pdf', kwargs={'pk': pl.pk}))
         self.assertEqual(res_pdf.status_code, 200)
 
-        # Vista / Pantalla de Detalle de Boleta en Recursos Humanos
+        # vista / pantalla de detalle de boleta en recursos humanos
         res_det_rrhh = self.client.get(reverse('rrhh:planilla_detail', kwargs={'pk': pl.pk}))
         self.assertEqual(res_det_rrhh.status_code, 200)
         self.assertContains(res_det_rrhh, 'Boleta de Pago de Sueldos')
         self.assertContains(res_det_rrhh, '3,030.95')
         self.assertContains(res_det_rrhh, 'Descuento por falta justificada 1 día')
 
-        # Vista / Pantalla de Detalle de Boleta en Gestión Financiera
+        # vista / pantalla de detalle de boleta en gestion financiera
         res_det_fin = self.client.get(reverse('financiero:planilla_detail', kwargs={'pk': pl.pk}))
         self.assertEqual(res_det_fin.status_code, 200)
         self.assertContains(res_det_fin, 'Boleta de Pago de Sueldos')
         self.assertContains(res_det_fin, '3,030.95')
 
-        # Intentar modificar una boleta pagada debe ser bloqueado y redirigido al detalle
+        # intentar modificar una boleta pagada debe ser bloqueado y redirigido al detalle
         res_bloqueo_get = self.client.get(reverse('rrhh:planilla_update', kwargs={'pk': pl.pk}))
         self.assertEqual(res_bloqueo_get.status_code, 302)
         self.assertRedirects(res_bloqueo_get, reverse('rrhh:planilla_detail', kwargs={'pk': pl.pk}))

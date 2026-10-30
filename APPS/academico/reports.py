@@ -129,7 +129,7 @@ def generar_pdf_boleta_notas(asignacion_estudiante):
     header_data = [
         [
             Paragraph("INSTITUTO DE EDUCACIÓN BÁSICA<br/><font color='#7A1C21'>'EL PROGRESO'</font><br/><font size=8 color='#64748B'>SISTEMA DE GESTIÓN ESCOLAR (ERP)</font>", style_title),
-            Paragraph(f"<b>BOLETA DE CALIFICACIONES</b><br/>Código MINEDUC: <b>{estudiante.codigo_mineduc}</b><br/>Ciclo Escolar <b>{ciclo.anio}</b>", style_header_right)
+            Paragraph(f"<b>BOLETA DE CALIFICACIONES</b><br/>Código MINEDUC: <b>{estudiante.codigo_mineduc}</b><br/>Año: <b>{ciclo.anio}</b>", style_header_right)
         ]
     ]
     t_header = Table(header_data, colWidths=[330, 210])
@@ -144,7 +144,7 @@ def generar_pdf_boleta_notas(asignacion_estudiante):
         [Paragraph("Nombre del Estudiante:", style_label), Paragraph(persona.nombre_completo, style_val_bold),
          Paragraph("CUI / DPI:", style_label), Paragraph(persona.cui, style_val)],
         [Paragraph("Grado y Sección:", style_label), Paragraph(f"<b>{seccion.grado.nombre} — Sección {seccion.letra}</b>", style_val_bold),
-         Paragraph("Ciclo Escolar:", style_label), Paragraph(str(ciclo.anio), style_val)]
+         Paragraph("Año:", style_label), Paragraph(str(ciclo.anio), style_val)]
     ]
     t_est = Table(datos_est, colWidths=[110, 160, 110, 160])
     t_est.setStyle(TableStyle([
@@ -258,8 +258,8 @@ def generar_pdf_boleta_notas(asignacion_estudiante):
 
     datos_firmas = [
         [
-            Paragraph("_______________________________________<br/>Firma del Docente Guía", ParagraphStyle('Ctr1', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, alignment=1)),
-            Paragraph("_______________________________________<br/>Firma y Sello de Dirección General", ParagraphStyle('Ctr2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, alignment=1))
+            Paragraph("_______________________________________<br/>Docente Guía", ParagraphStyle('Ctr1', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, alignment=1)),
+            Paragraph("_______________________________________<br/>Director (a)", ParagraphStyle('Ctr2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, alignment=1))
         ]
     ]
     t_firmas = Table(datos_firmas, colWidths=[270, 270])
@@ -374,7 +374,7 @@ def generar_pdf_certificacion_estudios(estudiante):
     else:
         for asig in asignaciones:
             story.append(Paragraph(
-                f"<b>GRADO: {asig.seccion.grado.nombre.upper()} — SECCIÓN {asig.seccion.letra} (CICLO LECTIVO {asig.ciclo_escolar.anio})</b>",
+                f"<b>GRADO: {asig.seccion.grado.nombre.upper()} — SECCIÓN {asig.seccion.letra} ({asig.ciclo_escolar.anio})</b>",
                 style_sec
             ))
             story.append(Spacer(1, 4))
@@ -431,8 +431,8 @@ def generar_pdf_certificacion_estudios(estudiante):
     story.append(Spacer(1, 20))
     datos_firmas = [
         [
-            Paragraph("_______________________________________<br/>Firma y Sello de Secretaría", ParagraphStyle('Ctr1', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, alignment=1)),
-            Paragraph("_______________________________________<br/>Firma de Dirección General", ParagraphStyle('Ctr2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, alignment=1))
+            Paragraph("_______________________________________<br/>Secretaría", ParagraphStyle('Ctr1', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, alignment=1)),
+            Paragraph("_______________________________________<br/>Director (a)", ParagraphStyle('Ctr2', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, alignment=1))
         ]
     ]
     t_f = Table(datos_firmas, colWidths=[270, 270])

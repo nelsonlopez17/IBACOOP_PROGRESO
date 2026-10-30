@@ -121,7 +121,7 @@ def generar_pdf_consolidado_planillas(ciclo_escolar, mes):
     story.append(ReportLabHelper.build_signature_block([
         "Elaborado por (Recursos Humanos)",
         "Revisado por (Contabilidad)",
-        "Autorizado por (Dirección)"
+        "Director (a)"
     ], orientation_landscape=True))
 
     doc.build(story, canvasmaker=NumberedCanvas)
@@ -199,7 +199,7 @@ def generar_pdf_boleta_pago_individual(planilla):
     ))
     story.append(Spacer(1, 15))
 
-    # Datos del Empleado
+    # datos del empleado
     datos_emp = [
         [
             Paragraph(f"<b>COLABORADOR:</b> {p.nombre_completo.upper()}", styles['td']),
@@ -220,7 +220,7 @@ def generar_pdf_boleta_pago_individual(planilla):
     story.append(t_emp)
     story.append(Spacer(1, 15))
 
-    # Detalle de Devengados y Descuentos
+    # detalle de devengados y descuentos
     tabla_rubros = [
         [
             Paragraph("<b>INGRESOS Y DEVENGADOS</b>", styles['th']),
@@ -266,7 +266,7 @@ def generar_pdf_boleta_pago_individual(planilla):
     story.append(t_rubros)
     story.append(Spacer(1, 15))
 
-    # Líquido a percibir
+    # liquido a percibir
     liquido_data = [
         [
             Paragraph("<font size=10><b>LÍQUIDO A PERCIBIR EN PLANILLA:</b></font>", styles['td']),
@@ -296,7 +296,7 @@ def generar_pdf_boleta_pago_individual(planilla):
     return response
 
 
-def generar_pdf_directorio_personal():
+def generar_pdf_directorio_personal(estado=None):
     """Genera el Directorio y Nómina Oficial de Personal Docente y Administrativo en PDF."""
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
@@ -311,11 +311,22 @@ def generar_pdf_directorio_personal():
     story = []
     styles = ReportLabHelper.get_styles()
 
-    personal_qs = Personal.objects.filter(esta_eliminado=False).select_related('persona', 'puesto').order_by('persona__apellidos', 'persona__nombres')
+    personal_qs = Personal.objects.filter(esta_eliminado=False).select_related('persona', 'puesto')
+    if estado:
+        personal_qs = personal_qs.filter(estado_laboral=estado)
+    personal_qs = personal_qs.order_by('persona__apellidos', 'persona__nombres')
+
+    # subtitulo dinamico indicando el estado del personal si fue filtrado
+    if estado:
+        choices_dict = dict(Personal._meta.get_field('estado_laboral').choices)
+        estado_label = choices_dict.get(estado, estado)
+        subtitulo = f"Registro Oficial de Catedráticos, Personal Docente y Administrativo — Estado: {estado_label}"
+    else:
+        subtitulo = "Registro Oficial de Catedráticos, Personal Docente y Administrativo"
 
     story.append(ReportLabHelper.build_header(
         doc_title="DIRECTORIO INSTITUCIONAL DE PERSONAL",
-        subtitle="Registro Oficial de Catedráticos, Personal Docente y Administrativo",
+        subtitle=subtitulo,
         orientation_landscape=True
     ))
     story.append(Spacer(1, 10))
@@ -364,20 +375,24 @@ def generar_pdf_directorio_personal():
 
     story.append(ReportLabHelper.build_signature_block([
         "Recursos Humanos",
-        "Director(a) Técnico Pedagógico"
+        "Director (a)"
     ], orientation_landscape=True))
 
     doc.build(story, canvasmaker=NumberedCanvas)
     buffer.seek(0)
 
     response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
-    response['Content-Disposition'] = f'inline; filename="Directorio_Personal_{timezone.now().strftime("%Y%m%d")}.pdf"'
+    estado_sufijo = f"_{estado}" if estado else ""
+    response['Content-Disposition'] = f'inline; filename="Directorio_Personal{estado_sufijo}_{timezone.now().strftime("%Y%m%d")}.pdf"'
     return response
 
 
-def generar_csv_directorio_personal():
+def generar_csv_directorio_personal(estado=None):
     """Genera exportación CSV del Directorio Institucional de Personal."""
-    personal_qs = Personal.objects.filter(esta_eliminado=False).select_related('persona', 'puesto').order_by('persona__apellidos')
+    personal_qs = Personal.objects.filter(esta_eliminado=False).select_related('persona', 'puesto')
+    if estado:
+        personal_qs = personal_qs.filter(estado_laboral=estado)
+    personal_qs = personal_qs.order_by('persona__apellidos')
 
     headers = ['No.', 'Apellidos', 'Nombres', 'Puesto Institucional', 'CUI / DPI', 'Teléfono', 'Correo', 'Estado']
     rows = []
@@ -396,4 +411,5 @@ def generar_csv_directorio_personal():
             estado_label
         ])
 
-    return IBACOOPReportCSV.generate_csv_response('Directorio_Personal', headers, rows)
+    filename = f'Directorio_Personal_{estado}' if estado else 'Directorio_Personal'
+    return IBACOOPReportCSV.generate_csv_response(filename, headers, rows)

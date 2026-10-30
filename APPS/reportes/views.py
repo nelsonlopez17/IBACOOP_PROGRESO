@@ -173,9 +173,9 @@ class ReportesDisciplinaPermissionMixin(ReportesBasePermissionMixin):
         )
 
 
-# ==============================================================================
-# HUB CENTRAL DE REPORTES
-# ==============================================================================
+
+# hub central de reportes
+
 
 class ReportesHubView(ReportesHubPermissionMixin, TemplateView):
     """
@@ -193,7 +193,7 @@ class ReportesHubView(ReportesHubPermissionMixin, TemplateView):
         grados = Grado.objects.filter(esta_eliminado=False).order_by('orden')
         secciones = Seccion.objects.filter(esta_eliminado=False).select_related('grado').order_by('grado__orden', 'letra')
 
-        # Cargar planillas recientes para el selector de boletas
+        # cargar planillas recientes para el selector de boletas
         planillas_recientes = Planilla.objects.filter(
             esta_eliminado=False
         ).select_related('personal__persona', 'ciclo_escolar').order_by('-ciclo_escolar__anio', '-mes_pagado')[:40]
@@ -210,14 +210,24 @@ class ReportesHubView(ReportesHubPermissionMixin, TemplateView):
         return context
 
 
-# ==============================================================================
-# REPORTES ACADÉMICOS
-# ==============================================================================
+
+# reportes academicos
+
 
 class DescargarBoletaCalificacionesPDFView(ReportesAcademicosPermissionMixin, View):
     """Descarga de la Boleta Oficial de Calificaciones por Estudiante."""
 
     def get(self, request, estudiante_id, ciclo_id, *args, **kwargs):
+        user = request.user
+        rol = getattr(user, 'rol', None)
+        es_admin = (
+            user.is_superuser
+            or rol in ['ADMINISTRADOR', 'DIRECTOR', 'SECRETARIA']
+            or user.groups.filter(name__in=['Administradores', 'Directores', 'Secretaría']).exists()
+        )
+        if not es_admin:
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied("La descarga de la Boleta Oficial de Calificaciones está reservada exclusivamente a Dirección y Secretaría.")
         estudiante = get_object_or_404(Estudiante, pk=estudiante_id)
         ciclo = get_object_or_404(CicloEscolar, pk=ciclo_id)
         return generar_pdf_boleta_calificaciones(estudiante, ciclo)
@@ -246,7 +256,7 @@ class ReporteCuadroCalificacionesView(ReportesAcademicosPermissionMixin, View):
         return generar_pdf_cuadro_calificaciones(seccion, ciclo)
 
 
-# Alias para retrocompatibilidad con rutas y enlaces previos
+# alias para retrocompatibilidad con rutas y enlaces previos
 ReporteSabanaNotasView = ReporteCuadroCalificacionesView
 
 
@@ -314,7 +324,7 @@ class ReporteAlertasTempranasExportView(ReportesAcademicosPermissionMixin, View)
         ciclo = get_object_or_404(CicloEscolar, pk=ciclo_id) if ciclo_id else CicloEscolar.objects.filter(estado_activo=True).first()
 
         from APPS.academico.models import NotaBloque
-        # Filtrado optimizado directo en base de datos calculando la suma de zona y examen
+        # filtrado optimizado directo en base de datos calculando la suma de zona y examen
         notas_reprobadas = NotaBloque.objects.filter(
             curso__grado__esta_eliminado=False,
             esta_eliminado=False
@@ -344,9 +354,9 @@ class ReporteAlertasTempranasExportView(ReportesAcademicosPermissionMixin, View)
         return IBACOOPReportCSV.generate_csv_response('Alertas_Tempranas_Reprobacion', headers, rows)
 
 
-# ==============================================================================
-# REPORTES FINANCIEROS Y TESORERÍA
-# ==============================================================================
+
+# reportes financieros y tesoreria
+
 
 class ReporteAntiguedadSaldosExportView(ReportesFinancierosPermissionMixin, View):
     """Emisión del reporte de morosidad y antigüedad de saldos en PDF o CSV."""
@@ -422,9 +432,9 @@ class ReporteBecasExportView(ReportesFinancierosPermissionMixin, View):
         return IBACOOPReportCSV.generate_csv_response('Padron_Becas_Descuentos', headers, rows)
 
 
-# ==============================================================================
-# REPORTES DE RECURSOS HUMANOS Y PLANILLA DE SUELDOS
-# ==============================================================================
+
+# reportes de recursos humanos y planilla de sueldos
+
 
 class ReporteConsolidadoPlanillasView(ReportesRRHHPermissionMixin, View):
     """Emisión del consolidado mensual de planilla de sueldos en PDF o CSV."""
@@ -459,18 +469,22 @@ class ReporteBoletaPagoEmpleadoView(ReportesRRHHPermissionMixin, View):
 
 
 class ReporteDirectorioPersonalView(ReportesRRHHPermissionMixin, View):
-    """Emisión del Directorio y Nómina de Personal en PDF o CSV."""
+    """Emisión del Directorio y Nómina de Personal en PDF o CSV con filtro opcional por estado."""
 
     def get(self, request, *args, **kwargs):
         formato = request.GET.get('formato', 'pdf').lower()
+        estado = request.GET.get('estado', '').strip().upper()
+        if not estado or estado == 'TODOS':
+            estado = None
+
         if formato == 'csv' or formato == 'excel':
-            return generar_csv_directorio_personal()
-        return generar_pdf_directorio_personal()
+            return generar_csv_directorio_personal(estado=estado)
+        return generar_pdf_directorio_personal(estado=estado)
 
 
-# ==============================================================================
-# REPORTES DE DISCIPLINA Y CONVIVENCIA ESCOLAR
-# ==============================================================================
+
+# reportes de disciplina y convivencia escolar
+
 
 class ReporteDisciplinaView(ReportesDisciplinaPermissionMixin, View):
     """Emisión del Historial de Incidentes Disciplinarios y Citaciones en PDF o CSV."""
@@ -492,9 +506,9 @@ class ReporteDisciplinaView(ReportesDisciplinaPermissionMixin, View):
         return generar_pdf_reporte_disciplina(ciclo, seccion)
 
 
-# ==============================================================================
-# REPORTES DE INVENTARIO Y CONTROL DE BIENES
-# ==============================================================================
+
+# reportes de inventario y control de bienes
+
 
 class ReporteInventarioValoradoView(ReportesInventarioPermissionMixin, View):
     """Emisión del inventario físico institucional en PDF o CSV."""
@@ -506,9 +520,9 @@ class ReporteInventarioValoradoView(ReportesInventarioPermissionMixin, View):
         return generar_pdf_inventario_valorado()
 
 
-# ==============================================================================
-# PROCESAMIENTO ASÍNCRONO EN SEGUNDO PLANO (CELERY)
-# ==============================================================================
+
+# procesamiento asincrono en segundo plano (celery)
+
 
 class IniciarDescargaBoletasZipView(ReportesAcademicosPermissionMixin, View):
     """
@@ -553,9 +567,9 @@ class ConsultarEstadoTareaView(ReportesHubPermissionMixin, View):
         return JsonResponse(data)
 
 
-# ==============================================================================
-# APIS PARA SELECTORES DEPENDIENTES EN LA INTERFAZ
-# ==============================================================================
+
+# apis para selectores dependientes en la interfaz
+
 
 class APISeccionesPorGradoView(ReportesHubPermissionMixin, View):
     """Retorna las secciones asociadas a un grado en formato JSON."""

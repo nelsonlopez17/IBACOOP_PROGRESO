@@ -38,6 +38,10 @@
             <a href="{% url 'disciplina:dashboard' %}" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-colors">
                 Volver
             </a>
+            {% elif user.mi_estudiante_id %}
+            <a href="{% url 'estudiantes:estudiante_detail' user.mi_estudiante_id %}" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-colors">
+                Volver a Mi Expediente
+            </a>
             {% else %}
             <a href="{% url 'estudiantes:estudiante_detail' incidente.estudiante.pk %}" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-colors">
                 Volver al Expediente

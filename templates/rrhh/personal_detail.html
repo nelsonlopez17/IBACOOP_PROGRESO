@@ -158,7 +158,7 @@
             <div>
                 <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
                     <i data-lucide="book-open" class="w-4 h-4 text-[#1E6532]"></i>
-                    Carga Académica Asignada (Ciclo Lectivo Activo)
+                    Carga Académica Asignada (Ciclo Escolar Activo)
                 </h3>
                 <p class="text-xs text-slate-500 mt-0.5">Materias y secciones que tiene a su cargo este colaborador.</p>
             </div>
@@ -172,7 +172,7 @@
                 <div>
                     <span class="font-bold text-slate-900 block text-sm">{{ c.curso.nombre_curso }}</span>
                     <span class="text-xs text-slate-600 block mt-0.5">{{ c.seccion }}</span>
-                    <span class="text-[10px] text-slate-400 font-mono">Ciclo {{ c.ciclo_escolar.anio }}</span>
+                    <span class="text-[10px] text-slate-400 font-mono">{{ c.ciclo_escolar.anio }}</span>
                 </div>
                 <div class="pt-2 border-t border-slate-200/60 flex items-center justify-between">
                     {% if personal.estado_laboral != 'ACTIVO' %}

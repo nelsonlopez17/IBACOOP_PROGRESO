@@ -343,11 +343,11 @@ class AbonoForm(TailwindFormMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.cuenta_por_cobrar = kwargs.pop('cuenta_por_cobrar', None)
         super().__init__(*args, **kwargs)
-        # Por defecto, fecha de hoy si no viene establecida
+        # por defecto, fecha de hoy si no viene establecida
         if not self.is_bound and not self.initial.get('fecha_pago'):
             from django.utils import timezone
             self.initial['fecha_pago'] = timezone.now().date()
-        # Si la cuenta tiene saldo pendiente, sugerir el monto total restante
+        # si la cuenta tiene saldo pendiente, sugerir el monto total restante
         if not self.is_bound and self.cuenta_por_cobrar:
             self.initial['monto_pagado'] = self.cuenta_por_cobrar.saldo_pendiente
 

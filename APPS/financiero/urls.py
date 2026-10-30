@@ -30,7 +30,7 @@ urlpatterns = [
     path('calendario-anual/', views.GenerarCalendarioAnualView.as_view(), name='calendario_anual'),
     path('antiguedad-saldos/', views.AntiguedadSaldosView.as_view(), name='antiguedad_saldos'),
 
-    # Planillas de Sueldos (Desacopladas en Gestión Financiera)
+    # planillas de sueldos (desacopladas en gestion financiera)
     path('planillas/', views.PlanillaListView.as_view(), name='planilla_list'),
     path('planillas/generar/', views.PlanillaGenerarMasivaView.as_view(), name='planilla_generar'),
     path('planillas/liquidar-masivo/', views.PlanillaLiquidarMasivoView.as_view(), name='planilla_liquidar_masivo'),

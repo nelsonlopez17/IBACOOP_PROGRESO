@@ -14,6 +14,7 @@ from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.utils import timezone
 from django.db.models import Q
+import hashlib
 
 from APPS.portal.models import (
     ContenidoWeb,
@@ -32,9 +33,9 @@ from APPS.portal.forms import (
 )
 
 
-# ==============================================================================
-# VISTAS PÚBLICAS PARA VISITANTES
-# ==============================================================================
+
+# vistas publicas para visitantes
+
 
 class PortalIndexView(TemplateView):
     """
@@ -49,13 +50,13 @@ class PortalIndexView(TemplateView):
         config = ConfiguracionPortal.get_solo()
         context['config'] = config
 
-        # Publicaciones y comunicados vigentes en el portal
+        # publicaciones y comunicados vigentes en el portal
         publicaciones_activas = ContenidoWeb.objects.filter(publicado=True).order_by('-fecha_publicacion')
         context['publicaciones_recientes'] = publicaciones_activas[:6]
         context['noticias_recientes'] = context['publicaciones_recientes']
         context['total_publicaciones_publicadas'] = publicaciones_activas.count()
 
-        # Fotos destacadas para portada
+        # fotos destacadas para portada
         fotos_destacadas = FotoGaleria.objects.filter(activo=True, destacada_portada=True)[:6]
         if not fotos_destacadas.exists():
             fotos_destacadas = FotoGaleria.objects.filter(activo=True)[:6]
@@ -216,9 +217,26 @@ class ContactoView(CreateView):
             form = self.get_form()
             return self.form_invalid(form)
 
+        # control de intentos fallidos repetidos por bot o script (anti brute-force / flood)
+        cache_key_fails = f"portal_contacto_fails_{ip}"
+        fallos = cache.get(cache_key_fails, 0)
+        if fallos >= 6:
+            self.object = None
+            messages.error(
+                request,
+                'Se han detectado demasiados envíos erróneos continuos desde su conexión. '
+                'Por favor espere unos minutos antes de intentar de nuevo.'
+            )
+            form = self.get_form()
+            return self.form_invalid(form)
+
         response = super().post(request, *args, **kwargs)
         if getattr(self, 'object', None) and self.object.pk:
             cache.set(cache_key, intentos + 1, timeout=600)
+            content_hash = hashlib.md5(f"{self.object.correo}:{self.object.mensaje.strip().lower()}".encode('utf-8')).hexdigest()
+            cache.set(f"portal_msg_hash_{content_hash}", True, timeout=900)
+        else:
+            cache.set(cache_key_fails, fallos + 1, timeout=600)
         return response
 
     def form_valid(self, form):
@@ -233,9 +251,9 @@ class ContactoView(CreateView):
         return super().form_invalid(form)
 
 
-# ==============================================================================
-# GESTIÓN INTERNA DEL PORTAL (PARA DIRECCIÓN, ADMINISTRACIÓN Y SECRETARÍA)
-# ==============================================================================
+
+# gestion interna del portal (para direccion, administracion y secretaria)
+
 
 class PortalPermissionMixin(LoginRequiredMixin, UserPassesTestMixin):
     """Control de acceso: exclusivo para Administradores, Dirección y Secretaría."""
@@ -302,7 +320,7 @@ class ConfiguracionPortalUpdateView(PortalPermissionMixin, UpdateView):
         return context
 
 
-# --- GESTIÓN DE GALERÍA DE FOTOS (VÍA ENLACES EXTERNOS) ---
+# gestion de galeria de fotos (via enlaces externos)
 
 class FotoGaleriaListView(PortalPermissionMixin, ListView):
     """Lista administrativa de fotografías registradas."""
@@ -379,7 +397,7 @@ class FotoGaleriaDeleteView(PortalPermissionMixin, DeleteView):
         return super().delete(request, *args, **kwargs)
 
 
-# --- GESTIÓN DE NOTICIAS Y COMUNICADOS ---
+# gestion de noticias y comunicados
 
 class ContenidoWebListView(PortalPermissionMixin, ListView):
     """Listado administrativo de comunicados y noticias publicadas."""
@@ -457,7 +475,7 @@ class ContenidoWebDeleteView(PortalPermissionMixin, DeleteView):
         return super().delete(request, *args, **kwargs)
 
 
-# --- BANDEJA DE SOLICITUDES DE CONTACTO Y MENSAJES DE VISITANTES ---
+# bandeja de solicitudes de contacto y mensajes de visitantes
 
 class BandejaContactoListView(PortalPermissionMixin, ListView):
     """Bandeja de mensajes enviados por padres de familia o encargados desde la web."""

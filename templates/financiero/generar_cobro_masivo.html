@@ -114,13 +114,15 @@
     </div>
 </div>
 
+{{ secciones_lista|json_script:"secciones-data" }}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const gradoSelect = document.getElementById('id_grado');
     const seccionSelect = document.getElementById('id_seccion');
     if (!gradoSelect || !seccionSelect) return;
 
-    const seccionesData = {{ secciones_json|safe }};
+    const secElem = document.getElementById('secciones-data');
+    const seccionesData = secElem ? JSON.parse(secElem.textContent) : [];
     const initialSeccionId = seccionSelect.value;
 
     function updateSecciones() {

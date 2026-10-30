@@ -13,11 +13,11 @@ from APPS.core.models import ModeloAuditable
 
 
 class CicloEscolar(ModeloAuditable):
-    """Año lectivo del instituto."""
+    """Ciclo escolar del instituto."""
     anio = models.PositiveIntegerField(
         unique=True,
         validators=[MinValueValidator(2000), MaxValueValidator(2100)],
-        verbose_name='Año lectivo'
+        verbose_name='Año'
     )
     estado_activo = models.BooleanField(
         default=False,
@@ -199,7 +199,7 @@ class AsignacionEstudiante(ModeloAuditable):
 
 class AsignacionDocente(ModeloAuditable):
     """
-    Asignación de un docente a un curso en una sección y ciclo lectivo (Normalizado en FNBC y 4FN).
+    Asignación de un docente a un curso en una sección y ciclo escolar (Normalizado en FNBC y 4FN).
     La clave candidata (curso, seccion, ciclo_escolar) determina funcionalmente al docente titular (`personal`),
     eliminando dependencias multivaluadas y garantizando consistencia de grado entre curso y sección.
     """
@@ -414,7 +414,7 @@ class NotaFinalCurso(ModeloAuditable):
     @property
     def total_materias_reprobadas(self) -> int:
         """
-        Calcula el total de asignaturas reprobadas por el estudiante en su ciclo lectivo actual.
+        Calcula el total de asignaturas reprobadas por el estudiante en su ciclo escolar actual.
         MINEDUC Acuerdo Ministerial 1171-2010 (Art. 26 y 27).
         """
         if not self.asignacion_estudiante_id:
@@ -455,7 +455,7 @@ class NotaFinalCurso(ModeloAuditable):
         prom = self.nota_promedio
         if prom >= Decimal('60.00'):
             return prom
-        # Si no tiene derecho legal a recuperación (>= 4 asignaturas reprobadas), la nota definitiva es el promedio reprobado
+        # si no tiene derecho legal a recuperacion (>= 4 asignaturas reprobadas), la nota definitiva es el promedio reprobado
         if not self.aplica_recuperacion:
             return prom
         candidatas = [prom]

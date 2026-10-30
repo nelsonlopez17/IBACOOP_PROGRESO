@@ -77,7 +77,7 @@ def generar_pdf_inventario_valorado():
 
     story.append(ReportLabHelper.build_signature_block([
         "Encargado(a) de Inventario",
-        "Director(a) Técnico Pedagógico"
+        "Director (a)"
     ]))
 
     doc.build(story, canvasmaker=NumberedCanvas)

@@ -52,7 +52,7 @@ def generar_pdf_boleta_calificaciones(estudiante, ciclo_escolar):
 
     story.append(ReportLabHelper.build_header(
         doc_title="BOLETA OFICIAL DE CALIFICACIONES",
-        subtitle=f"Ciclo Lectivo {ciclo_escolar.anio} • Nivel Medio - Ciclo Básico"
+        subtitle=f"{ciclo_escolar.anio} • Nivel Medio - Ciclo Básico"
     ))
     story.append(Spacer(1, 10))
 
@@ -161,9 +161,9 @@ def generar_pdf_boleta_calificaciones(estudiante, ciclo_escolar):
     story.append(Spacer(1, 30))
 
     story.append(ReportLabHelper.build_signature_block([
-        "Director(a) Técnico Pedagógico",
-        "Docente Guía de Sección",
-        "Firma de Padre o Encargado"
+        "Director (a)",
+        "Docente Guía",
+        "Padre de Familia o Encargado"
     ]))
 
     doc.build(story, canvasmaker=NumberedCanvas)
@@ -202,7 +202,7 @@ def generar_pdf_cuadro_calificaciones(seccion, ciclo_escolar):
     cursos = list(Curso.objects.filter(grado=seccion.grado, esta_eliminado=False).order_by('nombre_curso'))
     num_cursos = len(cursos)
 
-    # Optimizacion SQL: obtener todas las notas en una sola consulta
+    # optimizacion sql: obtener todas las notas en una sola consulta
     notas_qs = NotaBloque.objects.filter(
         asignacion_estudiante__in=asignaciones,
         esta_eliminado=False
@@ -215,12 +215,12 @@ def generar_pdf_cuadro_calificaciones(seccion, ciclo_escolar):
 
     story.append(ReportLabHelper.build_header(
         doc_title="CUADRO GENERAL DE CALIFICACIONES POR SECCIÓN",
-        subtitle=f"{seccion.grado.nombre} • Sección '{seccion.letra}' • Ciclo Lectivo {ciclo_escolar.anio}",
+        subtitle=f"{seccion.grado.nombre} • Sección '{seccion.letra}' • {ciclo_escolar.anio}",
         orientation_landscape=True
     ))
     story.append(Spacer(1, 8))
 
-    # Ancho disponible: 736 pt
+    # ancho disponible: 736 pt
     col_w_no = 24
     col_w_est = 180
     col_w_prom = 45
@@ -233,7 +233,7 @@ def generar_pdf_cuadro_calificaciones(seccion, ciclo_escolar):
         Paragraph("<b>APELLIDOS Y NOMBRES</b>", styles['th']),
     ]
     for c in cursos:
-        # Abreviar si el nombre es extenso
+        # abreviar si el nombre es extenso
         nombre_c = c.nombre_curso[:14] + '...' if len(c.nombre_curso) > 16 else c.nombre_curso
         headers.append(Paragraph(f"<b>{nombre_c}</b>", styles['th']))
     headers.append(Paragraph("<b>PROM.</b>", styles['th']))
@@ -282,8 +282,8 @@ def generar_pdf_cuadro_calificaciones(seccion, ciclo_escolar):
     story.append(Spacer(1, 20))
 
     story.append(ReportLabHelper.build_signature_block([
-        "Director(a) Técnico Pedagógico",
-        "Docente Guía de Sección",
+        "Director (a)",
+        "Docente Guía",
         "Comisión de Evaluación"
     ], orientation_landscape=True))
 
@@ -354,7 +354,7 @@ def generar_csv_cuadro_calificaciones(seccion, ciclo_escolar):
     return IBACOOPReportCSV.generate_csv_response(filename, headers, rows)
 
 
-# Alias para retrocompatibilidad
+# alias para retrocompatibilidad
 generar_csv_sabana_notas = generar_csv_cuadro_calificaciones
 
 
@@ -405,7 +405,7 @@ def generar_pdf_cuadro_honor(seccion, ciclo_escolar):
 
     story.append(ReportLabHelper.build_header(
         doc_title="CUADRO DE HONOR Y EXCELENCIA ACADÉMICA",
-        subtitle=f"{seccion.grado.nombre} • Sección '{seccion.letra}' • Ciclo Lectivo {ciclo_escolar.anio}"
+        subtitle=f"{seccion.grado.nombre} • Sección '{seccion.letra}' • {ciclo_escolar.anio}"
     ))
     story.append(Spacer(1, 12))
 
@@ -448,8 +448,8 @@ def generar_pdf_cuadro_honor(seccion, ciclo_escolar):
     story.append(Spacer(1, 35))
 
     story.append(ReportLabHelper.build_signature_block([
-        "Director(a) Técnico Pedagógico",
-        "Docente Guía de Sección"
+        "Director (a)",
+        "Docente Guía"
     ]))
 
     doc.build(story, canvasmaker=NumberedCanvas)
@@ -531,7 +531,7 @@ def generar_pdf_listado_estudiantes(seccion, ciclo_escolar):
 
     story.append(ReportLabHelper.build_header(
         doc_title="LISTADO OFICIAL DE ESTUDIANTES INSCRITOS",
-        subtitle=f"{seccion.grado.nombre} • Sección '{seccion.letra}' • Ciclo Lectivo {ciclo_escolar.anio}",
+        subtitle=f"{seccion.grado.nombre} • Sección '{seccion.letra}' • {ciclo_escolar.anio}",
         orientation_landscape=True
     ))
     story.append(Spacer(1, 10))
@@ -581,9 +581,9 @@ def generar_pdf_listado_estudiantes(seccion, ciclo_escolar):
     story.append(Spacer(1, 25))
 
     story.append(ReportLabHelper.build_signature_block([
-        "Secretaría del Instituto",
-        "Docente Guía de Sección",
-        "Director(a) Técnico Pedagógico"
+        "Secretaría",
+        "Docente Guía",
+        "Director (a)"
     ], orientation_landscape=True))
 
     doc.build(story, canvasmaker=NumberedCanvas)
@@ -659,7 +659,7 @@ def generar_pdf_constancia_inscripcion(estudiante, ciclo_escolar):
 
     story.append(ReportLabHelper.build_header(
         doc_title="CONSTANCIA OFICIAL DE INSCRIPCIÓN ESCOLAR",
-        subtitle=f"Ciclo Lectivo {ciclo_escolar.anio} • Nivel Medio - Ciclo de Educación Básica"
+        subtitle=f"{ciclo_escolar.anio} • Nivel Medio - Ciclo de Educación Básica"
     ))
     story.append(Spacer(1, 25))
 
@@ -679,7 +679,7 @@ def generar_pdf_constancia_inscripcion(estudiante, ciclo_escolar):
         f"MINEDUC No. <b>{estudiante.codigo_mineduc or 'En trámite'}</b> y Código Único de Identificación (CUI) "
         f"No. <b>{p.cui or 'Sin registro'}</b>, se encuentra formal y legalmente <b>INSCRITO(A)</b> en esta "
         f"institución educativa para cursar los estudios correspondientes a <b>{seccion_txt.upper()}</b> "
-        f"durante el presente Ciclo Escolar <b>{ciclo_escolar.anio}</b>."
+        f"durante el año <b>{ciclo_escolar.anio}</b>."
     )
     story.append(Paragraph(cuerpo, styles['td']))
     story.append(Spacer(1, 15))
@@ -699,7 +699,7 @@ def generar_pdf_constancia_inscripcion(estudiante, ciclo_escolar):
 
     story.append(ReportLabHelper.build_signature_block([
         "Secretario(a) Contador(a)",
-        "Director(a) Técnico Pedagógico"
+        "Director (a)"
     ]))
 
     doc.build(story, canvasmaker=NumberedCanvas)

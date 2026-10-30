@@ -6,7 +6,7 @@ Implementa el subtipo Personal (Persona FK primary_key=True), Puesto y Planilla.
 """
 from decimal import Decimal
 from django.db import models
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, FileExtensionValidator
 from simple_history.models import HistoricalRecords
 from APPS.core.models import ModeloAuditable, Persona
 
@@ -110,7 +110,7 @@ class Personal(ModeloAuditable):
         verbose_name='Motivo de la baja o retiro'
     )
 
-    # Ubicación del Contrato y Resguardo Físico en Secretaría
+    # ubicacion del contrato y resguardo fisico en secretaria
     numero_contrato_fisico = models.CharField(
         max_length=50,
         blank=True,
@@ -134,7 +134,7 @@ class Personal(ModeloAuditable):
         verbose_name='Teléfono contacto de emergencia'
     )
 
-    # Checklist Papelería Obligatoria Nivel Medio (Guatemala)
+    # checklist papeleria obligatoria nivel medio (guatemala)
     doc_dpi_personal = models.BooleanField(
         default=False,
         verbose_name='Fotocopia DPI / CUI (RENAP)'
@@ -244,7 +244,7 @@ class Planilla(ModeloAuditable):
         verbose_name='Mes pagado'
     )
 
-    # --- PERCEPCIONES / INGRESOS ---
+    # percepciones / ingresos
     salario_base = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -281,7 +281,7 @@ class Planilla(ModeloAuditable):
         verbose_name='Otras Bonificaciones / Horas Extras (Q)'
     )
 
-    # --- DEDUCCIONES / DESCUENTOS LABORALES ---
+    # deducciones / descuentos laborales
     descuento_igss = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -332,7 +332,7 @@ class Planilla(ModeloAuditable):
         verbose_name='Total Descuentos (Q)'
     )
 
-    # --- APORTES Y CARGAS PATRONALES (12.67% LEY DE GUATEMALA) ---
+    # aportes y cargas patronales (12.67% ley de guatemala)
     cuota_patronal_igss = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -362,6 +362,7 @@ class Planilla(ModeloAuditable):
         upload_to='planillas/%Y/%m/',
         null=True,
         blank=True,
+        validators=[FileExtensionValidator(allowed_extensions=['pdf'])],
         verbose_name='Comprobante PDF'
     )
     fecha_pago = models.DateField(

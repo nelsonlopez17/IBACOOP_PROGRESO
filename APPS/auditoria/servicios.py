@@ -249,7 +249,7 @@ class AuditoriaService:
             except model_cls.history.model.DoesNotExist:
                 pass
 
-        # Mapeo de verbose_name de los campos del modelo original
+        # mapeo de verbose_name de los campos del modelo original
         field_verbose_map = {}
         for f in model_cls._meta.get_fields():
             if hasattr(f, 'verbose_name'):

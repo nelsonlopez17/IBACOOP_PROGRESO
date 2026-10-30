@@ -43,7 +43,7 @@ class ConfiguracionPortal(ModeloAuditable):
         verbose_name='Visión institucional'
     )
 
-    # --- PLAN DE ESTUDIOS — CICLO BÁSICO ---
+    # plan de estudios — ciclo basico
     plan_estudios_subtitulo = models.CharField(
         max_length=255,
         default='Enseñanza integral orientada al desarrollo de competencias cognitivas, humanísticas y tecnológicas.',
@@ -74,7 +74,7 @@ class ConfiguracionPortal(ModeloAuditable):
         verbose_name='Aspectos o materias clave de Tercero Básico (un elemento por línea)'
     )
 
-    # --- REQUISITOS DE INSCRIPCIÓN ---
+    # requisitos de inscripcion
     requisitos_subtitulo = models.TextField(
         default='Para formalizar la inscripción en Secretaría, es indispensable presentar el expediente físico completo para su debido registro:',
         verbose_name='Subtítulo o indicación general de requisitos'
@@ -299,7 +299,7 @@ class FotoGaleria(ModeloAuditable):
         if not url:
             return ''
 
-        # Detección de enlaces compartidos de Google Drive
+        # deteccion de enlaces compartidos de google drive
         drive_file_match = re.search(r'drive\.google\.com/file/d/([a-zA-Z0-9_-]+)', url)
         if drive_file_match:
             file_id = drive_file_match.group(1)

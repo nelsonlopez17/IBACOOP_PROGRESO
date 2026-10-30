@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Centro de Reportes y Analítica | IBACOOP EL PROGRESO{% endblock %}
 {% block page_title %}Centro de Reportes y Analítica{% endblock %}
@@ -29,7 +30,7 @@
 
         <div class="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-xl text-xs font-bold text-emerald-800 self-start sm:self-auto">
             <i data-lucide="calendar" class="w-4 h-4 text-emerald-600"></i>
-            <span>Ciclo Lectivo Activo: {{ ciclo_activo.anio|default:"No configurado" }}</span>
+            <span>Ciclo Escolar Activo: {{ ciclo_activo.anio|default:"No configurado" }}</span>
         </div>
     </div>
 
@@ -460,18 +461,11 @@
                     </div>
                 </div>
             </div>
-            <div class="grid grid-cols-2 gap-2 mt-4">
-                <a href="{% url 'reportes:rrhh_directorio' %}?formato=pdf" target="_blank"
-                   class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-xs">
-                    <i data-lucide="printer" class="w-3.5 h-3.5"></i>
-                    <span>PDF</span>
-                </a>
-                <a href="{% url 'reportes:rrhh_directorio' %}?formato=csv"
-                   class="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-700 transition-all shadow-xs">
-                    <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i>
-                    <span>Excel</span>
-                </a>
-            </div>
+            <button type="button" onclick="abrirModalReporte('directorio_personal')"
+                    class="w-full mt-4 inline-flex items-center justify-center gap-2 px-3.5 py-2 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-xs cursor-pointer">
+                <i data-lucide="sliders" class="w-3.5 h-3.5"></i>
+                <span>Configurar y Emitir</span>
+            </button>
         </div>
 
         <!-- 13. Historial de Disciplina y Convivencia Escolar -->
@@ -584,7 +578,7 @@
                     {% endfor %}
                 </select>
             </div>
-            <button type="button" id="btn-iniciar-zip" onclick="iniciarGeneracionZip()"
+            <button type="button" id="btn-iniciar-zip" data-url-iniciar="{% url 'reportes:boletas_zip_iniciar' %}" onclick="iniciarGeneracionZip()"
                     class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-extrabold hover:bg-indigo-700 transition-all shadow-xs cursor-pointer">
                 <i data-lucide="play" class="w-4 h-4"></i>
                 <span>Generar Lote de Boletas</span>
@@ -652,10 +646,10 @@
         <div class="p-6 space-y-4 text-xs">
             <!-- Ciclo Escolar -->
             <div id="campo-ciclo" class="space-y-1">
-                <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px]">Ciclo Escolar</label>
+                <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px]">Año</label>
                 <select id="modal-select-ciclo" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800">
                     {% for c in ciclos %}
-                    <option value="{{ c.id }}" {% if c.estado_activo %}selected{% endif %}>Ciclo Lectivo {{ c.anio }}</option>
+                    <option value="{{ c.id }}" {% if c.estado_activo %}selected{% endif %}>{{ c.anio }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -731,6 +725,18 @@
                 </select>
             </div>
 
+            <!-- Estado Laboral (Para Directorio de Personal) -->
+            <div id="campo-estado-laboral" class="space-y-1" style="display: none;">
+                <label class="block font-bold text-slate-700 uppercase tracking-wider text-[11px]">Estado Laboral del Personal</label>
+                <select id="modal-select-estado-laboral" class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-800">
+                    <option value="">-- Todos los estados (Personal Completo) --</option>
+                    <option value="ACTIVO">Activo</option>
+                    <option value="BAJA">Baja temporal</option>
+                    <option value="RETIRADO">Retirado</option>
+                    <option value="SUSPENDIDO">Suspendido</option>
+                </select>
+            </div>
+
             <!-- Alerta de Validación -->
             <div id="modal-error" class="hidden p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 font-semibold text-xs flex items-center gap-2">
                 <i data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0"></i>
@@ -760,403 +766,5 @@
 <!-- ============================================================================== -->
 <!-- SCRIPTS DE INTERACCIÓN, BÚSQUEDA Y EMISIÓN PARAMÉTRICA -->
 <!-- ============================================================================== -->
-<script>
-    let reporteActual = null;
-
-    // Configuración de los campos requeridos y formatos para cada reporte
-    const CONFIG_REPORTES = {
-        'boleta_individual': {
-            titulo: 'Boleta Oficial de Calificaciones',
-            subtitulo: 'Seleccione grado, sección y estudiante para generar la boleta.',
-            campos: ['ciclo', 'grado_seccion', 'estudiante'],
-            permitePDF: true,
-            permiteExcel: false
-        },
-        'cuadro_calificaciones': {
-            titulo: 'Cuadro General de Calificaciones por Sección',
-            subtitulo: 'Matriz consolidada de cursos y calificaciones acumuladas.',
-            campos: ['ciclo', 'grado_seccion'],
-            permitePDF: true,
-            permiteExcel: true
-        },
-        'listado_estudiantes': {
-            titulo: 'Listado Oficial de Estudiantes Inscritos',
-            subtitulo: 'Padrón escolar de la sección con datos de contacto y encargado.',
-            campos: ['ciclo', 'grado_seccion'],
-            permitePDF: true,
-            permiteExcel: true
-        },
-        'cuadro_honor': {
-            titulo: 'Cuadro de Honor y Excelencia Académica',
-            subtitulo: 'Ranking de los mejores promedios acumulados de la sección.',
-            campos: ['ciclo', 'grado_seccion'],
-            permitePDF: true,
-            permiteExcel: true
-        },
-        'constancia_inscripcion': {
-            titulo: 'Constancia Oficial de Inscripción Escolar',
-            subtitulo: 'Seleccione el estudiante para extender la constancia oficial.',
-            campos: ['ciclo', 'grado_seccion', 'estudiante'],
-            permitePDF: true,
-            permiteExcel: false
-        },
-        'antiguedad_saldos': {
-            titulo: 'Antigüedad de Saldos y Morosidad',
-            subtitulo: 'Corte de cartera estratificado en Quetzales.',
-            campos: ['ciclo'],
-            permitePDF: true,
-            permiteExcel: true
-        },
-        'cuadre_caja': {
-            titulo: 'Arqueo y Cuadre Diario de Caja',
-            subtitulo: 'Consolidado de cobros y recibos por rango de fechas.',
-            campos: ['fechas'],
-            permitePDF: true,
-            permiteExcel: true
-        },
-        'estado_cuenta': {
-            titulo: 'Estado de Cuenta y Solvencia',
-            subtitulo: 'Registro de cuotas y abonos del estudiante.',
-            campos: ['ciclo', 'grado_seccion', 'estudiante'],
-            permitePDF: true,
-            permiteExcel: false
-        },
-        'consolidado_planilla': {
-            titulo: 'Consolidado Mensual de Planilla',
-            subtitulo: 'Nómina general de sueldos, Decreto 37-2001 e IGSS.',
-            campos: ['ciclo', 'mes'],
-            permitePDF: true,
-            permiteExcel: true
-        },
-        'boleta_pago_individual': {
-            titulo: 'Boleta Oficial de Pago de Salario',
-            subtitulo: 'Comprobante individual para firma del colaborador.',
-            campos: ['planilla_individual'],
-            permitePDF: true,
-            permiteExcel: false
-        },
-        'disciplina_historial': {
-            titulo: 'Historial de Disciplina y Convivencia',
-            subtitulo: 'Faltas tipificadas y medidas formativas aplicadas.',
-            campos: ['ciclo', 'grado_seccion'],
-            permitePDF: true,
-            permiteExcel: true
-        }
-    };
-
-    function abrirModalReporte(tipoReporte) {
-        reporteActual = tipoReporte;
-        const conf = CONFIG_REPORTES[tipoReporte];
-        if (!conf) return;
-
-        document.getElementById('modal-titulo').innerText = conf.titulo;
-        document.getElementById('modal-subtitulo').innerText = conf.subtitulo;
-        document.getElementById('modal-error').classList.add('hidden');
-
-        // Mostrar u ocultar campos según corresponda
-        document.getElementById('campo-ciclo').style.display = conf.campos.includes('ciclo') ? 'block' : 'none';
-        document.getElementById('campo-grado-seccion').style.display = conf.campos.includes('grado_seccion') ? 'grid' : 'none';
-        document.getElementById('campo-estudiante').style.display = conf.campos.includes('estudiante') ? 'block' : 'none';
-        document.getElementById('campo-fechas').style.display = conf.campos.includes('fechas') ? 'grid' : 'none';
-        document.getElementById('campo-mes').style.display = conf.campos.includes('mes') ? 'block' : 'none';
-        document.getElementById('campo-planilla-individual').style.display = conf.campos.includes('planilla_individual') ? 'block' : 'none';
-
-        // Botones de salida
-        document.getElementById('modal-btn-pdf').style.display = conf.permitePDF ? 'inline-flex' : 'none';
-        document.getElementById('modal-btn-excel').style.display = conf.permiteExcel ? 'inline-flex' : 'none';
-
-        // Resetear selectores dependientes
-        document.getElementById('modal-select-grado').selectedIndex = 0;
-        document.getElementById('modal-select-seccion').innerHTML = '<option value="">-- Primero elija el Grado --</option>';
-        document.getElementById('modal-select-estudiante').innerHTML = '<option value="">-- Seleccione una sección primero --</option>';
-
-        document.getElementById('modal-reporte').classList.remove('hidden');
-        if (window.lucide) lucide.createIcons();
-    }
-
-    function cerrarModalReporte() {
-        document.getElementById('modal-reporte').classList.add('hidden');
-        reporteActual = null;
-    }
-
-    // Carga dinámica de Secciones según el Grado elegido
-    function cargarSeccionesPorGrado(gradoId) {
-        const selectSec = document.getElementById('modal-select-seccion');
-        selectSec.innerHTML = '<option value="">Cargando secciones...</option>';
-        document.getElementById('modal-select-estudiante').innerHTML = '<option value="">-- Seleccione una sección primero --</option>';
-
-        if (!gradoId) {
-            selectSec.innerHTML = '<option value="">-- Primero elija el Grado --</option>';
-            return;
-        }
-
-        fetch(`/reportes/api/secciones-por-grado/${gradoId}/`)
-            .then(r => r.json())
-            .then(data => {
-                selectSec.innerHTML = '<option value="">-- Seleccionar Sección --</option>';
-                if (data.secciones && data.secciones.length > 0) {
-                    data.secciones.forEach(s => {
-                        const opt = document.createElement('option');
-                        opt.value = s.id;
-                        opt.textContent = s.nombre;
-                        selectSec.appendChild(opt);
-                    });
-                } else {
-                    selectSec.innerHTML = '<option value="">No hay secciones en este grado</option>';
-                }
-            })
-            .catch(err => {
-                selectSec.innerHTML = '<option value="">Error al cargar secciones</option>';
-                console.error(err);
-            });
-    }
-
-    // Carga dinámica de Estudiantes según la Sección y Ciclo elegidos
-    function onSeccionCambiada(seccionId) {
-        const conf = CONFIG_REPORTES[reporteActual];
-        if (!conf || !conf.campos.includes('estudiante')) return;
-
-        const selectEst = document.getElementById('modal-select-estudiante');
-        const cicloId = document.getElementById('modal-select-ciclo').value;
-
-        if (!seccionId) {
-            selectEst.innerHTML = '<option value="">-- Seleccione una sección primero --</option>';
-            return;
-        }
-
-        selectEst.innerHTML = '<option value="">Cargando estudiantes...</option>';
-        fetch(`/reportes/api/estudiantes-por-seccion/${seccionId}/${cicloId}/`)
-            .then(r => r.json())
-            .then(data => {
-                selectEst.innerHTML = '<option value="">-- Seleccionar Estudiante --</option>';
-                if (data.estudiantes && data.estudiantes.length > 0) {
-                    data.estudiantes.forEach(e => {
-                        const opt = document.createElement('option');
-                        opt.value = e.id;
-                        opt.textContent = `${e.nombre_completo} | CUI: ${e.cui}`;
-                        selectEst.appendChild(opt);
-                    });
-                } else {
-                    selectEst.innerHTML = '<option value="">No hay estudiantes inscritos en esta sección</option>';
-                }
-            })
-            .catch(err => {
-                selectEst.innerHTML = '<option value="">Error al cargar estudiantes</option>';
-                console.error(err);
-            });
-    }
-
-    // Ejecución de la emisión paramétrica del reporte
-    function ejecutarEmision(formato) {
-        const conf = CONFIG_REPORTES[reporteActual];
-        if (!conf) return;
-
-        const cicloId = document.getElementById('modal-select-ciclo').value;
-        const seccionId = document.getElementById('modal-select-seccion').value;
-        const estudianteId = document.getElementById('modal-select-estudiante').value;
-        const fechaIni = document.getElementById('modal-fecha-ini').value;
-        const fechaFin = document.getElementById('modal-fecha-fin').value;
-        const mes = document.getElementById('modal-select-mes').value;
-        const planillaId = document.getElementById('modal-select-planilla-id').value;
-        const errBox = document.getElementById('modal-error');
-        const errText = document.getElementById('modal-error-text');
-
-        errBox.classList.add('hidden');
-
-        // Validaciones según el reporte
-        if (conf.campos.includes('grado_seccion') && !seccionId && reporteActual !== 'disciplina_historial') {
-            errText.innerText = 'Debe seleccionar el grado y la sección.';
-            errBox.classList.remove('hidden');
-            return;
-        }
-
-        if (conf.campos.includes('estudiante') && !estudianteId) {
-            errText.innerText = 'Debe seleccionar un estudiante.';
-            errBox.classList.remove('hidden');
-            return;
-        }
-
-        if (conf.campos.includes('planilla_individual') && !planillaId) {
-            errText.innerText = 'Debe seleccionar una boleta de planilla válida.';
-            errBox.classList.remove('hidden');
-            return;
-        }
-
-        let url = '';
-        if (reporteActual === 'boleta_individual') {
-            url = `/reportes/academico/boleta/${estudianteId}/${cicloId}/`;
-        } else if (reporteActual === 'cuadro_calificaciones') {
-            url = `/reportes/academico/cuadro-calificaciones/?seccion_id=${seccionId}&ciclo_id=${cicloId}&formato=${formato}`;
-        } else if (reporteActual === 'listado_estudiantes') {
-            url = `/reportes/academico/listado-estudiantes/?seccion_id=${seccionId}&ciclo_id=${cicloId}&formato=${formato}`;
-        } else if (reporteActual === 'cuadro_honor') {
-            url = `/reportes/academico/cuadro-honor/?seccion_id=${seccionId}&ciclo_id=${cicloId}&formato=${formato}`;
-        } else if (reporteActual === 'constancia_inscripcion') {
-            url = `/reportes/academico/constancia-inscripcion/${estudianteId}/${cicloId}/`;
-        } else if (reporteActual === 'antiguedad_saldos') {
-            url = `/reportes/financiero/antiguedad-saldos/?ciclo_id=${cicloId}&formato=${formato}`;
-        } else if (reporteActual === 'cuadre_caja') {
-            url = `/reportes/financiero/cuadre-caja/?fecha_inicio=${fechaIni}&fecha_fin=${fechaFin}&formato=${formato}`;
-        } else if (reporteActual === 'estado_cuenta') {
-            url = `/reportes/financiero/estado-cuenta/${estudianteId}/${cicloId}/`;
-        } else if (reporteActual === 'consolidado_planilla') {
-            url = `/reportes/rrhh/consolidado-planillas/?ciclo_id=${cicloId}&mes=${mes}&formato=${formato}`;
-        } else if (reporteActual === 'boleta_pago_individual') {
-            url = `/reportes/rrhh/boleta-pago/${planillaId}/`;
-        } else if (reporteActual === 'disciplina_historial') {
-            const secParam = seccionId ? `&seccion_id=${seccionId}` : '';
-            url = `/reportes/disciplina/historial/?ciclo_id=${cicloId}${secParam}&formato=${formato}`;
-        }
-
-        if (url) {
-            if (formato === 'pdf') {
-                window.open(url, '_blank');
-            } else {
-                window.location.href = url;
-            }
-            cerrarModalReporte();
-        }
-    }
-
-    // Buscador interactivo en vivo y filtro por categorías
-    document.addEventListener('DOMContentLoaded', function () {
-        const buscador = document.getElementById('buscador-reportes');
-        const tarjetas = Array.from(document.querySelectorAll('.tarjeta-reporte'));
-        const tabBtns = Array.from(document.querySelectorAll('.btn-tab-categoria'));
-        let categoriaActiva = 'todos';
-
-        function filtrarCatalogo() {
-            const query = buscador.value.trim().toLowerCase();
-
-            tarjetas.forEach(t => {
-                const cat = t.getAttribute('data-categoria') || '';
-                const tit = t.getAttribute('data-titulo') || '';
-                const desc = t.getAttribute('data-desc') || '';
-
-                const coincideCat = (categoriaActiva === 'todos' || cat === categoriaActiva);
-                const coincideTexto = !query || tit.includes(query) || desc.includes(query);
-
-                if (coincideCat && coincideTexto) {
-                    t.style.display = 'flex';
-                } else {
-                    t.style.display = 'none';
-                }
-            });
-        }
-
-        buscador.addEventListener('input', filtrarCatalogo);
-
-        tabBtns.forEach(btn => {
-            btn.addEventListener('click', function () {
-                tabBtns.forEach(b => {
-                    b.className = 'btn-tab-categoria px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 cursor-pointer';
-                });
-                this.className = 'btn-tab-categoria px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-[#1E6532] text-white shadow-xs cursor-pointer';
-                categoriaActiva = this.getAttribute('data-categoria') || 'todos';
-                filtrarCatalogo();
-            });
-        });
-    });
-
-    // Control del procesamiento asíncrono en segundo plano (Celery)
-    let celeryPollInterval = null;
-
-    function iniciarGeneracionZip() {
-        const secId = document.getElementById('select-seccion-zip').value;
-        const cicloId = document.getElementById('select-ciclo-zip').value;
-        const btn = document.getElementById('btn-iniciar-zip');
-        const panel = document.getElementById('celery-progress-panel');
-        const bar = document.getElementById('celery-progress-bar');
-        const percentTxt = document.getElementById('celery-progress-percent');
-        const statusTxt = document.getElementById('celery-status-text');
-        const estDetail = document.getElementById('celery-estudiante-detail');
-        const countDetail = document.getElementById('celery-count-detail');
-        const downloadBtn = document.getElementById('celery-download-btn');
-        const errorAlert = document.getElementById('celery-error-alert');
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]') ? document.querySelector('[name=csrfmiddlewaretoken]').value : '';
-
-        if (!secId || !cicloId) {
-            alert('Por favor seleccione la sección y el ciclo escolar.');
-            return;
-        }
-
-        if (celeryPollInterval) clearInterval(celeryPollInterval);
-        btn.disabled = true;
-        btn.classList.add('opacity-50', 'cursor-not-allowed');
-        panel.classList.remove('hidden');
-        bar.style.width = '0%';
-        percentTxt.innerText = '0%';
-        statusTxt.innerText = 'Iniciando proceso en segundo plano...';
-        estDetail.innerText = 'En cola de procesamiento...';
-        countDetail.innerText = '';
-        downloadBtn.classList.add('hidden');
-        errorAlert.classList.add('hidden');
-
-        const formData = new FormData();
-        formData.append('seccion_id', secId);
-        formData.append('ciclo_id', cicloId);
-
-        fetch("{% url 'reportes:boletas_zip_iniciar' %}", {
-            method: 'POST',
-            body: formData,
-            headers: { 'X-CSRFToken': csrfToken }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (!data.success) {
-                throw new Error(data.error || 'No se pudo iniciar la tarea asíncrona.');
-            }
-            const taskId = data.task_id;
-            statusTxt.innerText = 'Tarea en ejecución, procesando boletas...';
-
-            celeryPollInterval = setInterval(() => {
-                fetch(`/reportes/asincrono/tarea/${taskId}/estado/`)
-                .then(r => r.json())
-                .then(taskData => {
-                    if (taskData.state === 'PROGRESS') {
-                        const pct = taskData.percent || 0;
-                        bar.style.width = pct + '%';
-                        percentTxt.innerText = pct + '%';
-                        statusTxt.innerText = 'Generando boletas oficiales en PDF...';
-                        estDetail.innerText = taskData.estudiante_actual ? `Estudiante: ${taskData.estudiante_actual}` : '';
-                        countDetail.innerText = `${taskData.current || 0} de ${taskData.total || 0}`;
-                    } else if (taskData.state === 'SUCCESS') {
-                        clearInterval(celeryPollInterval);
-                        bar.style.width = '100%';
-                        percentTxt.innerText = '100%';
-                        statusTxt.innerText = '¡Proceso completado!';
-                        estDetail.innerText = taskData.mensaje || `Se generaron ${taskData.total || 0} boletas.`;
-                        countDetail.innerText = `${taskData.total || 0} de ${taskData.total || 0}`;
-
-                        if (taskData.archivo_url) {
-                            downloadBtn.href = taskData.archivo_url;
-                            document.getElementById('celery-download-label').innerText = `Descargar ${taskData.filename}`;
-                            downloadBtn.classList.remove('hidden');
-                            if (window.lucide) lucide.createIcons();
-                        }
-
-                        btn.disabled = false;
-                        btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                    } else if (taskData.state === 'FAILURE' || taskData.status === 'ERROR') {
-                        clearInterval(celeryPollInterval);
-                        errorAlert.classList.remove('hidden');
-                        document.getElementById('celery-error-text').innerText = taskData.error || taskData.mensaje || 'Error al generar el lote.';
-                        statusTxt.innerText = 'Error en el proceso';
-                        btn.disabled = false;
-                        btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                    }
-                })
-                .catch(err => {
-                    console.error('Error al sondear estado de tarea:', err);
-                });
-            }, 1200);
-        })
-        .catch(err => {
-            btn.disabled = false;
-            btn.classList.remove('opacity-50', 'cursor-not-allowed');
-            errorAlert.classList.remove('hidden');
-            document.getElementById('celery-error-text').innerText = err.message || 'Error al conectar con el servidor.';
-        });
-    }
-</script>
+<script src="{% static 'js/modulos/panel_reportes.js' %}"></script>
 {% endblock %}

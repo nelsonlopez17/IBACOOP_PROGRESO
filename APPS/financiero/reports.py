@@ -124,7 +124,7 @@ def generar_pdf_recibo_pago(abono):
         [Paragraph("Nombre Completo:", style_label), Paragraph(persona.nombre_completo, style_val_bold),
          Paragraph("CUI / DPI:", style_label), Paragraph(persona.cui, style_val)],
         [Paragraph("Código MINEDUC:", style_label), Paragraph(estudiante.codigo_mineduc, style_val_bold),
-         Paragraph("Ciclo Escolar:", style_label), Paragraph(str(cuenta.ciclo_escolar.anio), style_val)]
+         Paragraph("Año:", style_label), Paragraph(str(cuenta.ciclo_escolar.anio), style_val)]
     ]
     t_est = Table(datos_estudiante, colWidths=[110, 160, 110, 160])
     t_est.setStyle(TableStyle([
@@ -243,7 +243,7 @@ def generar_pdf_solvencia_estudiante(estudiante, ciclo_escolar):
         fontSize=10,
         leading=16,
         textColor=colors.HexColor('#1E293B'),
-        alignment=4  # Justified
+        alignment=4  # justified
     )
     style_val_bold = ParagraphStyle(
         'ValBold',
@@ -287,7 +287,7 @@ def generar_pdf_solvencia_estudiante(estudiante, ciclo_escolar):
          Paragraph(persona.cui, style_val_bold)],
         [Paragraph("Código MINEDUC:", ParagraphStyle('L3', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, textColor=COLOR_GRIS)),
          Paragraph(estudiante.codigo_mineduc, style_val_bold)],
-        [Paragraph("Ciclo Escolar:", ParagraphStyle('L4', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, textColor=COLOR_GRIS)),
+        [Paragraph("Año:", ParagraphStyle('L4', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, textColor=COLOR_GRIS)),
          Paragraph(f"<b>{ciclo_escolar.anio}</b>", style_val_bold)],
         [Paragraph("Estado Financiero:", ParagraphStyle('L5', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=9, textColor=COLOR_GRIS)),
          Paragraph("<font color='#1E6532'><b>SOLVENTE (SIN DEUDAS PENDIENTES)</b></font>", style_val_bold)]
@@ -304,7 +304,7 @@ def generar_pdf_solvencia_estudiante(estudiante, ciclo_escolar):
 
     texto_cierre = (
         f"Se extiende la presente constancia de solvencia a solicitud del interesado para los trámites académicos "
-        f"y administrativos correspondientes al Ciclo Lectivo <b>{ciclo_escolar.anio}</b>, haciendo constar que el "
+        f"y administrativos correspondientes al año <b>{ciclo_escolar.anio}</b>, haciendo constar que el "
         f"estudiante ha cumplido a cabalidad con la totalidad de sus obligaciones financieras institucionales."
     )
     story.append(Paragraph(texto_cierre, style_body))
@@ -312,7 +312,7 @@ def generar_pdf_solvencia_estudiante(estudiante, ciclo_escolar):
 
     datos_firmas = [
         [Paragraph("_______________________________________<br/><b>Licda. Receptoría y Contabilidad</b><br/>Instituto El Progreso", ParagraphStyle('Ctr', parent=styles['Normal'], fontName='Helvetica', fontSize=9, alignment=1)),
-         Paragraph("_______________________________________<br/><b>Director General</b><br/>Instituto El Progreso", ParagraphStyle('Ctr2', parent=styles['Normal'], fontName='Helvetica', fontSize=9, alignment=1))]
+         Paragraph("_______________________________________<br/><b>Director (a)</b><br/>Instituto El Progreso", ParagraphStyle('Ctr2', parent=styles['Normal'], fontName='Helvetica', fontSize=9, alignment=1))]
     ]
     t_firmas = Table(datos_firmas, colWidths=[270, 270])
     t_firmas.setStyle(TableStyle([

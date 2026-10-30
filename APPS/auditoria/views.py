@@ -114,7 +114,7 @@ class AuditoriaDashboardView(AuditoriaPermissionMixin, TemplateView):
 
         metrics = AuditoriaService.get_dashboard_metrics()
 
-        # Construir querystring limpio sin el parámetro 'page' para paginación precisa
+        # construir querystring limpio sin el parametro 'page' para paginacion precisa
         query_params = self.request.GET.copy()
         query_params.pop('page', None)
         filtro_querystring = query_params.urlencode()

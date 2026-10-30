@@ -101,9 +101,11 @@
     </div>
 </div>
 
+{{ conceptos_precios|json_script:"conceptos-precios-data" }}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const preciosMap = {{ conceptos_precios_json|safe|default:'{}' }};
+    const dataElem = document.getElementById('conceptos-precios-data');
+    const preciosMap = dataElem ? JSON.parse(dataElem.textContent) : {};
     const conceptoSelect = document.getElementById('id_concepto');
     const montoInput = document.getElementById('id_monto_total');
     const hintSpan = document.getElementById('monto_hint_text');

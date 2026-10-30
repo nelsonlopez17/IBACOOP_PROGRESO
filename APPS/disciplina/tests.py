@@ -138,3 +138,42 @@ class DisciplinaTestCase(TestCase):
 
         # verificacion de registros historicos de auditoria
         self.assertEqual(incidente.history.count(), 2)
+
+    def test_estudiante_no_puede_descargar_citacion_ni_acta_pdf(self):
+        """Un usuario con rol ESTUDIANTE no puede descargar PDFs de citatorios ni de actas de compromiso."""
+        est_user = Usuario.objects.create_user(
+            username='estudiante_disc_test',
+            password='Password123!',
+            rol='ESTUDIANTE',
+            debe_cambiar_password=False
+        )
+        self.persona.usuario = est_user
+        self.persona.save()
+
+        incidente = IncidenteDisciplinario.objects.create(
+            estudiante=self.estudiante,
+            ciclo_escolar=self.ciclo,
+            reportado_por=self.director,
+            fecha=date.today(),
+            tipo_falta=TipoFaltaChoices.GRAVE,
+            categoria=CategoriaFaltaChoices.DESHONESTIDAD,
+            descripcion_hechos='Falta grave de prueba.'
+        )
+        citacion = CitacionPadre.objects.create(
+            incidente=incidente,
+            fecha_hora_citacion=timezone.now(),
+            motivo_citacion='Comparecencia por falta grave de prueba',
+            atendido_por=self.director,
+            estado=EstadoCitacionChoices.PENDIENTE
+        )
+
+        self.client.force_login(est_user)
+        # Intento de descarga de citatorio
+        res_cit = self.client.get(reverse('disciplina:citacion_pdf', kwargs={'pk': citacion.pk}))
+        self.assertEqual(res_cit.status_code, 302)
+        self.assertRedirects(res_cit, reverse('core:home'))
+
+        # Intento de descarga de acta de compromiso
+        res_acta = self.client.get(reverse('disciplina:acta_pdf', kwargs={'pk': citacion.pk}))
+        self.assertEqual(res_acta.status_code, 302)
+        self.assertRedirects(res_acta, reverse('core:home'))

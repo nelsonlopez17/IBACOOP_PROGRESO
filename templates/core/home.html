@@ -121,13 +121,6 @@
                     <i data-lucide="wallet" class="w-4 h-4"></i>
                     Estado de Cuenta y Recibos
                 </a>
-                {% if mi_asignacion %}
-                <a href="{% url 'academico:boleta_pdf' mi_asignacion.pk %}" target="_blank"
-                   class="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-700 transition-all shadow-sm">
-                    <i data-lucide="file-text" class="w-4 h-4"></i>
-                    Descargar Boleta de Calificaciones (PDF)
-                </a>
-                {% endif %}
             </div>
 
             <!-- Tabla de Calificaciones del Estudiante -->
@@ -231,13 +224,6 @@
                             <i data-lucide="wallet" class="w-3.5 h-3.5"></i>
                             Cuotas Escolares
                         </a>
-                        {% if item.asignacion %}
-                        <a href="{% url 'academico:boleta_pdf' item.asignacion.pk %}" target="_blank"
-                           class="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-700 transition-all">
-                            <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
-                            Boleta de Calificaciones PDF
-                        </a>
-                        {% endif %}
                     </div>
                 </div>
 

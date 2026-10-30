@@ -111,7 +111,7 @@ def generar_pdf_citacion_padre(citacion):
 
     story.append(ReportLabHelper.build_signature_block([
         "Docente / Comisión de Disciplina",
-        "Dirección del Instituto"
+        "Director (a)"
     ]))
     story.append(Spacer(1, 20))
 
@@ -212,9 +212,9 @@ def generar_pdf_acta_compromiso(citacion):
     story.append(Spacer(1, 25))
 
     story.append(ReportLabHelper.build_signature_block([
-        "Firma del Estudiante",
-        "Padre / Madre / Encargado",
-        "Dirección / Comisión Disciplina"
+        "Estudiante",
+        "Padre de Familia o Encargado",
+        "Director (a)"
     ]))
 
     doc.build(story, canvasmaker=NumberedCanvas)

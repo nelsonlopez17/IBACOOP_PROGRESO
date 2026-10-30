@@ -184,3 +184,88 @@ class EstudiantesFinancieroTestCase(TestCase):
         self.assertEqual(self.tutor.lugar_de_trabajo, 'Nuevo Empleo Central')
         self.assertEqual(self.persona_tutor.nombres, 'Roberto Carlos')
         self.assertEqual(self.persona_tutor.telefono_principal, '55551234')
+
+
+
+
+class RestriccionDescargasEstudianteTestCase(TestCase):
+    def setUp(self):
+        self.ciclo = CicloEscolar.objects.create(anio=2026, estado_activo=True)
+        self.admin_user = Usuario.objects.create_user(
+            username='admin_dl_test',
+            password='TestPassword123!',
+            rol=RolChoices.ADMINISTRADOR,
+            debe_cambiar_password=False,
+            is_staff=True,
+            is_superuser=True
+        )
+        self.user_estudiante = Usuario.objects.create_user(
+            username='est_dl_test',
+            password='TestPassword123!',
+            rol=RolChoices.ESTUDIANTE,
+            debe_cambiar_password=False
+        )
+        self.persona_est = Persona.objects.create(
+            cui='3000000000099',
+            nombres='Kevin',
+            apellidos='Gómez',
+            usuario=self.user_estudiante
+        )
+        self.estudiante = Estudiante.objects.create(
+            persona=self.persona_est,
+            codigo_mineduc='EST-9988'
+        )
+        self.concepto = ConceptoPago.objects.create(
+            nombre='Cuota Mensual Test',
+            monto_estandar=Decimal('200.00'),
+            categoria_concepto=CategoriaConceptoChoices.COLEGIATURA
+        )
+        self.cpc = CuentaPorCobrar.objects.create(
+            estudiante=self.estudiante,
+            concepto=self.concepto,
+            ciclo_escolar=self.ciclo,
+            monto_total=Decimal('200.00'),
+            saldo_pendiente=Decimal('0.00'),
+            estado_pago='PAGADO'
+        )
+        self.abono = Abono.objects.create(
+            cuenta_por_cobrar=self.cpc,
+            monto_pagado=Decimal('200.00'),
+            fecha_pago='2026-03-01',
+            numero_boleta='BOL-77777'
+        )
+
+    def test_estudiante_no_puede_descargar_expediente_pdf(self):
+        """Un estudiante recibe 403 (redirección a dashboard) al intentar descargar la ficha del expediente en PDF."""
+        self.client.force_login(self.user_estudiante)
+        url = reverse('estudiantes:estudiante_pdf_expediente', kwargs={'pk': self.estudiante.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('core:home'))
+
+    def test_estudiante_no_puede_descargar_solvencia_pdf(self):
+        """Un estudiante recibe 403 al intentar descargar la constancia de solvencia en PDF."""
+        self.client.force_login(self.user_estudiante)
+        url = reverse('financiero:solvencia_pdf', kwargs={'pk': self.estudiante.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('core:home'))
+
+    def test_estudiante_no_puede_descargar_recibo_pdf(self):
+        """Un estudiante recibe 403 al intentar descargar el recibo de abono en PDF."""
+        self.client.force_login(self.user_estudiante)
+        url = reverse('financiero:recibo_pdf', kwargs={'pk': self.abono.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('core:home'))
+
+    def test_administrador_si_puede_descargar_expediente_y_solvencia(self):
+        """Un administrador puede generar y descargar el expediente y la solvencia en PDF."""
+        self.client.force_login(self.admin_user)
+        res_exp = self.client.get(reverse('estudiantes:estudiante_pdf_expediente', kwargs={'pk': self.estudiante.pk}))
+        self.assertEqual(res_exp.status_code, 200)
+        self.assertEqual(res_exp['Content-Type'], 'application/pdf')
+
+        res_solv = self.client.get(reverse('financiero:solvencia_pdf', kwargs={'pk': self.estudiante.pk}))
+        self.assertEqual(res_solv.status_code, 200)
+        self.assertEqual(res_solv['Content-Type'], 'application/pdf')

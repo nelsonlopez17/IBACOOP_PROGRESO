@@ -120,7 +120,7 @@ class IncidenteDisciplinarioForm(TailwindFormMixin, forms.ModelForm):
         fecha = cleaned_data.get('fecha')
         ciclo = cleaned_data.get('ciclo_escolar')
 
-        # Si requiere citacion y no hay citacion atendida, no debe marcarse como resuelto inicialmente
+        # si requiere citacion y no hay citacion atendida, no debe marcarse como resuelto inicialmente
         if requiere_citacion and esta_resuelto:
             tiene_citacion_atendida = (
                 getattr(self.instance, 'citacion', None) and
@@ -132,7 +132,7 @@ class IncidenteDisciplinarioForm(TailwindFormMixin, forms.ModelForm):
                     'Un incidente que requiere citación al padre de familia o encargado no puede darse por resuelto y cerrado antes de celebrar la comparecencia y suscribir compromisos.'
                 )
 
-        # Validacion del rango de fechas respecto al ciclo escolar seleccionado
+        # validacion del rango de fechas respecto al ciclo escolar seleccionado
         if fecha and ciclo:
             if ciclo.fecha_inicio and fecha < ciclo.fecha_inicio:
                 self.add_error(
@@ -198,14 +198,14 @@ class CitacionPadreForm(TailwindFormMixin, forms.ModelForm):
             '%Y-%m-%d %H:%M',
             '%Y-%m-%d %H:%M:%S',
         ]
-        # Formatear el valor inicial de fecha_hora_citacion para el input HTML5 datetime-local
+        # formatear el valor inicial de fecha_hora_citacion para el input html5 datetime-local
         if self.instance and self.instance.pk and self.instance.fecha_hora_citacion:
             fecha_local = timezone.localtime(self.instance.fecha_hora_citacion) if timezone.is_aware(self.instance.fecha_hora_citacion) else self.instance.fecha_hora_citacion
             self.initial['fecha_hora_citacion'] = fecha_local.strftime('%Y-%m-%dT%H:%M')
 
         from django.contrib.auth import get_user_model
         UsuarioModel = get_user_model()
-        # Solo personal autorizado del plantel (no cuentas de estudiantes ni encargados)
+        # solo personal autorizado del plantel (no cuentas de estudiantes ni encargados)
         self.fields['atendido_por'].queryset = UsuarioModel.objects.filter(
             is_active=True
         ).exclude(
@@ -242,17 +242,17 @@ class CitacionPadreForm(TailwindFormMixin, forms.ModelForm):
         acuerdos = cleaned_data.get('acuerdos_alcanzados')
         fecha_hora = cleaned_data.get('fecha_hora_citacion')
 
-        # Si se marca como atendida, los acuerdos son obligatorios conforme a la normativa
+        # si se marca como atendida, los acuerdos son obligatorios conforme a la normativa
         if estado == EstadoCitacionChoices.ATENDIDA and not acuerdos:
             self.add_error(
                 'acuerdos_alcanzados',
                 'Debe registrar los acuerdos y compromisos asumidos cuando la citación se marca como Atendida conforme al Acuerdo 01-2011.'
             )
 
-        # Validar que una nueva citación programada no sea en el pasado
+        # validar que una nueva citacion programada no sea en el pasado
         if not self.instance.pk and fecha_hora:
             ahora = timezone.now()
-            # Margen de 15 minutos de tolerancia
+            # margen de 15 minutos de tolerancia
             if fecha_hora < (ahora - timezone.timedelta(minutes=15)):
                 self.add_error(
                     'fecha_hora_citacion',

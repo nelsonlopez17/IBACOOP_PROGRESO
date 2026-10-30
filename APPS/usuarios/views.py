@@ -352,9 +352,9 @@ def lockout_view(request, credentials=None, *args, **kwargs):
 
 
 
-# ==============================================================================
-# VISTAS DE GESTIÓN INTUITIVA DE ROLES Y GRUPOS DE PERMISOS
-# ==============================================================================
+
+# vistas de gestion intuitiva de roles y grupos de permisos
+
 
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.auth.models import Group

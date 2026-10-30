@@ -23,6 +23,7 @@ urlpatterns = [
     path('carga-docente/nueva/', views.AsignacionDocenteCreateView.as_view(), name='asignacion_docente_create'),
     path('carga-docente/<int:pk>/editar/', views.AsignacionDocenteUpdateView.as_view(), name='asignacion_docente_update'),
 
+    path('mis-calificaciones/', views.EstudianteMisCalificacionesView.as_view(), name='estudiante_mis_calificaciones'),
     path('notas/', views.CuadroCalificacionesView.as_view(), name='notas_lista'),
     path('mis-cursos/', views.CuadroCalificacionesView.as_view(), name='docente_mis_cursos'),
     path('notas/<int:pk>/editar/', views.IngresoNotasUpdateView.as_view(), name='ingreso_notas'),

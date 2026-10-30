@@ -180,7 +180,7 @@ def generar_pdf_credenciales_bytes(usuario, clave_temporal: str) -> bytes:
 
     pie_tabla = [
         [Paragraph("__________________________________________", ParagraphStyle('FirmaLine', alignment=1)), Paragraph("__________________________________________", ParagraphStyle('FirmaLine2', alignment=1))],
-        [Paragraph("Firma / Sello de Dirección / Administración", ParagraphStyle('FirmaLbl', fontName='Helvetica', fontSize=9, alignment=1, textColor=colors.HexColor('#64748B'))),
+        [Paragraph("Director (a)", ParagraphStyle('FirmaLbl', fontName='Helvetica-Bold', fontSize=9, alignment=1, textColor=colors.HexColor('#64748B'))),
          Paragraph("Firma de Conformidad del Usuario", ParagraphStyle('FirmaLbl2', fontName='Helvetica', fontSize=9, alignment=1, textColor=colors.HexColor('#64748B')))]
     ]
 

@@ -213,6 +213,7 @@ class CuentaPorCobrarCreateView(LoginRequiredMixin, PermissionRequiredMixin, Cre
             str(c.id): str(c.monto_estandar)
             for c in ConceptoPago.objects.filter(esta_eliminado=False)
         }
+        context['conceptos_precios'] = conceptos_precios
         context['conceptos_precios_json'] = json.dumps(conceptos_precios)
         return context
 
@@ -247,6 +248,7 @@ class GenerarCobroMasivoView(LoginRequiredMixin, PermissionRequiredMixin, FormVi
         import json
         from APPS.academico.models import Seccion
         secciones = list(Seccion.objects.filter(esta_eliminado=False).values('id', 'grado_id', 'letra'))
+        context['secciones_lista'] = secciones
         context['secciones_json'] = json.dumps(secciones)
         return context
 
@@ -379,7 +381,7 @@ class EstudianteCuentaCorrienteDetailView(LoginRequiredMixin, PermissionRequired
         total_pagado = total_deuda - saldo_pendiente_total
 
         # determinacion del estado de solvencia escolar
-        es_solvente = (saldo_pendiente_total == Decimal('0.00'))
+        es_solvente = (cuentas.exists() and saldo_pendiente_total == Decimal('0.00'))
 
         abonos_historial = Abono.objects.filter(
             cuenta_por_cobrar__estudiante=estudiante,
@@ -516,6 +518,8 @@ class AbonoListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
 @login_required
 def descargar_recibo_pdf(request, pk):
     """Servicio HTTP para descargar o visualizar el Recibo Oficial de Pago en PDF."""
+    if getattr(request.user, 'rol', None) == 'ESTUDIANTE':
+        raise PermissionDenied("Los estudiantes deben consultar sus recibos en pantalla o solicitarlos en caja.")
     abono = get_object_or_404(
         Abono.objects.select_related(
             'cuenta_por_cobrar__estudiante__persona',
@@ -541,6 +545,8 @@ def descargar_recibo_pdf(request, pk):
 @login_required
 def descargar_solvencia_pdf(request, pk):
     """Servicio HTTP para descargar o visualizar la Constancia de Solvencia Financiera en PDF."""
+    if getattr(request.user, 'rol', None) == 'ESTUDIANTE':
+        raise PermissionDenied("La descarga de la constancia de solvencia en PDF está reservada a personal administrativo.")
     estudiante = get_object_or_404(Estudiante, pk=pk, persona__esta_eliminado=False)
 
     from APPS.usuarios.permisos import es_titular_o_encargado_de_estudiante
@@ -552,16 +558,22 @@ def descargar_solvencia_pdf(request, pk):
         raise PermissionDenied("No tiene autorización para descargar la solvencia de este estudiante.")
     
     # verificar que el estudiante no mantenga saldos pendientes
-    pendientes = CuentaPorCobrar.objects.filter(
+    cuentas = CuentaPorCobrar.objects.filter(
         estudiante=estudiante,
-        esta_eliminado=False,
-        saldo_pendiente__gt=Decimal('0.00')
+        esta_eliminado=False
     )
-
-    if pendientes.exists():
+    if not cuentas.exists():
         messages.error(
             request,
-            f'No se puede generar la solvencia. El estudiante {estudiante.persona.nombre_completo} posee pagos pendientes de saldo.'
+            f'No se puede generar la constancia de solvencia. El estudiante {estudiante.persona.nombre_completo} no posee asignaciones financieras registradas.'
+        )
+        return redirect('financiero:estudiante_cuenta_corriente', pk=estudiante.pk)
+
+    pendientes = cuentas.filter(saldo_pendiente__gt=Decimal('0.00'))
+    if pendientes.exists() or estudiante.saldo_total_pendiente > Decimal('0.00'):
+        messages.error(
+            request,
+            f'No se puede generar la constancia de solvencia. El estudiante {estudiante.persona.nombre_completo} posee pagos pendientes de saldo.'
         )
         return redirect('financiero:estudiante_cuenta_corriente', pk=estudiante.pk)
 
@@ -800,9 +812,9 @@ class AntiguedadSaldosView(LoginRequiredMixin, PermissionRequiredMixin, Template
         return context
 
 
-# ==============================================================================
-# VISTAS DE PLANILLAS DE SUELDOS (GESTIÓN FINANCIERA / NÓMINA)
-# ==============================================================================
+
+# vistas de planillas de sueldos (gestion financiera / nomina)
+
 
 class PlanillaListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     """Listado general de pagos de planilla mensuales del personal."""
@@ -1069,7 +1081,12 @@ def descargar_comprobante_planilla_pdf(request, pk):
         pk=pk,
         esta_eliminado=False
     )
-    es_titular = getattr(planilla.personal.persona, 'usuario_id', None) == request.user.id
+    usuario_id = getattr(planilla.personal.persona, 'usuario_id', None)
+    es_titular = (
+        request.user.is_authenticated
+        and usuario_id is not None
+        and usuario_id == request.user.id
+    )
     if not (request.user.has_perm('rrhh.view_planilla') or es_titular):
         raise PermissionDenied("No tiene autorización para descargar esta boleta de pago de planilla.")
     return generar_pdf_comprobante_planilla(planilla)

@@ -80,7 +80,7 @@ class UsuarioFormTestCase(TestCase):
             'email': 'limpio@colegio.edu.gt',
             'rol': 'DOCENTE',
             'is_active': True,
-            'groups': [],  # Todos desmarcados
+            'groups': [],  # todos desmarcados
         }
         form = CustomUserChangeForm(data=form_data, instance=usuario)
         self.assertTrue(form.is_valid(), form.errors)
@@ -201,7 +201,7 @@ class MiPerfilNotificacionYValidacionTestCase(TestCase):
         response = self.client.post(
             reverse('usuarios:mi_perfil'),
             {
-                'telefono_principal': '123',  # Inválido: menos de 8 dígitos
+                'telefono_principal': '123',  # invalido: menos de 8 digitos
                 'telefono_secundario': '',
                 'correo': 'carlos.est@colegio.edu.gt',
                 'direccion': 'Barrio El Centro, El Progreso',
@@ -228,7 +228,7 @@ class MiPerfilNotificacionYValidacionTestCase(TestCase):
                 'last_name': 'IntentoApellido',
                 'email': 'hack@colegio.edu.gt',
                 'rol': 'ESTUDIANTE',
-                'is_active': False,  # Intento de autodesactivación
+                'is_active': False,  # intento de autodesactivacion
                 'debe_cambiar_password': False,
             },
             instance=self.usuario,
@@ -277,12 +277,12 @@ class MiPerfilNotificacionYValidacionTestCase(TestCase):
 
         self.client.force_login(operador)
 
-        # restriccion de permisos sobre cuenta principal
+        # restriccion de permisos sobre cuenta principal con redireccion a dashboard
         res_edit = self.client.get(reverse('usuarios:usuario_update', args=[superadmin.pk]))
-        self.assertEqual(res_edit.status_code, 403)
+        self.assertRedirects(res_edit, reverse('core:home'))
 
         res_toggle = self.client.post(reverse('usuarios:usuario_toggle_active', args=[superadmin.pk]))
-        self.assertEqual(res_toggle.status_code, 403)
+        self.assertRedirects(res_toggle, reverse('core:home'))
         superadmin.refresh_from_db()
         self.assertTrue(superadmin.is_active)
 
@@ -313,13 +313,13 @@ class GestionRolesPermisosTestCase(TestCase):
         self.perm2 = Permission.objects.filter(codename='add_curso').first()
 
     def test_acceso_denegado_a_usuarios_no_administradores(self):
-        """Verifica que usuarios sin rol ni grupo de administración no puedan acceder a la gestión de roles."""
+        """Verifica que usuarios sin rol ni grupo de administración sean redirigidos al dashboard."""
         self.client.force_login(self.docente_user)
         res = self.client.get(reverse('usuarios:grupo_list'))
-        self.assertEqual(res.status_code, 403)
+        self.assertRedirects(res, reverse('core:home'))
 
         res_create = self.client.get(reverse('usuarios:grupo_create'))
-        self.assertEqual(res_create.status_code, 403)
+        self.assertRedirects(res_create, reverse('core:home'))
 
     def test_listado_roles_acceso_admin(self):
         """Verifica que un administrador pueda listar los roles y ver sus métricas."""

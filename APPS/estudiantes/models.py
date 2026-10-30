@@ -82,7 +82,7 @@ class Estudiante(ModeloAuditable):
         verbose_name='Historial médico',
         help_text='Información médica relevante, alergias, afecciones, etc.'
     )
-    # Checklist Papelería Oficial MINEDUC (5 Documentos Obligatorios)
+    # checklist papeleria oficial mineduc (5 documentos obligatorios)
     doc_cert_nacimiento_renap = models.BooleanField(
         default=False,
         verbose_name='Certificado de Nacimiento RENAP'
@@ -116,6 +116,56 @@ class Estudiante(ModeloAuditable):
     def __str__(self):
         cui = f" | CUI: {self.persona.cui}" if self.persona and self.persona.cui else ""
         return f"{self.persona.nombre_completo}{cui} (MINEDUC: {self.codigo_mineduc})"
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        from APPS.core.models import ContactoPersona, DocumentoExpediente, TipoVinculoContactoChoices, TipoDocumentoExpedienteChoices
+
+        if self.persona_id:
+            if self.nombre_padre or self.telefono_padre:
+                ContactoPersona.objects.update_or_create(
+                    persona_id=self.persona_id,
+                    tipo_vinculo=TipoVinculoContactoChoices.PADRE,
+                    defaults={
+                        'nombre_completo': self.nombre_padre or 'Padre',
+                        'telefono': self.telefono_padre or '',
+                        'esta_eliminado': False,
+                    }
+                )
+            if self.nombre_madre or self.telefono_madre:
+                ContactoPersona.objects.update_or_create(
+                    persona_id=self.persona_id,
+                    tipo_vinculo=TipoVinculoContactoChoices.MADRE,
+                    defaults={
+                        'nombre_completo': self.nombre_madre or 'Madre',
+                        'telefono': self.telefono_madre or '',
+                        'esta_eliminado': False,
+                    }
+                )
+            mapa_docs = {
+                'doc_cert_nacimiento_renap': TipoDocumentoExpedienteChoices.CERT_NACIMIENTO_RENAP,
+                'doc_dpi_encargado': TipoDocumentoExpedienteChoices.DPI_ENCARGADO,
+                'doc_certificado_grado_anterior': TipoDocumentoExpedienteChoices.CERTIFICADO_GRADO_ANTERIOR,
+                'doc_diploma_primaria': TipoDocumentoExpedienteChoices.DIPLOMA_PRIMARIA,
+                'doc_codigo_mineduc': TipoDocumentoExpedienteChoices.CODIGO_MINEDUC,
+            }
+            for campo, tipo_doc in mapa_docs.items():
+                if getattr(self, campo, False):
+                    DocumentoExpediente.objects.update_or_create(
+                        persona_id=self.persona_id,
+                        tipo_documento=tipo_doc,
+                        defaults={'entregado': True, 'esta_eliminado': False}
+                    )
+            if self.encargado_id:
+                EstudianteEncargado.objects.update_or_create(
+                    estudiante_id=self.pk,
+                    encargado_id=self.encargado_id,
+                    defaults={
+                        'parentesco': ParentescoChoices.TUTOR,
+                        'es_contacto_principal': True,
+                        'esta_eliminado': False,
+                    }
+                )
 
     @property
     def expediente_completo(self):

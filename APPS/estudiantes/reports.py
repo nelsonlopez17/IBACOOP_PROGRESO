@@ -223,10 +223,11 @@ def generar_pdf_expediente_estudiante(estudiante):
 
     story.append(Spacer(1, 30))
     datos_firmas = [
-        [Paragraph("_______________________________________<br/>Firma y Sello de Secretaría", style_header_right),
-         Paragraph("_______________________________________<br/>Firma de Conformidad del Padre de Familia o Encargado", style_header_right)]
+        [Paragraph("____________________________<br/>Director (a)", style_header_right),
+         Paragraph("____________________________<br/>Firma y Sello de Secretaría", style_header_right),
+         Paragraph("____________________________<br/>Padre de Familia o Encargado", style_header_right)]
     ]
-    t_firmas = Table(datos_firmas, colWidths=[270, 270])
+    t_firmas = Table(datos_firmas, colWidths=[180, 180, 180])
     t_firmas.setStyle(TableStyle([
         ('ALIGN', (0,0), (-1,-1), 'CENTER'),
         ('VALIGN', (0,0), (-1,-1), 'BOTTOM'),

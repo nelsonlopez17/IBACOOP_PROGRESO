@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Cierre Anual de Ciclo Lectivo y Promoción MINEDUC{% endblock %}
+{% block title %}Cierre Anual de Ciclo Escolar y Promoción MINEDUC{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
@@ -17,7 +17,7 @@
             </div>
             <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
                 <i data-lucide="award" class="w-7 h-7 text-[#1E6532]"></i>
-                Cierre Anual de Ciclo Lectivo y Promoción MINEDUC
+                Cierre Anual de Ciclo Escolar y Promoción MINEDUC
             </h1>
             <p class="text-xs text-slate-500 mt-1">Evaluación automatizada de notas finales y determinación de estudiantes Promovidos y Retenidos.</p>
         </div>
@@ -67,7 +67,7 @@
             <p class="leading-relaxed">
                 <b>Art. 26:</b> Tienen derecho a examen de recuperación los estudiantes que reprueben hasta un máximo de <b>tres (3) asignaturas</b>.<br>
                 <b>Art. 27:</b> No tienen derecho a examen de recuperación los estudiantes que reprueben <b>cuatro (4) o más asignaturas</b>, debiendo repetir el grado.<br>
-                Al ejecutar el <b>Cierre Anual del Ciclo Lectivo {{ ciclo_activo.anio }}</b>, el sistema calculará las notas definitivas
+                Al ejecutar el <b>Cierre Anual del Ciclo Escolar {{ ciclo_activo.anio }}</b>, el sistema calculará las notas definitivas
                 de todos los cursos del pensum. Aquellos estudiantes que hayan aprobado el 100% de asignaturas (&ge; 60 pts) serán promovidos.
             </p>
         </div>
@@ -149,7 +149,7 @@
         <!-- Acción de Ejecución -->
         <form method="post" class="flex justify-end pt-2">
             {% csrf_token %}
-            <button type="submit" onclick="return confirm('¿Está seguro de ejecutar el Cierre Anual del Ciclo Lectivo {{ ciclo_activo.anio }}?');"
+            <button type="submit" onclick="return confirm('¿Está seguro de ejecutar el Cierre Anual del Ciclo Escolar {{ ciclo_activo.anio }}?');"
                 class="px-6 py-3 bg-[#7A1C21] hover:bg-[#7A1C21]/90 text-white rounded-xl text-xs font-black transition-all shadow-md shadow-[#7A1C21]/20 flex items-center gap-2">
                 <i data-lucide="lock" class="w-4 h-4"></i>
                 Ejecutar Cierre Anual del Ciclo {{ ciclo_activo.anio }}

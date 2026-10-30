@@ -663,6 +663,8 @@ def buscar_encargado_api(request):
 @login_required
 def descargar_expediente_pdf(request, pk):
     """Genera y descarga la Ficha Única del Expediente del Estudiante en PDF."""
+    if getattr(request.user, 'rol', None) == 'ESTUDIANTE':
+        raise PermissionDenied("Los estudiantes no tienen autorización para descargar la ficha de expediente en PDF.")
     estudiante = get_object_or_404(
         Estudiante.objects.select_related('persona', 'encargado', 'encargado__persona'),
         pk=pk,

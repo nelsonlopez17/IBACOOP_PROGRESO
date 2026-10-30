@@ -221,7 +221,7 @@ class AsignacionEstudianteListView(LoginRequiredMixin, PermissionRequiredMixin, 
 
 
 class AsignacionEstudianteCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
-    """Inscripción formal de un estudiante en una sección para un ciclo lectivo."""
+    """Inscripción formal de un estudiante en una sección para un ciclo escolar."""
 
     model = AsignacionEstudiante
     form_class = AsignacionEstudianteForm
@@ -527,7 +527,7 @@ class CuadroCalificacionesView(LoginRequiredMixin, PermissionRequiredMixin, Temp
         context['grados'] = grados
         context['es_admin'] = es_admin
 
-        # 1. Grado seleccionado
+        # 1. grado seleccionado
         grado_id = self.request.GET.get('grado') or self.request.POST.get('grado')
         seccion_id = self.request.GET.get('seccion') or self.request.POST.get('seccion')
         curso_id = self.request.GET.get('curso') or self.request.POST.get('curso')
@@ -546,7 +546,7 @@ class CuadroCalificacionesView(LoginRequiredMixin, PermissionRequiredMixin, Temp
 
         context['grado_sel'] = grado_sel
 
-        # 2. Secciones del Grado seleccionado
+        # 2. secciones del grado seleccionado
         if grado_sel:
             secciones = secciones_base.filter(grado=grado_sel).order_by('letra')
         else:
@@ -562,7 +562,7 @@ class CuadroCalificacionesView(LoginRequiredMixin, PermissionRequiredMixin, Temp
 
         context['seccion_sel'] = seccion_sel
 
-        # 3. Cursos del Grado y Sección seleccionados
+        # 3. cursos del grado y seccion seleccionados
         if grado_sel and seccion_sel:
             if es_admin:
                 cursos = cursos_base.filter(grado=grado_sel).order_by('nombre_curso')
@@ -587,7 +587,7 @@ class CuadroCalificacionesView(LoginRequiredMixin, PermissionRequiredMixin, Temp
 
         context['curso_sel'] = curso_sel
 
-        # 4. Bimestres / Bloques
+        # 4. bimestres / bloques
         bloques = BloqueAcademico.objects.filter(ciclo_escolar=ciclo_activo, esta_eliminado=False).order_by('orden')
         context['bloques'] = bloques
 
@@ -599,7 +599,7 @@ class CuadroCalificacionesView(LoginRequiredMixin, PermissionRequiredMixin, Temp
 
         context['bloque_sel'] = bloque_sel
 
-        # 5. Si tenemos sección, curso y bloque seleccionados, cargamos/aseguramos las notas
+        # 5. si tenemos seccion, curso y bloque seleccionados, cargamos/aseguramos las notas
         if seccion_sel and curso_sel and bloque_sel:
             inscripciones = AsignacionEstudiante.objects.filter(
                 seccion=seccion_sel,
@@ -611,7 +611,7 @@ class CuadroCalificacionesView(LoginRequiredMixin, PermissionRequiredMixin, Temp
                 'estudiante__persona__nombres'
             )
 
-            # Auto-generar casilleros de notas bimestrales y notas finales si hicieran falta
+            # auto-generar casilleros de notas bimestrales y notas finales si hicieran falta
             for asig in inscripciones:
                 NotaFinalCurso.objects.get_or_create(
                     asignacion_estudiante=asig,
@@ -678,12 +678,12 @@ class CuadroCalificacionesView(LoginRequiredMixin, PermissionRequiredMixin, Temp
         curso = get_object_or_404(Curso, pk=curso_id, esta_eliminado=False)
         bloque = get_object_or_404(BloqueAcademico, pk=bloque_id, esta_eliminado=False)
 
-        # Validación de que el curso pertenezca al grado de la sección
+        # validacion de que el curso pertenezca al grado de la seccion
         if curso.grado_id != seccion.grado_id:
             messages.error(request, f'El curso "{curso.nombre_curso}" no corresponde al grado de la sección "{seccion}".')
             return redirect(f"{reverse('academico:notas_lista')}?grado={seccion.grado_id}&seccion={seccion.id}")
 
-        # Validación de permisos para docentes
+        # validacion de permisos para docentes
         if not es_admin:
             tiene_permiso = AsignacionDocente.objects.filter(
                 personal__persona__usuario=usuario,
@@ -720,7 +720,7 @@ class CuadroCalificacionesView(LoginRequiredMixin, PermissionRequiredMixin, Temp
                             nb.usuario_modificacion = usuario
                             nb.save(update_fields=['nota_zona', 'nota_examen', 'actualizado_en', 'usuario_modificacion'])
 
-                            # Recalcular nota final del curso
+                            # recalcular nota final del curso
                             nf, _ = NotaFinalCurso.objects.get_or_create(
                                 asignacion_estudiante=nb.asignacion_estudiante,
                                 curso=nb.curso
@@ -738,8 +738,151 @@ class CuadroCalificacionesView(LoginRequiredMixin, PermissionRequiredMixin, Temp
         return redirect(f"{reverse('academico:notas_lista')}?grado={seccion.grado_id}&seccion={seccion.id}&curso={curso.id}&bloque={bloque.id}")
 
 
-# Alias para retrocompatibilidad
+# alias para retrocompatibilidad
 DocenteNotasListView = CuadroCalificacionesView
+
+class EstudianteMisCalificacionesView(LoginRequiredMixin, TemplateView):
+    """
+    Vista de autoservicio para consulta exclusiva de calificaciones y asistencia en pantalla.
+    Permite al estudiante (o encargado) consultar notas bimestrales, promedio y asistencia
+    sin opciones de descarga de documentos oficiales.
+    """
+    template_name = 'academico/estudiante_mis_calificaciones.html'
+
+    def get_estudiante(self):
+        user = self.request.user
+        if getattr(user, 'rol', None) == 'ESTUDIANTE':
+            try:
+                return user.persona.estudiante
+            except Exception:
+                return None
+        est_id = self.request.GET.get('estudiante_id')
+        if est_id:
+            from APPS.usuarios.permisos import es_titular_o_encargado_de_estudiante
+            estudiante = get_object_or_404(Estudiante, pk=est_id, esta_eliminado=False)
+            if user.is_superuser or user.rol in ['ADMINISTRADOR', 'DIRECTOR', 'SECRETARIA', 'DOCENTE'] or es_titular_o_encargado_de_estudiante(user, estudiante):
+                return estudiante
+        if getattr(user, 'rol', None) == 'ENCARGADO':
+            from APPS.estudiantes.models import EstudianteEncargado
+            est_rel = EstudianteEncargado.objects.filter(encargado__persona__usuario=user, esta_eliminado=False).first()
+            if est_rel:
+                return est_rel.estudiante
+            est_p = Estudiante.objects.filter(encargado__persona__usuario=user, esta_eliminado=False).first()
+            if est_p:
+                return est_p
+        return None
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        estudiante = self.get_estudiante()
+        if not estudiante:
+            messages.warning(self.request, "No se encontró un expediente estudiantil vinculado a su cuenta.")
+            context['estudiante'] = None
+            return context
+
+        asignaciones_todas = AsignacionEstudiante.objects.filter(
+            estudiante=estudiante,
+            esta_eliminado=False
+        ).select_related('seccion__grado', 'ciclo_escolar').order_by('-ciclo_escolar__anio')
+
+        ciclo_id = self.request.GET.get('ciclo_id')
+        if ciclo_id:
+            asignacion_actual = asignaciones_todas.filter(ciclo_escolar_id=ciclo_id).first()
+        else:
+            asignacion_actual = asignaciones_todas.filter(ciclo_escolar__estado_activo=True).first() or asignaciones_todas.first()
+
+        notas_tabla = []
+        promedio_general = Decimal('0.00')
+        cursos_aprobados = 0
+        cursos_pendientes = 0
+        docente_guia = None
+
+        if asignacion_actual:
+            asig_doc_guia = AsignacionDocente.objects.filter(
+                seccion=asignacion_actual.seccion,
+                ciclo_escolar=asignacion_actual.ciclo_escolar,
+                esta_eliminado=False
+            ).select_related('personal__persona').first()
+            if asig_doc_guia and asig_doc_guia.personal and asig_doc_guia.personal.persona:
+                docente_guia = asig_doc_guia.personal.persona.nombre_completo
+
+            notas_finales = NotaFinalCurso.objects.select_related('curso').filter(
+                asignacion_estudiante=asignacion_actual,
+                esta_eliminado=False
+            ).order_by('curso__nombre_curso')
+
+            notas_bloques = NotaBloque.objects.select_related('bloque_academico').filter(
+                asignacion_estudiante=asignacion_actual,
+                esta_eliminado=False
+            )
+            mapa_bloques = {}
+            for nb in notas_bloques:
+                mapa_bloques.setdefault(nb.curso_id, {})[nb.bloque_academico.nombre_bloque] = nb.nota_total
+
+            suma_promedios = Decimal('0.00')
+            total_cursos_finales = 0
+
+            for nf in notas_finales:
+                b_dict = mapa_bloques.get(nf.curso_id, {})
+                es_aprobado = nf.nota_definitiva >= 60
+                if es_aprobado:
+                    cursos_aprobados += 1
+                else:
+                    cursos_pendientes += 1
+
+                suma_promedios += nf.nota_definitiva
+                total_cursos_finales += 1
+
+                notas_tabla.append({
+                    'curso': nf.curso.nombre_curso,
+                    'codigo': nf.curso.codigo_curso,
+                    'b1': b_dict.get('Bimestre I'),
+                    'b2': b_dict.get('Bimestre II'),
+                    'b3': b_dict.get('Bimestre III'),
+                    'b4': b_dict.get('Bimestre IV'),
+                    'promedio': nf.nota_definitiva,
+                    'aprobado': es_aprobado,
+                    'estado_promocion': 'Aprobado' if es_aprobado else 'Pendiente'
+                })
+
+            if total_cursos_finales > 0:
+                promedio_general = round(suma_promedios / total_cursos_finales, 1)
+
+            asist_qs = AsistenciaEstudiantil.objects.filter(
+                asignacion_estudiante=asignacion_actual,
+                esta_eliminado=False
+            )
+            total_asist = asist_qs.count()
+            presentes = asist_qs.filter(presente=True).count()
+            justificadas = asist_qs.filter(presente=False, justificado=True).count()
+            ausentes = asist_qs.filter(presente=False, justificado=False).count()
+            porcentaje_asistencia = round((presentes / total_asist * 100), 1) if total_asist > 0 else 100.0
+        else:
+            total_asist = 0
+            presentes = 0
+            justificadas = 0
+            ausentes = 0
+            porcentaje_asistencia = 100.0
+
+        context.update({
+            'titulo_pagina': 'Mis Calificaciones y Rendimiento Académico',
+            'estudiante': estudiante,
+            'asignaciones_todas': asignaciones_todas,
+            'asignacion_actual': asignacion_actual,
+            'docente_guia': docente_guia,
+            'notas_tabla': notas_tabla,
+            'promedio_general': promedio_general,
+            'cursos_aprobados': cursos_aprobados,
+            'cursos_pendientes': cursos_pendientes,
+            'total_cursos': len(notas_tabla),
+            'asistencias_total': total_asist,
+            'asistencias_presentes': presentes,
+            'asistencias_justificadas': justificadas,
+            'asistencias_ausentes': ausentes,
+            'porcentaje_asistencia': porcentaje_asistencia,
+        })
+        return context
+
 
 
 @login_required
@@ -752,10 +895,16 @@ def descargar_boleta_notas_pdf(request, pk):
         pk=pk,
         esta_eliminado=False
     )
-    from APPS.usuarios.permisos import es_titular_o_encargado_de_estudiante
-    if not (request.user.has_perm('academico.view_asignacionestudiante') or es_titular_o_encargado_de_estudiante(request.user, asignacion.estudiante)):
+    user = request.user
+    rol = getattr(user, 'rol', None)
+    es_admin = (
+        user.is_superuser
+        or rol in ['ADMINISTRADOR', 'DIRECTOR', 'SECRETARIA']
+        or user.groups.filter(name__in=['Administradores', 'Directores', 'Secretaría']).exists()
+    )
+    if not es_admin:
         from django.core.exceptions import PermissionDenied
-        raise PermissionDenied("No tiene autorización para descargar la Boleta de Calificaciones de este estudiante.")
+        raise PermissionDenied("La descarga de la Boleta de Calificaciones oficial está reservada a Dirección y Secretaría.")
     return generar_pdf_boleta_notas(asignacion)
 
 
@@ -763,17 +912,23 @@ def descargar_boleta_notas_pdf(request, pk):
 def descargar_certificacion_pdf(request, pk):
     """Servicio HTTP para descargar la Certificación de Estudios (Kardex Acumulado) en PDF."""
     estudiante = get_object_or_404(Estudiante, pk=pk, persona__esta_eliminado=False)
-    from APPS.usuarios.permisos import es_titular_o_encargado_de_estudiante
-    if not (request.user.has_perm('academico.view_asignacionestudiante') or es_titular_o_encargado_de_estudiante(request.user, estudiante)):
+    user = request.user
+    rol = getattr(user, 'rol', None)
+    es_admin = (
+        user.is_superuser
+        or rol in ['ADMINISTRADOR', 'DIRECTOR', 'SECRETARIA']
+        or user.groups.filter(name__in=['Administradores', 'Directores', 'Secretaría']).exists()
+    )
+    if not es_admin:
         from django.core.exceptions import PermissionDenied
-        raise PermissionDenied("No tiene autorización para descargar la Certificación de Estudios de este estudiante.")
+        raise PermissionDenied("La descarga de la Certificación de Estudios oficial está reservada a Dirección y Secretaría.")
     return generar_pdf_certificacion_estudios(estudiante)
 
 
 
 class CierreCicloEscolarView(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
     """
-    Vista administrativa para ejecutar el Cierre de Ciclo Lectivo y la Evaluación de Promoción.
+    Vista administrativa para ejecutar el Cierre de Ciclo Escolar y la Evaluación de Promoción.
     Aplica el algoritmo de aprobación MINEDUC (pensum completo >= 60 pts).
     """
 
@@ -785,7 +940,7 @@ class CierreCicloEscolarView(LoginRequiredMixin, PermissionRequiredMixin, Templa
         context = super().get_context_data(**kwargs)
         ciclo_activo = CicloEscolar.objects.filter(estado_activo=True, esta_eliminado=False).first()
         context['ciclo_activo'] = ciclo_activo
-        context['titulo_pagina'] = 'Cierre Anual de Ciclo Lectivo y Evaluación de Promoción'
+        context['titulo_pagina'] = 'Cierre Anual de Ciclo Escolar y Evaluación de Promoción'
 
         if ciclo_activo:
             inscripciones = AsignacionEstudiante.objects.filter(ciclo_escolar=ciclo_activo, esta_eliminado=False)
@@ -846,7 +1001,7 @@ class CierreCicloEscolarView(LoginRequiredMixin, PermissionRequiredMixin, Templa
 
         messages.success(
             request,
-            f'✓ Cierre del Ciclo Lectivo {ciclo_activo.anio} ejecutado con éxito. '
+            f'✓ Cierre del Ciclo Escolar {ciclo_activo.anio} ejecutado con éxito. '
             f'Total evaluados: {evaluados_count} estudiantes ({promovidos_total} Promovidos).'
         )
         return redirect('academico:reinscripcion_rapida')
@@ -854,7 +1009,7 @@ class CierreCicloEscolarView(LoginRequiredMixin, PermissionRequiredMixin, Templa
 
 class ReinscripcionRapidaView(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
     """
-    Vista de Reinscripción Rápida para el nuevo ciclo lectivo.
+    Vista de Reinscripción Rápida para el nuevo ciclo escolar.
     Sugiere automáticamente promover al grado superior o retener al estudiante.
     """
 
@@ -904,7 +1059,7 @@ class ReinscripcionRapidaView(LoginRequiredMixin, PermissionRequiredMixin, Templ
         nuevo_ciclo_id = request.POST.get('nuevo_ciclo')
 
         if not asig_ids or not nuevo_ciclo_id:
-            messages.error(request, 'Debe seleccionar al menos un estudiante y el ciclo lectivo destino.')
+            messages.error(request, 'Debe seleccionar al menos un estudiante y el ciclo escolar destino.')
             return redirect('academico:reinscripcion_rapida')
 
         nuevo_ciclo = get_object_or_404(CicloEscolar, pk=nuevo_ciclo_id, esta_eliminado=False)
@@ -984,7 +1139,7 @@ class ReinscripcionRapidaView(LoginRequiredMixin, PermissionRequiredMixin, Templ
 
         messages.success(
             request,
-            f'✓ Reinscripción rápida completada: {reinscritos_count} estudiantes inscritos en el Ciclo Lectivo {nuevo_ciclo.anio}.'
+            f'✓ Reinscripción rápida completada: {reinscritos_count} estudiantes inscritos en el Ciclo Escolar {nuevo_ciclo.anio}.'
         )
         return redirect('academico:asignacion_estudiante_list')
 
@@ -1049,7 +1204,7 @@ class AsistenciaSeccionView(LoginRequiredMixin, PermissionRequiredMixin, View):
         context['grados'] = grados
         context['es_admin'] = es_admin
 
-        # 1. Grado
+        # 1. grado
         grado_id = self.request.GET.get('grado') or self.request.POST.get('grado')
         seccion_id = self.request.GET.get('seccion') or self.request.POST.get('seccion')
         curso_id = self.request.GET.get('curso') or self.request.POST.get('curso')
@@ -1069,7 +1224,7 @@ class AsistenciaSeccionView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
         context['grado_sel'] = grado_sel
 
-        # 2. Secciones del Grado
+        # 2. secciones del grado
         if grado_sel:
             secciones = secciones_base.filter(grado=grado_sel).order_by('letra')
         else:
@@ -1085,7 +1240,7 @@ class AsistenciaSeccionView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
         context['seccion_sel'] = seccion_sel
 
-        # 3. Cursos del Grado y Sección
+        # 3. cursos del grado y seccion
         if grado_sel and seccion_sel:
             if es_admin:
                 cursos = cursos_base.filter(grado=grado_sel).order_by('nombre_curso')
@@ -1110,7 +1265,7 @@ class AsistenciaSeccionView(LoginRequiredMixin, PermissionRequiredMixin, View):
 
         context['curso_sel'] = curso_sel
 
-        # 4. Estudiantes y Asistencias registradas
+        # 4. estudiantes y asistencias registradas
         if seccion_sel and curso_sel:
             inscritos = AsignacionEstudiante.objects.filter(
                 seccion=seccion_sel,
@@ -1182,7 +1337,7 @@ class AsistenciaSeccionView(LoginRequiredMixin, PermissionRequiredMixin, View):
         seccion = get_object_or_404(Seccion, pk=seccion_id, esta_eliminado=False)
         curso = get_object_or_404(Curso, pk=curso_id, esta_eliminado=False)
 
-        # Validación FNBC: el curso debe ser del mismo grado que la sección
+        # validacion fnbc: el curso debe ser del mismo grado que la seccion
         if curso.grado_id != seccion.grado_id:
             messages.error(request, f'El curso "{curso.nombre_curso}" no pertenece al grado de la sección "{seccion}".')
             return redirect(f"{reverse('academico:asistencia')}?grado={seccion.grado_id}&seccion={seccion.id}")
@@ -1201,7 +1356,7 @@ class AsistenciaSeccionView(LoginRequiredMixin, PermissionRequiredMixin, View):
                     presente = False
                     justificado = False
                 else:
-                    # Fallback para garantizar exclusión mutua
+                    # fallback para garantizar exclusion mutua
                     chk_p = request.POST.get(f'presente_{aid}') == 'on'
                     chk_j = request.POST.get(f'justificado_{aid}') == 'on'
                     if chk_p:
@@ -1424,7 +1579,7 @@ class IngresoNotaRecuperacionView(LoginRequiredMixin, PermissionRequiredMixin, U
                 messages.error(
                     request,
                     f'El estudiante {obj.asignacion_estudiante.estudiante.persona.nombre_completo} reprobó '
-                    f'{obj.total_materias_reprobadas} asignaturas en el ciclo lectivo. '
+                    f'{obj.total_materias_reprobadas} asignaturas en el ciclo escolar. '
                     f'Conforme al Acuerdo Ministerial 1171-2010 (Art. 26 y 27), el límite legal máximo es de 3 materias para optar a recuperación. '
                     f'El estudiante no tiene derecho a examen de recuperación y debe repetir el grado.'
                 )
