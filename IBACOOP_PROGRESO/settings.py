@@ -1,9 +1,17 @@
 import os
 import sys
+import urllib.parse
 from datetime import timedelta
 from pathlib import Path
 
+import environ
+
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Carga automatica de archivo .env si existe en la raiz
+env = environ.Env()
+if (BASE_DIR / '.env').exists():
+    environ.Env.read_env(BASE_DIR / '.env')
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-^59f-cp@#)$ez20opmvdr@rk%3sr-*az6(9s+a@(3o#$h*8*#)')
 
@@ -89,16 +97,38 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'IBACOOP_PROGRESO.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.postgresql'),
-        'NAME': os.environ.get('DB_NAME', 'IBACOOP_PROGRESO'),
-        'USER': os.environ.get('DB_USER', 'postgres'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'admin'),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
+database_url = os.environ.get('DATABASE_URL')
+if database_url:
+    parsed_db = urllib.parse.urlparse(database_url)
+    DATABASES = {
+        'default': {
+            'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.postgresql'),
+            'NAME': parsed_db.path.lstrip('/') or 'postgres',
+            'USER': urllib.parse.unquote(parsed_db.username or ''),
+            'PASSWORD': urllib.parse.unquote(parsed_db.password or ''),
+            'HOST': parsed_db.hostname or '',
+            'PORT': parsed_db.port or 5432,
+            'OPTIONS': {
+                'sslmode': os.environ.get('DB_SSLMODE', 'require'),
+            },
+        }
     }
-}
+else:
+    db_options = {}
+    sslmode_val = os.environ.get('DB_SSLMODE')
+    if sslmode_val:
+        db_options['sslmode'] = sslmode_val
+    DATABASES = {
+        'default': {
+            'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.postgresql'),
+            'NAME': os.environ.get('DB_NAME', 'IBACOOP_PROGRESO'),
+            'USER': os.environ.get('DB_USER', 'postgres'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', 'admin'),
+            'HOST': os.environ.get('DB_HOST', 'localhost'),
+            'PORT': os.environ.get('DB_PORT', '5432'),
+            'OPTIONS': db_options,
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {

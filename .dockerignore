@@ -17,5 +17,5 @@ htmlcov/
 scratch/
 .system_generated/
 media/
-static/
+staticfiles/
 node_modules/

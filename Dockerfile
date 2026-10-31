@@ -41,5 +41,5 @@ EXPOSE 8000
 # Script de entrada para migraciones y recolección de estáticos
 ENTRYPOINT ["/app/entrypoint.sh"]
 
-# Comando por defecto: Servidor WSGI Gunicorn para producción/despliegue
-CMD ["gunicorn", "IBACOOP_PROGRESO.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--reload"]
+# Comando por defecto: Servidor WSGI Gunicorn para producción/despliegue (soporta $PORT de Render o 8000 por defecto)
+CMD ["sh", "-c", "gunicorn IBACOOP_PROGRESO.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3"]
