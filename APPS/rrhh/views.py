@@ -206,11 +206,9 @@ class PersonalCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView
         )
 
 
-class PersonalDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
+class PersonalDetailView(LoginRequiredMixin, DetailView):
     """Ficha 360° del Empleado (Perfil, resguardo físico, checklist y cuenta asociada)."""
     login_url = 'usuarios:login'
-    permission_required = 'rrhh.view_personal'
-    raise_exception = True
     model = Personal
     template_name = 'rrhh/personal_detail.html'
     context_object_name = 'personal'
@@ -218,12 +216,25 @@ class PersonalDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
     def get_queryset(self):
         return Personal.objects.select_related('persona', 'puesto', 'persona__usuario').filter(esta_eliminado=False)
 
+    def dispatch(self, request, *args, **kwargs):
+        obj = self.get_object()
+        es_titular = getattr(obj.persona, 'usuario_id', None) == request.user.id
+        if not (request.user.has_perm('rrhh.view_personal') or es_titular):
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied("No tiene autorización para visualizar los detalles de este expediente.")
+        return super().dispatch(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         personal = self.object
-        # recuperar clave temporal de sesion si existe
-        clave_temp_key = f'temp_pwd_personal_{personal.pk}'
-        context['clave_temporal'] = self.request.session.get(clave_temp_key)
+        es_titular = getattr(personal.persona, 'usuario_id', None) == self.request.user.id
+        context['es_titular'] = es_titular
+        # recuperar clave temporal de sesion si existe (solo si tiene permiso de gestion)
+        if self.request.user.has_perm('rrhh.view_personal'):
+            clave_temp_key = f'temp_pwd_personal_{personal.pk}'
+            context['clave_temporal'] = self.request.session.get(clave_temp_key)
+        else:
+            context['clave_temporal'] = None
         context['baja_form'] = PersonalBajaForm()
         context['cursos_asignados'] = personal.asignaciones_docente.filter(
             esta_eliminado=False,
@@ -380,7 +391,6 @@ class PersonalUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView
 
 
 @login_required(login_url='usuarios:login')
-@permission_required('rrhh.view_personal', raise_exception=True)
 def descargar_expediente_pdf(request, pk):
     """Genera y descarga la Ficha de Expediente Físico del Empleado en PDF."""
     personal = get_object_or_404(
@@ -388,6 +398,10 @@ def descargar_expediente_pdf(request, pk):
         pk=pk,
         esta_eliminado=False
     )
+    es_titular = getattr(personal.persona, 'usuario_id', None) == request.user.id
+    if not (request.user.has_perm('rrhh.view_personal') or es_titular):
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied("No tiene autorización para descargar este expediente de personal.")
     return generar_pdf_expediente_empleado(personal)
 
 

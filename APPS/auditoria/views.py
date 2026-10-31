@@ -37,6 +37,7 @@ class AuditoriaPermissionMixin(LoginRequiredMixin, UserPassesTestMixin):
             user.is_superuser
             or getattr(user, 'rol', None) in ['ADMINISTRADOR', 'DIRECTOR']
             or user.groups.filter(name__in=['Administradores', 'Directores']).exists()
+            or user.has_perm('auditoria.view_eventoseguridad')
             or user.has_perm('auditoria.view_registroauditoria')
         )
 

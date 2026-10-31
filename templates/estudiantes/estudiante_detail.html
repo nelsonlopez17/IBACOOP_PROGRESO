@@ -11,8 +11,10 @@
             <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
                 <a href="{% url 'core:home' %}" class="hover:underline">Dashboard</a>
                 <span>/</span>
-                <a href="{% url 'estudiantes:estudiante_list' %}" class="hover:underline">Gestión de Alumnos</a>
+                {% if perms.estudiantes.view_estudiante %}
+                <a href="{% url 'estudiantes:estudiante_list' %}" class="hover:underline">Estudiantes</a>
                 <span>/</span>
+                {% endif %}
                 <span class="text-slate-500">Expediente Digital</span>
             </div>
             <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
@@ -22,15 +24,17 @@
         </div>
         
         <div class="flex items-center gap-3 flex-wrap">
-            {% if user.rol == 'ESTUDIANTE' %}
+            {% if not perms.estudiantes.view_estudiante %}
             <a href="{% url 'core:home' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
                 <i data-lucide="home" class="w-4 h-4 text-slate-500"></i>
                 Inicio
             </a>
-            <a href="{% url 'academico:estudiante_mis_calificaciones' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
+            {% if user.rol == 'ESTUDIANTE' or user.rol == 'ENCARGADO' %}
+            <a href="{% url 'academico:estudiante_mis_calificaciones' %}?estudiante_id={{ estudiante.pk }}" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
                 <i data-lucide="award" class="w-4 h-4 text-[#1E6532]"></i>
-                Mis Calificaciones
+                Calificaciones y Asistencia
             </a>
+            {% endif %}
             {% else %}
             <a href="{% url 'estudiantes:estudiante_list' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
                 <i data-lucide="arrow-left" class="w-4 h-4 text-slate-500"></i>
@@ -122,11 +126,15 @@
                         <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-900 border border-blue-200">
                             🎓 {{ asignacion_actual.seccion }} (Ciclo {{ asignacion_actual.ciclo_escolar.anio }})
                         </span>
-                    {% else %}
+                    {% elif perms.academico.add_asignacionestudiante %}
                         <a href="{% url 'academico:asignacion_estudiante_create' %}?estudiante={{ estudiante.pk }}" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200 transition-colors inline-flex items-center gap-1">
                             <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
                             <span>Sin Sección (Inscribir Inmediatamente)</span>
                         </a>
+                    {% else %}
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 inline-flex items-center gap-1">
+                            <span>Sin Sección Asignada</span>
+                        </span>
                     {% endif %}
                 </div>
                 <p class="text-xs text-slate-500 font-mono">CUI: {{ estudiante.persona.cui }} | Código MINEDUC: <span class="font-bold text-[#1E6532]">{{ estudiante.codigo_mineduc }}</span></p>
@@ -196,9 +204,15 @@
                 <span class="text-[10px] font-bold text-rose-800 uppercase tracking-wider block">Injustificadas</span>
                 <span class="text-sm font-black text-rose-700">{{ asistencias_ausentes_count }} Días</span>
             </div>
+            {% if perms.academico.view_asistenciaestudiantil %}
             <a href="{% url 'academico:asistencia_historial' %}?q={{ estudiante.persona.cui }}" class="px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-colors">
                 Ver Detalle
             </a>
+            {% elif user.rol == 'ENCARGADO' or user.rol == 'ESTUDIANTE' %}
+            <a href="{% url 'academico:estudiante_mis_calificaciones' %}?estudiante_id={{ estudiante.pk }}" class="px-3 py-2 bg-[#1E6532] hover:bg-[#1E6532]/90 text-white rounded-xl text-xs font-bold transition-colors">
+                Ver Calificaciones y Asistencia
+            </a>
+            {% endif %}
         </div>
     </div>
 
@@ -392,9 +406,15 @@
                     <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
                     Cuenta Configurada
                 </span>
+                {% if perms.usuarios.view_usuario %}
                 <p class="text-[10px] text-slate-400 mt-1 max-w-xs leading-normal">
                     Para restablecer contraseñas en caso de olvido, utilice el directorio en <a href="{% url 'usuarios:usuario_list' %}" class="text-[#3C7DA8] font-bold hover:underline">Gestión de Usuarios</a>.
                 </p>
+                {% else %}
+                <p class="text-[10px] text-slate-400 mt-1 max-w-xs leading-normal">
+                    Para restablecer contraseñas en caso de olvido, consulte con la Dirección o Secretaría del establecimiento.
+                </p>
+                {% endif %}
             </div>
         {% endif %}
     </div>

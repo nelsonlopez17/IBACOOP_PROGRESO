@@ -10,6 +10,7 @@ app_name = 'inventario'
 
 urlpatterns = [
     path('', views.ArticuloInventarioListView.as_view(), name='articulo_list'),
+    path('mis-articulos/', views.MisArticulosAsignadosListView.as_view(), name='mis_articulos'),
     path('nuevo/', views.ArticuloInventarioCreateView.as_view(), name='articulo_create'),
     path('<int:pk>/', views.ArticuloInventarioDetailView.as_view(), name='articulo_detail'),
     path('<int:pk>/editar/', views.ArticuloInventarioUpdateView.as_view(), name='articulo_update'),

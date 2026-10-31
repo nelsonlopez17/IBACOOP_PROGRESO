@@ -44,6 +44,25 @@ class DisciplinaDashboardView(LoginRequiredMixin, PermissionRequiredMixin, Templ
         if ciclo_activo:
             qs = qs.filter(ciclo_escolar=ciclo_activo)
 
+        # Si el usuario es DOCENTE, acotar exclusivamente a faltas de estudiantes a los que imparte clases
+        usuario = self.request.user
+        secciones_docente_ids = []
+        if getattr(usuario, 'rol', None) == 'DOCENTE' and not usuario.is_superuser:
+            from APPS.academico.models import AsignacionDocente, AsignacionEstudiante
+            secciones_docente_ids = list(AsignacionDocente.objects.filter(
+                personal__persona__usuario=usuario,
+                ciclo_escolar=ciclo_activo,
+                esta_eliminado=False
+            ).values_list('seccion_id', flat=True).distinct())
+
+            estudiantes_docente_ids = AsignacionEstudiante.objects.filter(
+                seccion_id__in=secciones_docente_ids,
+                ciclo_escolar=ciclo_activo,
+                esta_eliminado=False
+            ).values_list('estudiante_id', flat=True)
+
+            qs = qs.filter(estudiante_id__in=estudiantes_docente_ids)
+
         q_search = self.request.GET.get('q', '').strip()
         tipo_falta = self.request.GET.get('tipo_falta', '').strip()
         resuelto = self.request.GET.get('resuelto', '').strip()
@@ -69,12 +88,9 @@ class DisciplinaDashboardView(LoginRequiredMixin, PermissionRequiredMixin, Templ
             )
 
         citaciones_pendientes_qs = CitacionPadre.objects.filter(
-            estado=EstadoCitacionChoices.PENDIENTE
+            estado=EstadoCitacionChoices.PENDIENTE,
+            incidente__in=qs
         )
-        if ciclo_activo:
-            citaciones_pendientes_qs = citaciones_pendientes_qs.filter(
-                incidente__ciclo_escolar=ciclo_activo
-            )
 
         metricas = {
             'total_incidentes': qs.count(),
@@ -94,7 +110,12 @@ class DisciplinaDashboardView(LoginRequiredMixin, PermissionRequiredMixin, Templ
         context['metricas'] = metricas
         context['ciclo_activo'] = ciclo_activo
         context['tipos_falta'] = TipoFaltaChoices.choices
-        context['secciones'] = Seccion.objects.select_related('grado').all().order_by('grado__orden', 'letra')
+        if getattr(usuario, 'rol', None) == 'DOCENTE' and not usuario.is_superuser:
+            context['secciones'] = Seccion.objects.filter(id__in=secciones_docente_ids, esta_eliminado=False).select_related('grado').order_by('grado__orden', 'letra')
+            context['es_vista_docente'] = True
+        else:
+            context['secciones'] = Seccion.objects.select_related('grado').all().order_by('grado__orden', 'letra')
+            context['es_vista_docente'] = False
         context['filtros'] = {
             'q': q_search,
             'tipo_falta': tipo_falta,
@@ -140,11 +161,27 @@ class IncidenteDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailVie
     raise_exception = True
 
     def has_permission(self):
-        if super().has_permission():
+        user = self.request.user
+        if not user.is_authenticated:
+            return False
+        if user.is_superuser or getattr(user, 'rol', None) in ['ADMINISTRADOR', 'DIRECTOR', 'SECRETARIA']:
             return True
+        incidente = self.get_object()
+        if getattr(user, 'rol', None) == 'DOCENTE':
+            from APPS.academico.models import AsignacionDocente, AsignacionEstudiante
+            secciones_docente = AsignacionDocente.objects.filter(
+                personal__persona__usuario=user,
+                ciclo_escolar=incidente.ciclo_escolar,
+                esta_eliminado=False
+            ).values_list('seccion_id', flat=True)
+            return AsignacionEstudiante.objects.filter(
+                estudiante=incidente.estudiante,
+                seccion_id__in=secciones_docente,
+                ciclo_escolar=incidente.ciclo_escolar,
+                esta_eliminado=False
+            ).exists()
         try:
-            incidente = self.get_object()
-            return es_titular_o_encargado_de_estudiante(self.request.user, incidente.estudiante)
+            return es_titular_o_encargado_de_estudiante(user, incidente.estudiante)
         except Exception:
             return False
 
@@ -238,6 +275,20 @@ class DescargarCitacionPDFView(LoginRequiredMixin, View):
         if getattr(request.user, 'rol', None) == 'ESTUDIANTE':
             raise PermissionDenied("Los estudiantes no tienen autorización para descargar citatorios oficiales en PDF.")
         citacion = get_object_or_404(CitacionPadre, pk=pk)
+        if getattr(request.user, 'rol', None) == 'DOCENTE':
+            from APPS.academico.models import AsignacionDocente, AsignacionEstudiante
+            secciones_docente = AsignacionDocente.objects.filter(
+                personal__persona__usuario=request.user,
+                ciclo_escolar=citacion.incidente.ciclo_escolar,
+                esta_eliminado=False
+            ).values_list('seccion_id', flat=True)
+            if not AsignacionEstudiante.objects.filter(
+                estudiante=citacion.incidente.estudiante,
+                seccion_id__in=secciones_docente,
+                ciclo_escolar=citacion.incidente.ciclo_escolar,
+                esta_eliminado=False
+            ).exists():
+                raise PermissionDenied("No tiene autorización para descargar este citatorio.")
         if not (request.user.has_perm('disciplina.view_citacionpadre') or es_titular_o_encargado_de_estudiante(request.user, citacion.incidente.estudiante)):
             raise PermissionDenied("No tiene autorización para descargar este citatorio.")
         pdf_bytes = generar_pdf_citacion_padre(citacion)
@@ -254,6 +305,20 @@ class DescargarActaCompromisoPDFView(LoginRequiredMixin, View):
         if getattr(request.user, 'rol', None) == 'ESTUDIANTE':
             raise PermissionDenied("Los estudiantes no tienen autorización para descargar actas de compromiso oficiales en PDF.")
         citacion = get_object_or_404(CitacionPadre, pk=pk)
+        if getattr(request.user, 'rol', None) == 'DOCENTE':
+            from APPS.academico.models import AsignacionDocente, AsignacionEstudiante
+            secciones_docente = AsignacionDocente.objects.filter(
+                personal__persona__usuario=request.user,
+                ciclo_escolar=citacion.incidente.ciclo_escolar,
+                esta_eliminado=False
+            ).values_list('seccion_id', flat=True)
+            if not AsignacionEstudiante.objects.filter(
+                estudiante=citacion.incidente.estudiante,
+                seccion_id__in=secciones_docente,
+                ciclo_escolar=citacion.incidente.ciclo_escolar,
+                esta_eliminado=False
+            ).exists():
+                raise PermissionDenied("No tiene autorización para descargar esta acta de compromiso.")
         if not (request.user.has_perm('disciplina.view_citacionpadre') or es_titular_o_encargado_de_estudiante(request.user, citacion.incidente.estudiante)):
             raise PermissionDenied("No tiene autorización para descargar esta acta de compromiso.")
         pdf_bytes = generar_pdf_acta_compromiso(citacion)

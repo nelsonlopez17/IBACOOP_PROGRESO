@@ -117,7 +117,7 @@ function focusFirstInvalidField() {
     }
 }
 
-// inicializacion de selectores con busqueda (tom select)
+// inicializacion de selectores con busqueda predictiva
 function initSearchableSelects() {
     if (typeof TomSelect === 'undefined') return;
     document.querySelectorAll('select.searchable-select, select[data-searchable="true"]').forEach(function (el) {

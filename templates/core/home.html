@@ -190,7 +190,7 @@
         <div class="space-y-6">
             <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
                 <i data-lucide="users" class="w-5 h-5 text-[#1E6532]"></i>
-                <span>Estudiantes bajo su Representación Familiar</span>
+                <span>Hijos / estudiantes a mi cargo</span>
             </h3>
 
             {% for item in tarjetas_hijos %}
@@ -215,19 +215,24 @@
 
                     <div class="flex flex-wrap items-center gap-2">
                         <a href="{% url 'estudiantes:estudiante_detail' item.estudiante.pk %}"
-                           class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all">
-                            <i data-lucide="id-card" class="w-3.5 h-3.5"></i>
-                            Expediente Estudiantil
+                           class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-bold transition-all shadow-xs">
+                            <i data-lucide="folder-user" class="w-3.5 h-3.5 text-[#1E6532]"></i>
+                            Expediente Digital
+                        </a>
+                        <a href="{% url 'academico:estudiante_mis_calificaciones' %}?estudiante_id={{ item.estudiante.pk }}"
+                           class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-bold transition-all shadow-xs">
+                            <i data-lucide="award" class="w-3.5 h-3.5 text-[#3C7DA8]"></i>
+                            Calificaciones y Asistencia
                         </a>
                         <a href="{% url 'financiero:estudiante_cuenta_corriente' item.estudiante.pk %}"
-                           class="inline-flex items-center gap-1.5 px-4 py-2 bg-[#3C7DA8] text-white rounded-xl text-xs font-bold hover:bg-[#3C7DA8]/90 transition-all">
-                            <i data-lucide="wallet" class="w-3.5 h-3.5"></i>
-                            Cuotas Escolares
+                           class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#1E6532] text-white hover:bg-[#1E6532]/90 rounded-xl text-xs font-bold transition-all shadow-xs">
+                            <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
+                            Estado de Cuenta
                         </a>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
                         <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Asistencia Escolar</span>
                         <p class="text-sm font-extrabold text-slate-900 mt-1">
@@ -236,15 +241,20 @@
                     </div>
                     <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
                         <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Estado de Cuotas Escolares</span>
-                        {% if item.estudiante.es_solvente %}
-                            <p class="text-sm font-extrabold text-emerald-700 mt-1">Solvente al día</p>
+                        {% if item.estudiante.solvencia_inscripcion_estado == 'SOLVENTE' or item.estudiante.saldo_total_pendiente <= 0 %}
+                            <p class="text-sm font-extrabold text-emerald-700 mt-1 flex items-center gap-1">
+                                <i data-lucide="check-circle" class="w-4 h-4"></i> Solvente al día
+                            </p>
                         {% else %}
-                            <p class="text-sm font-extrabold text-rose-700 mt-1">Saldo vencido: Q {{ item.estudiante.deuda_vencida }}</p>
+                            <p class="text-sm font-extrabold text-rose-700 mt-1 flex items-center gap-1">
+                                <i data-lucide="alert-circle" class="w-4 h-4"></i> Saldo pendiente: Q {{ item.estudiante.saldo_total_pendiente|floatformat:2 }}
+                            </p>
                         {% endif %}
                     </div>
                     <div class="p-4 rounded-2xl bg-slate-50 border border-slate-100">
                         <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Disciplina y Convivencia</span>
                         <span class="inline-flex items-center px-2.5 py-0.5 mt-1 rounded-full text-xs font-bold border {{ item.estudiante.semaforo_disciplina.class }}">
+                            <i data-lucide="{{ item.estudiante.semaforo_disciplina.icono }}" class="w-3 h-3 mr-1"></i>
                             {{ item.estudiante.semaforo_disciplina.label }}
                         </span>
                     </div>
@@ -279,14 +289,14 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <a href="{% url 'academico:asignacion_estudiante_list' %}"
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <a href="{% url 'academico:notas_lista' %}"
                class="group bg-white border border-[#1E6532]/30 rounded-3xl p-6 hover:border-[#1E6532] transition-all shadow-xs hover:shadow-md block">
                 <div class="w-11 h-11 rounded-2xl bg-[#1E6532]/10 text-[#1E6532] flex items-center justify-center mb-3">
-                    <i data-lucide="check-square" class="w-5 h-5"></i>
+                    <i data-lucide="award" class="w-5 h-5"></i>
                 </div>
-                <h4 class="text-base font-bold text-slate-900 group-hover:text-[#1E6532]">Calificaciones y Asistencia</h4>
-                <p class="text-xs text-slate-500 mt-1">Registro de notas por bimestre, asistencia diaria y boletas de calificaciones.</p>
+                <h4 class="text-base font-bold text-slate-900 group-hover:text-[#1E6532]">Notas y Calificaciones</h4>
+                <p class="text-xs text-slate-500 mt-1">Cuadro de notas por bimestre e ingreso de calificaciones de sus estudiantes.</p>
             </a>
 
             <a href="{% url 'academico:asignacion_docente_list' %}"
@@ -298,16 +308,25 @@
                 <p class="text-xs text-slate-500 mt-1">Consulte sus cursos, grados y secciones asignadas en el ciclo escolar.</p>
             </a>
 
-            {% comment "Oculto temporalmente" %}
-            <a href="{% url 'disciplina:dashboard' %}"
+            {% if user.mi_personal_id %}
+            <a href="{% url 'rrhh:personal_detail' user.mi_personal_id %}"
                class="group bg-white border border-[#7A1C21]/30 rounded-3xl p-6 hover:border-[#7A1C21] transition-all shadow-xs hover:shadow-md block">
                 <div class="w-11 h-11 rounded-2xl bg-[#7A1C21]/10 text-[#7A1C21] flex items-center justify-center mb-3">
-                    <i data-lucide="shield-alert" class="w-5 h-5"></i>
+                    <i data-lucide="briefcase" class="w-5 h-5"></i>
                 </div>
-                <h4 class="text-base font-bold text-slate-900 group-hover:text-[#7A1C21]">Disciplina y Convivencia</h4>
-                <p class="text-xs text-slate-500 mt-1">Bitácora de incidentes disciplinarios y seguimiento formativo MINEDUC.</p>
+                <h4 class="text-base font-bold text-slate-900 group-hover:text-[#7A1C21]">Mi Expediente Laboral</h4>
+                <p class="text-xs text-slate-500 mt-1">Consulta de contrato, puesto y descarga de expediente digital.</p>
             </a>
-            {% endcomment %}
+            {% endif %}
+
+            <a href="{% url 'inventario:mis_articulos' %}"
+               class="group bg-white border border-slate-300 rounded-3xl p-6 hover:border-slate-500 transition-all shadow-xs hover:shadow-md block">
+                <div class="w-11 h-11 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center mb-3">
+                    <i data-lucide="shield-check" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-base font-bold text-slate-900 group-hover:text-slate-700">Bienes en Resguardo</h4>
+                <p class="text-xs text-slate-500 mt-1">Artículos asignados y vales de resguardo institucionales.</p>
+            </a>
         </div>
 
         {% if mis_planillas %}
@@ -354,10 +373,18 @@
         <!-- ===================================================================== -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-3">
-                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <i data-lucide="briefcase" class="w-4 h-4 text-[#1E6532]"></i>
-                    Mi Ficha Laboral
-                </h3>
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <i data-lucide="briefcase" class="w-4 h-4 text-[#1E6532]"></i>
+                        Mi Ficha Laboral
+                    </h3>
+                    {% if user.mi_personal_id %}
+                    <a href="{% url 'rrhh:personal_detail' user.mi_personal_id %}"
+                       class="inline-flex items-center gap-1.5 px-3 py-1 bg-[#1E6532]/10 text-[#1E6532] rounded-lg text-xs font-bold hover:bg-[#1E6532] hover:text-white transition-colors">
+                        <i data-lucide="folder-user" class="w-3.5 h-3.5"></i> Ver Mi Expediente
+                    </a>
+                    {% endif %}
+                </div>
                 {% if mi_personal %}
                     <p class="text-xs text-slate-600">Puesto: <strong class="text-slate-900">{{ mi_personal.puesto.nombre_puesto }}</strong></p>
                     <p class="text-xs text-slate-600">Contrato: <strong class="text-slate-900">{{ mi_personal.get_tipo_contrato_display }}</strong></p>
@@ -367,16 +394,14 @@
                 {% endif %}
             </div>
 
-            {% if perms.inventario.view_articulo %}
-            <a href="{% url 'inventario:articulo_list' %}"
+            <a href="{% url 'inventario:mis_articulos' %}"
                class="group bg-white border border-[#3C7DA8]/30 rounded-2xl p-6 hover:border-[#3C7DA8] transition-all shadow-xs flex items-center justify-between">
                 <div>
-                    <h4 class="text-base font-bold text-slate-900 group-hover:text-[#3C7DA8]">Inventario y Activos</h4>
-                    <p class="text-xs text-slate-500 mt-1">Consulta de mobiliario, equipo e insumos en bodega.</p>
+                    <h4 class="text-base font-bold text-slate-900 group-hover:text-[#3C7DA8]">Bienes en Resguardo</h4>
+                    <p class="text-xs text-slate-500 mt-1">Consulta de artículos, equipo e implementos bajo su responsabilidad.</p>
                 </div>
                 <i data-lucide="arrow-right" class="w-5 h-5 text-[#3C7DA8]"></i>
             </a>
-            {% endif %}
         </div>
 
         {% if mis_planillas %}
@@ -572,8 +597,8 @@
                 </a>
                 {% endif %}
 
-                {% if perms.financiero.view_cuentaporcobrar or perms.financiero.view_pagorecibo or perms.rrhh.view_planilla %}
-                <a href="{% if perms.financiero.view_cuentaporcobrar %}{% url 'financiero:cuentaporcobrar_list' %}{% else %}{% url 'financiero:planilla_list' %}{% endif %}"
+                {% if perms.financiero.view_cuentaporcobrar or perms.financiero.view_abono or perms.rrhh.view_planilla %}
+                <a href="{% if perms.financiero.view_cuentaporcobrar %}{% url 'financiero:cuentaporcobrar_list' %}{% else %}{% url 'rrhh:planilla_list' %}{% endif %}"
                     class="group relative bg-white border border-amber-600/30 rounded-3xl p-6 hover:border-amber-600 transition-all duration-300 shadow-sm hover:shadow-xl block">
                     <div class="flex items-center justify-between mb-4">
                         <div class="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700">
@@ -589,7 +614,7 @@
                 </a>
                 {% endif %}
 
-                {% if perms.inventario.view_articulo %}
+                {% if perms.inventario.view_articuloinventario %}
                 <a href="{% url 'inventario:articulo_list' %}"
                     class="group relative bg-white border border-slate-400/40 rounded-3xl p-6 hover:border-slate-700 transition-all duration-300 shadow-sm hover:shadow-xl block">
                     <div class="flex items-center justify-between mb-4">

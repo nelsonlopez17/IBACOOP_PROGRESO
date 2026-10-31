@@ -3,7 +3,7 @@ reportes/reportes_financieros.py
 
 Generación de reportes financieros y de tesorería para el Instituto Básico por Cooperativa El Progreso:
   1. Antigüedad de Saldos y Morosidad (PDF y CSV/Excel)
-  2. Arqueo y Cuadre Diario de Caja (PDF y CSV/Excel)
+  2. Recuento y Cuadre Diario de Caja (PDF y CSV/Excel)
   3. Estado de Cuenta y Solvencia por Estudiante (PDF y CSV/Excel)
   4. Padrón de Becas y Descuentos Otorgados (CSV/Excel)
 """
@@ -189,7 +189,7 @@ def generar_csv_antiguedad_saldos(ciclo_escolar=None):
 
 def generar_pdf_cuadre_caja(fecha_inicio, fecha_fin):
     """
-    Genera el Reporte Oficial de Arqueo y Cuadre de Caja en PDF.
+    Genera el Reporte Oficial de Recuento y Cuadre de Caja en PDF.
     Consolida todos los cobros efectuados entre las fechas indicadas, con desglose y firmas.
     """
     buffer = io.BytesIO()
@@ -219,7 +219,7 @@ def generar_pdf_cuadre_caja(fecha_inicio, fecha_fin):
         subtitulo = f"Corte Diario del {fecha_inicio.strftime('%d/%m/%Y')}"
 
     story.append(ReportLabHelper.build_header(
-        doc_title="ARQUEO Y CUADRE DIARIO DE CAJA",
+        doc_title="RECUENTO Y CUADRE DIARIO DE CAJA",
         subtitle=f"{subtitulo} • Moneda: Quetzales (Q)"
     ))
     story.append(Spacer(1, 10))

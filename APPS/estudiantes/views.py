@@ -105,10 +105,23 @@ class EstudianteDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailVi
 
     def has_permission(self):
         user = self.request.user
-        if super().has_permission() or getattr(user, 'rol', None) == RolChoices.DOCENTE:
+        if super().has_permission():
             return True
+        estudiante = self.get_object()
+        if getattr(user, 'rol', None) == RolChoices.DOCENTE:
+            from APPS.academico.models import AsignacionDocente, AsignacionEstudiante
+            secciones_docente = AsignacionDocente.objects.filter(
+                personal__persona__usuario=user,
+                ciclo_escolar__estado_activo=True,
+                esta_eliminado=False
+            ).values_list('seccion_id', flat=True)
+            if AsignacionEstudiante.objects.filter(
+                estudiante=estudiante,
+                seccion_id__in=secciones_docente,
+                esta_eliminado=False
+            ).exists():
+                return True
         try:
-            estudiante = self.get_object()
             return es_titular_o_encargado_de_estudiante(user, estudiante)
         except Exception:
             return False
@@ -670,7 +683,22 @@ def descargar_expediente_pdf(request, pk):
         pk=pk,
         esta_eliminado=False
     )
-    if not (request.user.has_perm('estudiantes.view_estudiante') or es_titular_o_encargado_de_estudiante(request.user, estudiante)):
+    user = request.user
+    es_docente_autorizado = False
+    if getattr(user, 'rol', None) == RolChoices.DOCENTE:
+        from APPS.academico.models import AsignacionDocente, AsignacionEstudiante
+        secciones_docente = AsignacionDocente.objects.filter(
+            personal__persona__usuario=user,
+            ciclo_escolar__estado_activo=True,
+            esta_eliminado=False
+        ).values_list('seccion_id', flat=True)
+        es_docente_autorizado = AsignacionEstudiante.objects.filter(
+            estudiante=estudiante,
+            seccion_id__in=secciones_docente,
+            esta_eliminado=False
+        ).exists()
+
+    if not (request.user.has_perm('estudiantes.view_estudiante') or es_titular_o_encargado_de_estudiante(request.user, estudiante) or es_docente_autorizado):
         raise PermissionDenied("No tiene autorización para descargar la ficha de expediente de este estudiante.")
     return generar_pdf_expediente_estudiante(estudiante)
 

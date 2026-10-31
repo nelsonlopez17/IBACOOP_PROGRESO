@@ -6,13 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{{ titulo_pagina|default:"Sistema ERP Escolar" }}{% endblock %} | IBACOOP EL PROGRESO</title>
     <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'vendor/css/inter.css' %}">
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="{% static 'js/lucide.min.js' %}"></script>
     <!-- HTMX -->
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="{% static 'vendor/js/htmx.min.js' %}"></script>
     <!-- Tailwind CSS CDN Config con Paleta Institucional IBACOOP EL PROGRESO -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -198,7 +196,7 @@
     </div>
     {% endif %}
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+    <link rel="stylesheet" href="{% static 'vendor/css/notyf.min.css' %}">
     <style>
         .notyf { padding: 1.25rem !important; }
         .notyf__toast {
@@ -233,7 +231,7 @@
         .notyf__dismiss-btn { background-color: transparent !important; opacity: 0.85 !important; }
         .notyf__dismiss-btn:hover { background-color: rgba(255, 255, 255, 0.15) !important; opacity: 1 !important; }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <script src="{% static 'vendor/js/notyf.min.js' %}"></script>
     <script>
         // Inicializar iconos de Lucide
         lucide.createIcons();

@@ -154,12 +154,12 @@ class CursoCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
 
 
 class AsignacionEstudianteListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
-    """Lista las asignaciones/inscripciones de estudiantes por sección y ciclo."""
+    """Lista las asignaciones/inscripciones de estudiantes por sección y ciclo (exclusivo Dirección y Secretaría)."""
 
     model = AsignacionEstudiante
     template_name = 'academico/asignacion_estudiante_list.html'
     context_object_name = 'asignaciones'
-    permission_required = 'academico.view_asignacionestudiante'
+    permission_required = 'academico.add_asignacionestudiante'
     raise_exception = True
     paginate_by = 25
 
@@ -194,18 +194,6 @@ class AsignacionEstudianteListView(LoginRequiredMixin, PermissionRequiredMixin, 
                 qs = qs.filter(ciclo_escolar=ciclo_activo)
             except (CicloEscolar.DoesNotExist, CicloEscolar.MultipleObjectsReturned):
                 pass
-
-        # mostrar unicamente estudiantes asignados a las secciones del docente
-        usuario = self.request.user
-        if getattr(usuario, 'rol', None) == 'DOCENTE' and not usuario.is_superuser:
-            secciones_docente = AsignacionDocente.objects.filter(
-                personal__persona__usuario=usuario,
-                esta_eliminado=False
-            ).values_list('seccion_id', flat=True)
-            qs = qs.filter(
-                Q(seccion_id__in=secciones_docente) |
-                Q(seccion__docente_guia__persona__usuario=usuario)
-            ).distinct()
 
         return qs.order_by('seccion__grado__orden', 'seccion__letra', 'estudiante__persona__apellidos')
 
@@ -775,6 +763,18 @@ class EstudianteMisCalificacionesView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         estudiante = self.get_estudiante()
+        user = self.request.user
+        if getattr(user, 'rol', None) == 'ENCARGADO':
+            from APPS.estudiantes.models import EstudianteEncargado
+            ids_rel = EstudianteEncargado.objects.filter(
+                encargado__persona__usuario=user,
+                esta_eliminado=False,
+            ).values_list('estudiante_id', flat=True)
+            mis_hijos = Estudiante.objects.filter(
+                Q(encargado__persona__usuario=user) | Q(pk__in=ids_rel),
+                esta_eliminado=False
+            ).distinct().select_related('persona').order_by('persona__apellidos')
+            context['mis_hijos'] = mis_hijos
         if not estudiante:
             messages.warning(self.request, "No se encontró un expediente estudiantil vinculado a su cuenta.")
             context['estudiante'] = None

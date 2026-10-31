@@ -45,7 +45,7 @@ const CONFIG_REPORTES = {
         permiteExcel: true
     },
     'cuadre_caja': {
-        titulo: 'Arqueo y Cuadre Diario de Caja',
+        titulo: 'Recuento y Cuadre Diario de Caja',
         subtitulo: 'Consolidado de cobros y recibos por rango de fechas.',
         campos: ['fechas'],
         permitePDF: true,

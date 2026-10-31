@@ -460,7 +460,7 @@ class AbonoCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
 
 
 class AbonoListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
-    """Historial e inspección general de abonos/pagos registrados (Arqueo y Conciliación)."""
+    """Historial e inspección general de abonos/pagos registrados (Recuento y Conciliación)."""
 
     model = Abono
     template_name = 'financiero/abono_list.html'

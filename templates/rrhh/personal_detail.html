@@ -22,20 +22,28 @@
         </div>
         
         <div class="flex items-center gap-3 flex-wrap">
+            {% if perms.rrhh.view_personal %}
             <a href="{% url 'rrhh:personal_list' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
                 <i data-lucide="arrow-left" class="w-4 h-4 text-slate-500"></i>
                 Volver
             </a>
+            {% else %}
+            <a href="{% url 'core:home' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
+                <i data-lucide="layout-dashboard" class="w-4 h-4 text-slate-500"></i>
+                Inicio
+            </a>
+            {% endif %}
             <a href="{% url 'rrhh:personal_pdf_expediente' personal.pk %}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-700 text-white rounded-xl text-xs font-bold hover:bg-emerald-800 transition-all shadow-md shadow-emerald-700/20">
                 <i data-lucide="file-text" class="w-4 h-4"></i>
                 Ficha Expediente (PDF)
             </a>
-            {% if clave_temporal %}
+            {% if clave_temporal and perms.rrhh.view_personal %}
             <a href="{% url 'rrhh:personal_pdf_credenciales' personal.pk %}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-[#3C7DA8] text-white rounded-xl text-xs font-bold hover:bg-[#3C7DA8]/90 transition-all shadow-md shadow-[#3C7DA8]/20">
                 <i data-lucide="key" class="w-4 h-4"></i>
                 Credenciales Acceso (PDF)
             </a>
             {% endif %}
+            {% if perms.rrhh.change_personal %}
             <a href="{% url 'rrhh:personal_update' personal.pk %}" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-xl text-xs font-bold hover:bg-slate-900 transition-all shadow-sm">
                 <i data-lucide="edit-3" class="w-4 h-4"></i>
                 Editar
@@ -53,6 +61,7 @@
                     Reactivar Colaborador
                 </button>
             </form>
+            {% endif %}
             {% endif %}
         </div>
     </div>

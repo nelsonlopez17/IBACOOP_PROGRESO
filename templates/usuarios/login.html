@@ -4,6 +4,14 @@
 
 {% block auth_content %}
 <div class="w-full max-w-md px-6 py-8">
+    <div class="mb-4">
+        <a href="{% url 'portal:index' %}"
+            class="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 hover:text-[#1E6532] transition-colors group">
+            <i data-lucide="arrow-left" class="w-4 h-4 transition-transform group-hover:-translate-x-0.5"></i>
+            <span>Ir al inicio del portal de visitantes</span>
+        </a>
+    </div>
+
     <div class="bg-white border border-slate-200 rounded-3xl shadow-xl p-8 backdrop-blur">
 
         <!-- Encabezado y escudo del colegio -->
@@ -99,6 +107,15 @@
                 <i data-lucide="arrow-right" class="w-4 h-4"></i>
             </button>
         </form>
+
+        <!-- Botón para ir al inicio del portal de visitantes -->
+        <div class="mt-3">
+            <a href="{% url 'portal:index' %}"
+                class="w-full py-3 px-4 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-[#1E6532] font-semibold rounded-xl border border-slate-200 transition-all text-xs flex items-center justify-center gap-2">
+                <i data-lucide="globe" class="w-4 h-4 text-[#1E6532]"></i>
+                <span>Ir al inicio del portal de visitantes</span>
+            </a>
+        </div>
 
         <!-- Contacto de Soporte TI en caso de olvido de contraseña -->
         <div class="mt-6 pt-5 border-t border-slate-100 text-center">

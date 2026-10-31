@@ -1,6 +1,6 @@
 <!-- Sub-navegación por Pestañas Horizontales (Tabs) para el Módulo Académico -->
 <div class="bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-1 overflow-x-auto">
-    {% if perms.academico.view_asignacionestudiante %}
+    {% if perms.academico.add_asignacionestudiante and user.rol != 'DOCENTE' %}
     <a href="{% url 'academico:asignacion_estudiante_list' %}"
         class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap {% if request.resolver_match.view_name == 'academico:asignacion_estudiante_list' or request.resolver_match.view_name == 'academico:asignacion_estudiante_create' %}bg-[#1E6532] text-white shadow-xs{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100{% endif %}">
         <i data-lucide="graduation-cap" class="w-4 h-4"></i>

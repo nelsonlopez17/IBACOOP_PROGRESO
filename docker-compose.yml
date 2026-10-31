@@ -49,7 +49,7 @@ services:
       - DB_PORT=5432
     volumes:
       - .:/app
-      - static_data:/app/static
+      - static_data:/app/staticfiles
       - media_data:/app/media
     depends_on:
       db:

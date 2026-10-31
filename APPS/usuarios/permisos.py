@@ -70,7 +70,7 @@ MATRIZ_PERMISOS_POR_ROL = {
             'view_contenidoweb', 'add_contenidoweb', 'change_contenidoweb',
             'view_solicitudcontacto', 'change_solicitudcontacto',
         ],
-        'auditoria': ['view_registroauditoria'],
+        'auditoria': ['view_eventoseguridad'],
     },
     RolChoices.SECRETARIA: {
         'core': ['view_persona', 'add_persona', 'change_persona'],
@@ -129,22 +129,19 @@ MATRIZ_PERMISOS_POR_ROL = {
     RolChoices.DOCENTE: {
         'academico': [
             'view_cicloescolar', 'view_bloqueacademico', 'view_grado', 'view_seccion', 'view_curso',
-            'view_asignaciondocente', 'view_asignacionestudiante',
+            'view_asignaciondocente',
             'view_notabloque', 'add_notabloque', 'change_notabloque',
             'view_notafinalcurso', 'change_notafinalcurso',
             'view_asistenciaestudiantil', 'add_asistenciaestudiantil', 'change_asistenciaestudiantil',
         ],
         'disciplina': [
-            'view_incidentedisciplinario', 'add_incidentedisciplinario', 'change_incidentedisciplinario',
-            'view_citacionpadre', 'add_citacionpadre',
+            'view_incidentedisciplinario', 'view_citacionpadre',
         ],
     },
-    # acceso directo por titularidad para estudiantes y encargados
+    # acceso directo por titularidad para estudiantes, encargados y personal operativo
     RolChoices.ESTUDIANTE: {},
     RolChoices.ENCARGADO: {},
-    RolChoices.PERSONAL: {
-        'inventario': ['view_articuloinventario'],
-    },
+    RolChoices.PERSONAL: {},
 }
 
 APPS_SISTEMA = [
@@ -358,6 +355,7 @@ DEFINICION_MODULOS_SISTEMA = [
         'descripcion': 'Grupos de roles y permisos, intentos de acceso y bloqueos de seguridad.',
         'modelos': [
             ('group', 'Grupos y Roles de Permisos'),
+            ('eventoseguridad', 'Bitácora de Eventos de Seguridad'),
             ('accessattempt', 'Intentos de Acceso Bloqueados'),
             ('accesslog', 'Registros de Auditoría de Sesiones'),
         ]
@@ -414,7 +412,7 @@ def obtener_matriz_permisos_ui(grupo=None) -> list[dict]:
         asignados_modulo = 0
 
         for model_code, nombre_legible in mod['modelos']:
-            target_app = 'auth' if model_code == 'group' else ('axes' if model_code in ['accessattempt', 'accesslog'] else app_label)
+            target_app = 'auth' if model_code == 'group' else ('auditoria' if model_code == 'eventoseguridad' else ('axes' if model_code in ['accessattempt', 'accesslog'] else app_label))
             key = (target_app, model_code)
             modelos_procesados.add(key)
 

@@ -7,18 +7,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{{ titulo_pagina|default:"Sistema ERP Escolar" }}{% endblock %} | IBACOOP EL PROGRESO</title>
     <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'vendor/css/inter.css' %}">
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="{% static 'js/lucide.min.js' %}"></script>
     <!-- HTMX -->
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="{% static 'vendor/js/htmx.min.js' %}"></script>
     <!-- Tailwind CSS compilado localmente con paleta institucional -->
     {% tailwind_css %}
     <!-- Tom Select (Busqueda predictiva y filtrado en desplegables) -->
-    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+    <link href="{% static 'vendor/css/tom-select.css' %}" rel="stylesheet">
+    <script src="{% static 'vendor/js/tom-select.complete.min.js' %}"></script>
     <!-- Estilos de componentes corporativos IBACOOP -->
     <link rel="stylesheet" href="{% static 'css/componentes.css' %}">
 </head>
@@ -91,6 +89,38 @@
                     <i data-lucide="receipt"
                         class="w-4 h-4 {% if request.resolver_match.view_name == 'financiero:estudiante_cuenta_corriente' %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
                     <span>Mi Estado de Cuenta</span>
+                </a>
+                {% endif %}
+
+                <!-- Autoservicio para Rol ENCARGADO -->
+                {% if user.rol == 'ENCARGADO' %}
+                <div class="pt-4 px-3 pb-1 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                    Portal de Familia
+                </div>
+                <a href="{% url 'core:home' %}"
+                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if request.resolver_match.app_name == 'core' and request.resolver_match.view_name == 'core:home' or request.resolver_match.view_name == 'academico:estudiante_mis_calificaciones' or request.resolver_match.view_name == 'financiero:estudiante_cuenta_corriente' or request.resolver_match.view_name == 'estudiantes:estudiante_detail' %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
+                    <i data-lucide="users"
+                        class="w-4 h-4 {% if request.resolver_match.app_name == 'core' and request.resolver_match.view_name == 'core:home' or request.resolver_match.view_name == 'academico:estudiante_mis_calificaciones' or request.resolver_match.view_name == 'financiero:estudiante_cuenta_corriente' or request.resolver_match.view_name == 'estudiantes:estudiante_detail' %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
+                    <span>Hijos / estudiantes a mi cargo</span>
+                </a>
+                {% endif %}
+
+                <!-- Autoservicio Laboral para Colaboradores (Docente / Personal) -->
+                {% if user.mi_personal_id %}
+                <div class="pt-4 px-3 pb-1 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                    Mi Espacio Laboral
+                </div>
+                <a href="{% url 'rrhh:personal_detail' user.mi_personal_id %}"
+                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if request.resolver_match.app_name == 'rrhh' and request.resolver_match.view_name == 'rrhh:personal_detail' and request.resolver_match.kwargs.pk == user.mi_personal_id %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
+                    <i data-lucide="briefcase"
+                        class="w-4 h-4 {% if request.resolver_match.app_name == 'rrhh' and request.resolver_match.view_name == 'rrhh:personal_detail' and request.resolver_match.kwargs.pk == user.mi_personal_id %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
+                    <span>Mi Expediente Laboral</span>
+                </a>
+                <a href="{% url 'inventario:mis_articulos' %}"
+                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all group border {% if request.resolver_match.app_name == 'inventario' and request.resolver_match.view_name == 'inventario:mis_articulos' %}bg-[#1E6532]/10 text-[#1E6532] border-[#1E6532]/30 shadow-sm{% else %}text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border-transparent{% endif %}">
+                    <i data-lucide="shield-check"
+                        class="w-4 h-4 {% if request.resolver_match.app_name == 'inventario' and request.resolver_match.view_name == 'inventario:mis_articulos' %}text-[#1E6532]{% else %}text-slate-400 group-hover:text-slate-600{% endif %}"></i>
+                    <span>Bienes en Resguardo</span>
                 </a>
                 {% endif %}
 
@@ -317,15 +347,10 @@
     </div>
     {% endif %}
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <link rel="stylesheet" href="{% static 'vendor/css/notyf.min.css' %}">
+    <script src="{% static 'vendor/js/notyf.min.js' %}"></script>
     <!-- Script principal de interfaz y componentes -->
     <script src="{% static 'js/app.js' %}"></script>
-    <script>
-        if (window.lucide && typeof lucide.createIcons === 'function') {
-            lucide.createIcons();
-        }
-    </script>
-</body>
+    </body>
 
 </html>

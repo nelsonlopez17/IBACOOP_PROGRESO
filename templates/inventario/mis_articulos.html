@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis Bienes en Resguardo | IBACOOP El Progreso{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Encabezado de la Sección -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-[#3C7DA8] uppercase tracking-wider mb-1">
+                <a href="{% url 'core:home' %}" class="hover:underline">Dashboard</a>
+                <span>/</span>
+                <span class="text-slate-500">Mi Espacio Laboral</span>
+                <span>/</span>
+                <span class="text-slate-500">Bienes en Resguardo</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-[#1E6532] tracking-tight flex items-center gap-2.5">
+                <i data-lucide="shield-check" class="w-7 h-7 text-[#1E6532]"></i>
+                Mis Bienes y Artículos en Resguardo
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">
+                Consulta y comprobantes de activos, mobiliario y equipo institucional asignados bajo su custodia.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            {% if perms.inventario.view_articuloinventario %}
+            <a href="{% url 'inventario:articulo_list' %}"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs">
+                <i data-lucide="package" class="w-4 h-4 text-[#1E6532]"></i>
+                Catálogo General
+            </a>
+            {% endif %}
+            <a href="{% url 'core:home' %}"
+                class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs">
+                <i data-lucide="layout-dashboard" class="w-4 h-4 text-slate-500"></i>
+                Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Ficha del Colaborador -->
+    {% if mi_personal %}
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-3.5">
+            <div class="w-12 h-12 rounded-xl bg-[#1E6532]/10 border border-[#1E6532]/20 text-[#1E6532] flex items-center justify-center font-black text-base">
+                {{ user.iniciales }}
+            </div>
+            <div>
+                <h3 class="text-base font-extrabold text-slate-900">{{ mi_personal.persona.nombre_completo }}</h3>
+                <p class="text-xs text-slate-500 mt-0.5">
+                    Puesto: <strong>{{ mi_personal.puesto.nombre_puesto }}</strong> •
+                    CUI/DPI: <span class="font-mono text-slate-700 font-bold">{{ mi_personal.persona.cui }}</span>
+                </p>
+            </div>
+        </div>
+        <div class="text-right sm:border-l sm:border-slate-100 sm:pl-6">
+            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Bienes Asignados</span>
+            <span class="text-2xl font-black text-[#1E6532]">{{ asignaciones.count }}</span>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Listado de Asignaciones / Vales de Resguardo -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+            <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="file-check-2" class="w-4 h-4 text-[#1E6532]"></i>
+                Historial de Artículos Asignados
+            </h2>
+            <span class="text-xs text-slate-500 font-medium">Total: {{ asignaciones.count }} registro{{ asignaciones.count|pluralize:"s" }}</span>
+        </div>
+
+        {% if asignaciones %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+                <thead class="bg-slate-50 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                    <tr>
+                        <th class="py-3 px-4">Código</th>
+                        <th class="py-3 px-4">Artículo / Bien</th>
+                        <th class="py-3 px-4">Categoría</th>
+                        <th class="py-3 px-4 text-center">Cantidad</th>
+                        <th class="py-3 px-4">Fecha Asignación</th>
+                        <th class="py-3 px-4">Motivo / Destino</th>
+                        <th class="py-3 px-4 text-right">Comprobante</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for mov in asignaciones %}
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="py-3.5 px-4 font-mono font-bold text-[#1E6532]">
+                            {{ mov.articulo.codigo_unico }}
+                        </td>
+                        <td class="py-3.5 px-4 font-bold text-slate-900">
+                            {{ mov.articulo.nombre }}
+                            {% if mov.documento_referencia %}
+                            <span class="block text-[11px] font-normal text-slate-400">Ref: {{ mov.documento_referencia }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3.5 px-4">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                {{ mov.articulo.get_categoria_display }}
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-4 text-center font-extrabold text-slate-900">
+                            {{ mov.cantidad }} {{ mov.articulo.unidad_medida }}
+                        </td>
+                        <td class="py-3.5 px-4 text-slate-600">
+                            {{ mov.fecha|date:"d/m/Y H:i" }}
+                        </td>
+                        <td class="py-3.5 px-4 text-slate-600 max-w-xs truncate" title="{{ mov.motivo }}">
+                            {{ mov.motivo }}
+                        </td>
+                        <td class="py-3.5 px-4 text-right">
+                            <a href="{% url 'inventario:movimiento_pdf' mov.pk %}" target="_blank"
+                               class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#1E6532]/10 hover:bg-[#1E6532] text-[#1E6532] hover:text-white rounded-xl text-xs font-bold transition-all shadow-xs">
+                                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                                Vale de Resguardo (PDF)
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-12 text-center space-y-3">
+            <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+                <i data-lucide="package-open" class="w-7 h-7"></i>
+            </div>
+            <h3 class="text-sm font-bold text-slate-800">No cuenta con artículos asignados</h3>
+            <p class="text-xs text-slate-500 max-w-md mx-auto">
+                Actualmente no tiene bienes, mobiliario o equipo institucional asignado bajo su resguardo directo.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

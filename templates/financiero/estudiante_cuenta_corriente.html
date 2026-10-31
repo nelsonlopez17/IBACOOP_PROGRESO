@@ -38,8 +38,14 @@
                 <i data-lucide="award" class="w-4 h-4 text-[#1E6532]"></i>
                 Mis Calificaciones
             </a>
+            {% elif user.rol == 'ENCARGADO' %}
+            <a href="{% url 'academico:estudiante_mis_calificaciones' %}?estudiante_id={{ estudiante.pk }}"
+                class="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
+                <i data-lucide="award" class="w-4 h-4 text-[#1E6532]"></i>
+                Calificaciones y Asistencia
+            </a>
             {% endif %}
-            {% if es_solvente and user.rol != 'ESTUDIANTE' and perms.financiero.view_cuentaporcobrar %}
+            {% if es_solvente and user.rol != 'ESTUDIANTE' and perms.financiero.view_cuentaporcobrar or es_solvente and user.rol == 'ENCARGADO' %}
             <a href="{% url 'financiero:solvencia_pdf' estudiante.pk %}" target="_blank"
                 class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E6532] text-white rounded-xl text-xs font-bold hover:bg-[#1E6532]/90 transition-all shadow-md shadow-[#1E6532]/20">
                 <i data-lucide="award" class="w-4 h-4"></i>
@@ -235,7 +241,7 @@
                         <td class="py-4 px-6 font-bold text-[#1E6532]">Q{{ abono.monto_pagado|floatformat:2 }}</td>
                         <td class="py-4 px-6 text-slate-500">{{ abono.observaciones|default:"Sin observaciones" }}</td>
                         <td class="py-4 px-6 text-right">
-                            {% if user.rol != 'ESTUDIANTE' and perms.financiero.view_abono %}
+                            {% if user.rol != 'ESTUDIANTE' and perms.financiero.view_abono or user.rol == 'ENCARGADO' %}
                             <a href="{% url 'financiero:recibo_pdf' abono.pk %}" target="_blank"
                                 class="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-lg text-xs font-black transition-all shadow-xs">
                                 <i data-lucide="file-text" class="w-3.5 h-3.5"></i>

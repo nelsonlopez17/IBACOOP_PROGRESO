@@ -126,6 +126,41 @@ class Usuario(AbstractUser):
             pass
         return None
 
+    @property
+    def mi_personal_id(self):
+        """Retorna el ID del expediente Personal vinculado al usuario si existe."""
+        try:
+            if hasattr(self, 'persona') and hasattr(self.persona, 'personal'):
+                return self.persona.personal.pk
+        except Exception:
+            pass
+        return None
+
+    @property
+    def mis_estudiantes_a_cargo(self):
+        """
+        Retorna el queryset de estudiantes vinculados a este usuario cuando su rol es ENCARGADO,
+        consultando la relación directa de tutor y la tabla intermedia EstudianteEncargado.
+        """
+        if self.rol != RolChoices.ENCARGADO:
+            return []
+        try:
+            from APPS.estudiantes.models import Estudiante, EstudianteEncargado
+            from django.db.models import Q
+            ids_rel = EstudianteEncargado.objects.filter(
+                encargado__persona__usuario=self,
+                esta_eliminado=False,
+            ).values_list('estudiante_id', flat=True)
+
+            return Estudiante.objects.select_related(
+                'persona', 'encargado__persona'
+            ).filter(
+                Q(encargado__persona__usuario=self) | Q(pk__in=ids_rel),
+                esta_eliminado=False,
+            ).distinct().order_by('persona__apellidos', 'persona__nombres')
+        except Exception:
+            return []
+
     def tiene_rol(self, *roles):
         """
         Verifica si el usuario tiene alguno de los roles indicados.

@@ -22,19 +22,37 @@
             </p>
         </div>
 
+        {% if estudiante %}
         <div class="flex items-center gap-2 flex-wrap">
-            <a href="{% url 'estudiantes:estudiante_detail' user.mi_estudiante_id %}"
+            <a href="{% url 'estudiantes:estudiante_detail' estudiante.pk %}"
                class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-xs">
                 <i data-lucide="folder-user" class="w-4 h-4 text-[#1E6532]"></i>
-                Mi Expediente
+                {% if user.rol == 'ENCARGADO' %}Expediente del Estudiante{% else %}Mi Expediente{% endif %}
             </a>
-            <a href="{% url 'financiero:estudiante_cuenta_corriente' user.mi_estudiante_id %}"
+            <a href="{% url 'financiero:estudiante_cuenta_corriente' estudiante.pk %}"
                class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-xs">
                 <i data-lucide="receipt" class="w-4 h-4 text-[#3C7DA8]"></i>
-                Mi Estado de Cuenta
+                {% if user.rol == 'ENCARGADO' %}Estado de Cuenta{% else %}Mi Estado de Cuenta{% endif %}
             </a>
         </div>
+        {% endif %}
     </div>
+
+    {% if mis_hijos and mis_hijos.count > 1 %}
+    <!-- Selector de Hijos para Encargado -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
+        <span class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Seleccionar Estudiante:</span>
+        <div class="flex items-center gap-2 flex-wrap">
+            {% for hijo in mis_hijos %}
+            <a href="?estudiante_id={{ hijo.pk }}"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all {% if hijo.pk == estudiante.pk %}bg-[#1E6532] text-white shadow-sm{% else %}bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100{% endif %}">
+                <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                <span>{{ hijo.persona.nombre_completo }}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 
     {% if not estudiante %}
     <div class="p-6 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-start gap-3">

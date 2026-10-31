@@ -9,15 +9,13 @@
     <meta name="description" content="Portal oficial del Instituto Básico por Cooperativa de Enseñanza de Colonia El Progreso (IBACOOP), Escuintla, Guatemala. Excelencia académica y valores éticos.">
 
     <!-- Google Fonts: Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'vendor/css/inter.css' %}">
 
     <!-- Lucide Icons (local con respaldo cdn) -->
-    <script src="{% static 'js/lucide.min.js' %}" onerror="this.onerror=null;this.src='https://unpkg.com/lucide@latest';"></script>
+    <script src="{% static 'js/lucide.min.js' %}"></script>
     <!-- Notyf v3 (Notificaciones Emergentes / Toast Temporales) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <link rel="stylesheet" href="{% static 'vendor/css/notyf.min.css' %}">
+    <script src="{% static 'vendor/js/notyf.min.js' %}"></script>
 
     <!-- Tailwind CSS compilado localmente con paleta institucional -->
     {% tailwind_css %}
@@ -261,11 +259,6 @@
     <!-- Script de Inicialización de Iconos, Menú Móvil y Notificaciones Emergentes -->
     <!-- Script principal de interfaz y componentes -->
     <script src="{% static 'js/app.js' %}"></script>
-    <script>
-        if (window.lucide && typeof lucide.createIcons === 'function') {
-            lucide.createIcons();
-        }
-    </script>
     <!-- Botón Flotante de WhatsApp para Visitantes -->
     {% if config_portal.telefono_whatsapp %}
     <a href="{{ config_portal.link_whatsapp }}" target="_blank" rel="noopener noreferrer"

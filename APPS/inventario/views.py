@@ -27,15 +27,21 @@ from APPS.inventario.forms import ArticuloInventarioForm, MovimientoInventarioFo
 from APPS.inventario.reportes import generar_pdf_reporte_inventario, generar_pdf_comprobante_movimiento
 
 
-class ArticuloInventarioListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+class ArticuloInventarioListView(LoginRequiredMixin, ListView):
     """Lista todos los artículos del inventario institucional con opciones de búsqueda y filtrado."""
 
     model = ArticuloInventario
     template_name = 'inventario/articulo_list.html'
     context_object_name = 'articulos'
-    permission_required = 'inventario.view_articuloinventario'
-    raise_exception = True
     paginate_by = 15
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.has_perm('inventario.view_articuloinventario'):
+            if getattr(request.user, 'mi_personal_id', None):
+                return redirect('inventario:mis_articulos')
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied("No cuenta con permisos para consultar el catálogo de inventario.")
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         qs = ArticuloInventario.objects.filter(esta_eliminado=False)
@@ -206,8 +212,34 @@ def descargar_inventario_pdf(request):
     return response
 
 
+class MisArticulosAsignadosListView(LoginRequiredMixin, ListView):
+    """Lista exclusivamente los artículos asignados al colaborador autenticado (Vale de Resguardo)."""
+
+    model = MovimientoInventario
+    template_name = 'inventario/mis_articulos.html'
+    context_object_name = 'asignaciones'
+    paginate_by = 15
+
+    def get_queryset(self):
+        user = self.request.user
+        return MovimientoInventario.objects.filter(
+            personal_responsable__persona__usuario=user,
+            tipo_movimiento=TipoMovimientoChoices.ASIGNACION,
+            esta_eliminado=False,
+        ).select_related('articulo', 'personal_responsable__persona', 'personal_responsable__puesto').order_by('-fecha')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['titulo_pagina'] = 'Mis Bienes y Artículos en Resguardo'
+        from APPS.rrhh.models import Personal
+        context['mi_personal'] = Personal.objects.filter(
+            persona__usuario=self.request.user,
+            esta_eliminado=False
+        ).select_related('puesto').first()
+        return context
+
+
 @login_required
-@permission_required('inventario.view_movimientoinventario', raise_exception=True)
 def descargar_movimiento_pdf(request, pk):
     """Genera y descarga el vale o comprobante de resguardo del movimiento en PDF."""
     movimiento = get_object_or_404(
@@ -217,6 +249,11 @@ def descargar_movimiento_pdf(request, pk):
         pk=pk,
         esta_eliminado=False
     )
+    usuario_id = getattr(movimiento.personal_responsable.persona, 'usuario_id', None)
+    es_titular = (usuario_id is not None and usuario_id == request.user.id)
+    if not (request.user.has_perm('inventario.view_movimientoinventario') or es_titular):
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied("No tiene autorización para descargar este comprobante de resguardo.")
     pdf_buffer = generar_pdf_comprobante_movimiento(movimiento)
     response = HttpResponse(pdf_buffer.read(), content_type='application/pdf')
     filename = f"Vale_Resguardo_{movimiento.pk:06d}.pdf"
