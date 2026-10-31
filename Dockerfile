@@ -35,6 +35,9 @@ COPY . /app/
 RUN chmod +x /app/entrypoint.sh && \
     sed -i 's/\r$//' /app/entrypoint.sh
 
+# Recopilar archivos estáticos para WhiteNoise durante la construcción
+RUN SECRET_KEY="build-key-for-collectstatic" python manage.py collectstatic --noinput
+
 # Puerto expuesto por el contenedor
 EXPOSE 8000
 
