@@ -141,9 +141,70 @@ class AuditoriaService:
         return AUDITED_MODELS.get(model_key.lower()) if model_key else None
 
     @classmethod
+    def format_instance_repr(cls, record, model_key, cfg):
+        """
+        Genera una descripción legible y estructurada del registro histórico
+        utilizando los campos snapshot ya persistidos en el registro, sin disparar
+        consultas adicionales a la base de datos (evita N+1).
+        """
+        try:
+            if model_key == 'usuario':
+                nombre_comp = f"{getattr(record, 'first_name', '')} {getattr(record, 'last_name', '')}".strip()
+                rol_str = getattr(record, 'rol', 'USUARIO')
+                return f"{record.username} ({nombre_comp}) [{rol_str}]" if nombre_comp else f"{record.username} [{rol_str}]"
+            elif model_key == 'notabloque':
+                zona = getattr(record, 'nota_zona', 0) or 0
+                examen = getattr(record, 'nota_examen', 0) or 0
+                total = zona + examen
+                return f"Calificación #{record.id} (Zona: {zona:.1f}, Examen: {examen:.1f} = {total:.1f} pts)"
+            elif model_key == 'planilla':
+                mes = getattr(record, 'mes_pagado', '')
+                tipo = getattr(record, 'tipo_planilla', 'Mensual')
+                salario = getattr(record, 'salario_base', 0) or 0
+                return f"Planilla {tipo} - Mes {mes} (Q{salario:,.2f})"
+            elif model_key == 'abono':
+                boleta = getattr(record, 'numero_boleta', None) or 'S/N'
+                monto = getattr(record, 'monto_pagado', 0) or 0
+                metodo = getattr(record, 'metodo_pago', 'Efectivo')
+                return f"Abono {metodo} (Boleta: {boleta}) - Q{monto:,.2f}"
+            elif model_key == 'cuentaporcobrar':
+                monto = getattr(record, 'monto_total', 0) or 0
+                return f"Cuenta por Cobrar #{record.id} (Q{monto:,.2f})"
+            elif model_key == 'articuloinventario':
+                nombre = getattr(record, 'nombre', '')
+                cod = getattr(record, 'codigo_unico', '')
+                return f"{nombre} [{cod}]" if cod else f"{nombre}"
+            elif model_key == 'incidentedisciplinario':
+                falta = getattr(record, 'tipo_falta', 'Falta')
+                lugar = getattr(record, 'lugar', 'Plantel')
+                return f"Incidente: {falta} en {lugar}"
+            elif model_key == 'citacionpadre':
+                motivo = getattr(record, 'motivo_citacion', '') or 'Citación formal'
+                return f"Citación: {motivo[:45]}"
+            elif model_key == 'asignacionestudiante':
+                return f"Inscripción de Estudiante #{record.id}"
+            elif model_key == 'contenidoweb':
+                titulo = getattr(record, 'titulo', '')
+                return f"Artículo: {titulo[:45]}"
+            elif model_key == 'fotogaleria':
+                titulo = getattr(record, 'titulo', '')
+                return f"Foto: {titulo[:45]}"
+            elif model_key == 'solicitudcontacto':
+                remitente = getattr(record, 'nombre_remitente', 'Remitente')
+                asunto = getattr(record, 'asunto', '')
+                return f"Contacto: {remitente} - {asunto[:35]}"
+            elif model_key == 'configuracionportal':
+                inst = getattr(record, 'nombre_instituto', 'Portal Web')
+                return f"Ajustes Portal: {inst[:40]}"
+        except Exception:
+            pass
+        return f"{cfg['nombre']} #{record.history_id}"
+
+    @classmethod
     def get_history_records(cls, model_key=None, usuario_id=None, action_type=None, date_from=None, date_to=None, limit=100):
         """
-        Recupera y combina los registros de auditoría según los filtros especificados.
+        Recupera y combina los registros de auditoría según los filtros especificados
+        con paginación eficiente y representación optimizada en memoria.
         """
         keys_to_query = [model_key.lower()] if model_key and model_key.lower() in AUDITED_MODELS else list(AUDITED_MODELS.keys())
         all_records = []
@@ -151,6 +212,10 @@ class AuditoriaService:
         tz = timezone.get_current_timezone()
         dt_from = timezone.make_aware(datetime.combine(date_from, time.min), tz) if date_from else None
         dt_to = timezone.make_aware(datetime.combine(date_to, time.max), tz) if date_to else None
+
+        # Cuando se consulta un solo modelo, traer exactamente el limite requerido.
+        # Cuando se combinan todos los modelos, traer una cuota ponderada por modelo para optimizar red.
+        per_model_limit = limit if len(keys_to_query) == 1 else max(25, min(limit, (limit // len(keys_to_query)) + 30))
 
         for k in keys_to_query:
             cfg = AUDITED_MODELS[k]
@@ -166,7 +231,7 @@ class AuditoriaService:
             if dt_to:
                 qs = qs.filter(history_date__lte=dt_to)
 
-            for record in qs.order_by('-history_date')[:limit]:
+            for record in qs.order_by('-history_date')[:per_model_limit]:
                 all_records.append({
                     'history_id': record.history_id,
                     'model_key': k,
@@ -180,7 +245,7 @@ class AuditoriaService:
                     'history_type_badge': cls.get_action_badge(record.history_type),
                     'history_user': record.history_user,
                     'history_change_reason': record.history_change_reason or 'Actualización de datos',
-                    'instance_repr': str(record.instance) if hasattr(record, 'instance') and record.instance else f"{cfg['nombre']} #{record.history_id}",
+                    'instance_repr': cls.format_instance_repr(record, k, cfg),
                     'record_obj': record,
                 })
 
@@ -309,7 +374,13 @@ class AuditoriaService:
 
     @classmethod
     def get_dashboard_metrics(cls):
-        """Calcula métricas globales de actividad para el panel de auditoría de forma agregada."""
+        """Calcula métricas globales de actividad para el panel de auditoría de forma agregada con caché."""
+        from django.core.cache import cache
+        cache_key = 'auditoria_dashboard_metrics_24h'
+        cached_val = cache.get(cache_key)
+        if cached_val is not None:
+            return cached_val
+
         ahora = timezone.now()
         hace_24h = ahora - timezone.timedelta(hours=24)
 
@@ -339,10 +410,12 @@ class AuditoriaService:
                 ).values_list('history_user_id', flat=True).distinct()
                 usuarios_activos.update(user_ids)
 
-        return {
+        resultado = {
             'total_24h': total_hoy,
             'creaciones_24h': creaciones_hoy,
             'modificaciones_24h': modificaciones_hoy,
             'eliminaciones_24h': eliminaciones_hoy,
             'usuarios_activos_count': len(usuarios_activos),
         }
+        cache.set(cache_key, resultado, 60)
+        return resultado

@@ -13,7 +13,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.decorators import login_required, permission_required
 from django.db import transaction
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Case, When, IntegerField
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy, reverse
@@ -599,21 +599,40 @@ class CuadroCalificacionesView(LoginRequiredMixin, PermissionRequiredMixin, Temp
                 'estudiante__persona__nombres'
             )
 
-            # auto-generar casilleros de notas bimestrales y notas finales si hicieran falta
-            for asig in inscripciones:
-                NotaFinalCurso.objects.get_or_create(
-                    asignacion_estudiante=asig,
+            # auto-generar casilleros de notas bimestrales y notas finales si hicieran falta en lote
+            inscritos_ids = [asig.id for asig in inscripciones]
+            existing_finales = set(
+                NotaFinalCurso.objects.filter(
+                    asignacion_estudiante_id__in=inscritos_ids,
                     curso=curso_sel
-                )
-                NotaBloque.objects.get_or_create(
+                ).values_list('asignacion_estudiante_id', flat=True)
+            )
+            nuevas_finales = [
+                NotaFinalCurso(asignacion_estudiante=asig, curso=curso_sel)
+                for asig in inscripciones if asig.id not in existing_finales
+            ]
+            if nuevas_finales:
+                NotaFinalCurso.objects.bulk_create(nuevas_finales, ignore_conflicts=True)
+
+            existing_bloques = set(
+                NotaBloque.objects.filter(
+                    asignacion_estudiante_id__in=inscritos_ids,
+                    curso=curso_sel,
+                    bloque_academico=bloque_sel
+                ).values_list('asignacion_estudiante_id', flat=True)
+            )
+            nuevas_bloques = [
+                NotaBloque(
                     asignacion_estudiante=asig,
                     curso=curso_sel,
                     bloque_academico=bloque_sel,
-                    defaults={
-                        'nota_zona': Decimal('0.00'),
-                        'nota_examen': Decimal('0.00'),
-                    }
+                    nota_zona=Decimal('0.00'),
+                    nota_examen=Decimal('0.00'),
                 )
+                for asig in inscripciones if asig.id not in existing_bloques
+            ]
+            if nuevas_bloques:
+                NotaBloque.objects.bulk_create(nuevas_bloques, ignore_conflicts=True)
 
             notas = NotaBloque.objects.filter(
                 asignacion_estudiante__seccion=seccion_sel,
@@ -1508,53 +1527,80 @@ class AlertasTempranasView(LoginRequiredMixin, PermissionRequiredMixin, Template
             context['alumnos_riesgo_asistencia'] = []
             return context
 
-        # identificar estudiantes con materias reprobadas segun normativa
-        inscritos = AsignacionEstudiante.objects.filter(
-            ciclo_escolar=ciclo_activo,
-            estudiante__estado_estudiante='ACTIVO',
-            esta_eliminado=False
-        ).select_related('estudiante__persona', 'seccion__grado')
+        from collections import defaultdict
 
-        alumnos_riesgo_notas = []
-        for asig in inscritos:
-            notas_bajas = NotaFinalCurso.objects.filter(
-                asignacion_estudiante=asig,
+        # 1. Identificar estudiantes con materias reprobadas (Consulta agregada única, evita N+1)
+        notas_bajas_qs = (
+            NotaFinalCurso.objects.filter(
+                asignacion_estudiante__ciclo_escolar=ciclo_activo,
+                asignacion_estudiante__estudiante__estado_estudiante='ACTIVO',
+                asignacion_estudiante__esta_eliminado=False,
                 esta_eliminado=False,
                 nota_definitiva__lt=Decimal('60.00'),
                 nota_definitiva__gt=Decimal('0.00')
-            ).select_related('curso')
+            )
+            .select_related('curso', 'asignacion_estudiante__estudiante__persona', 'asignacion_estudiante__seccion__grado')
+        )
 
-            if notas_bajas.count() >= 2:
+        notas_por_asig = defaultdict(list)
+        asig_map = {}
+        for nf in notas_bajas_qs:
+            notas_por_asig[nf.asignacion_estudiante_id].append(nf)
+            asig_map[nf.asignacion_estudiante_id] = nf.asignacion_estudiante
+
+        alumnos_riesgo_notas = []
+        for asig_id, lista_notas in notas_por_asig.items():
+            if len(lista_notas) >= 2:
                 alumnos_riesgo_notas.append({
-                    'asignacion': asig,
-                    'materias_reprobadas': list(notas_bajas),
-                    'total_reprobadas': notas_bajas.count()
+                    'asignacion': asig_map[asig_id],
+                    'materias_reprobadas': lista_notas,
+                    'total_reprobadas': len(lista_notas)
                 })
 
-        # identificar estudiantes con inasistencias injustificadas
-        alumnos_riesgo_asistencia = []
-        for asig in inscritos:
-            total_asistencias = AsistenciaEstudiantil.objects.filter(
-                asignacion_estudiante=asig,
+        # 2. Identificar estudiantes con inasistencias injustificadas (Agregación SQL única)
+        asistencias_stats = (
+            AsistenciaEstudiantil.objects.filter(
+                asignacion_estudiante__ciclo_escolar=ciclo_activo,
+                asignacion_estudiante__estudiante__estado_estudiante='ACTIVO',
+                asignacion_estudiante__esta_eliminado=False,
                 esta_eliminado=False
-            ).count()
+            )
+            .values('asignacion_estudiante_id')
+            .annotate(
+                total_registros=Count('id'),
+                ausencias_count=Count(Case(When(presente=False, justificado=False, then=1), output_field=IntegerField())),
+            )
+            .filter(total_registros__gt=0)
+        )
 
-            if total_asistencias > 0:
-                ausencias_injustificadas = AsistenciaEstudiantil.objects.filter(
-                    asignacion_estudiante=asig,
-                    presente=False,
-                    justificado=False,
-                    esta_eliminado=False
-                ).count()
+        riesgo_asig_ids = []
+        stats_map = {}
+        for st in asistencias_stats:
+            tot = st['total_registros']
+            aus = st['ausencias_count']
+            pct = (aus / tot) * 100 if tot > 0 else 0
+            if pct >= 15.0:
+                riesgo_asig_ids.append(st['asignacion_estudiante_id'])
+                stats_map[st['asignacion_estudiante_id']] = {
+                    'ausencias_count': aus,
+                    'total_registros': tot,
+                    'porcentaje': round(pct, 1)
+                }
 
-                porcentaje_inasistencia = (ausencias_injustificadas / total_asistencias) * 100
-
-                if porcentaje_inasistencia >= 15.0:
+        alumnos_riesgo_asistencia = []
+        if riesgo_asig_ids:
+            asigs_dict = {
+                a.id: a for a in AsignacionEstudiante.objects.filter(
+                    id__in=riesgo_asig_ids
+                ).select_related('estudiante__persona', 'seccion__grado')
+            }
+            for asig_id, data in stats_map.items():
+                if asig_id in asigs_dict:
                     alumnos_riesgo_asistencia.append({
-                        'asignacion': asig,
-                        'ausencias_count': ausencias_injustificadas,
-                        'total_registros': total_asistencias,
-                        'porcentaje': round(porcentaje_inasistencia, 1)
+                        'asignacion': asigs_dict[asig_id],
+                        'ausencias_count': data['ausencias_count'],
+                        'total_registros': data['total_registros'],
+                        'porcentaje': data['porcentaje']
                     })
 
         context['alumnos_riesgo_notas'] = sorted(alumnos_riesgo_notas, key=lambda x: x['total_reprobadas'], reverse=True)

@@ -157,23 +157,32 @@ class CuentaPorCobrar(ModeloAuditable):
 
     @property
     def total_abonado(self) -> Decimal:
+        if '_total_abonado_sql' in self.__dict__ and self.__dict__['_total_abonado_sql'] is not None:
+            return round(Decimal(str(self.__dict__['_total_abonado_sql'])), 2)
         if not self.pk:
             return Decimal('0.00')
         res = self.abonos.filter(esta_eliminado=False).aggregate(total=models.Sum('monto_pagado'))['total']
         return Decimal(str(res)) if res is not None else Decimal('0.00')
 
+    @total_abonado.setter
+    def total_abonado(self, valor) -> None:
+        self.__dict__['_total_abonado_sql'] = valor
+
     @property
     def saldo_pendiente(self) -> Decimal:
+        if 'saldo_pendiente' in self.__dict__ and self.__dict__['saldo_pendiente'] is not None:
+            return round(Decimal(str(self.__dict__['saldo_pendiente'])), 2)
         monto = Decimal(str(self.monto_total)) if self.monto_total is not None else Decimal('0.00')
         return round(max(monto - self.total_abonado, Decimal('0.00')), 2)
 
     @saldo_pendiente.setter
     def saldo_pendiente(self, valor) -> None:
-        # propiedad derivada calculada dinamicamente
-        pass
+        self.__dict__['saldo_pendiente'] = valor
 
     @property
     def estado_pago(self) -> str:
+        if 'estado_pago' in self.__dict__ and self.__dict__['estado_pago']:
+            return self.__dict__['estado_pago']
         if self.saldo_pendiente <= Decimal('0.00'):
             return EstadoPagoChoices.PAGADO
         if self.total_abonado > Decimal('0.00'):
@@ -182,8 +191,7 @@ class CuentaPorCobrar(ModeloAuditable):
 
     @estado_pago.setter
     def estado_pago(self, valor) -> None:
-        # propiedad derivada calculada dinamicamente
-        pass
+        self.__dict__['estado_pago'] = valor
 
     def get_estado_pago_display(self) -> str:
         return dict(EstadoPagoChoices.choices).get(self.estado_pago, self.estado_pago)

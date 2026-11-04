@@ -185,6 +185,7 @@ class ModeloAuditable(models.Model):
     )
     esta_eliminado = models.BooleanField(
         default=False,
+        db_index=True,
         verbose_name='¿Está eliminado?',
         help_text='Indica si el registro fue eliminado lógicamente.',
     )

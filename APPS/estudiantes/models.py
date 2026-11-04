@@ -204,6 +204,13 @@ class Estudiante(ModeloAuditable):
 
     @property
     def solvencia_inscripcion_estado(self):
+        if hasattr(self, '_prefetched_cuentas_inscripcion'):
+            cuentas = self._prefetched_cuentas_inscripcion
+            if not cuentas:
+                return 'SIN_COBRO'
+            if all(c.saldo_pendiente <= 0 for c in cuentas):
+                return 'SOLVENTE'
+            return 'PENDIENTE'
         cuentas = self.cuentas_inscripcion
         if not cuentas.exists():
             return 'SIN_COBRO'

@@ -6,7 +6,8 @@ Implementa transacciones atómicas (transaction.atomic()), contraseñas temporal
 y generación de expedientes/credenciales oficiales en PDF.
 """
 from django.db import transaction
-from django.db.models import Q, Count
+from django.db.models import Q, Prefetch, Count, Case, When, IntegerField
+from APPS.financiero.models import CuentaPorCobrar
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy, reverse
 from django.views.generic import CreateView, ListView, UpdateView, DetailView
@@ -42,6 +43,15 @@ class EstudianteListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     def get_queryset(self):
         qs = Estudiante.objects.select_related(
             'persona', 'persona__usuario', 'encargado', 'encargado__persona'
+        ).prefetch_related(
+            Prefetch(
+                'cuentas_por_cobrar',
+                queryset=CuentaPorCobrar.objects.filter(
+                    esta_eliminado=False,
+                    concepto__categoria_concepto='MATRICULA'
+                ).annotate(**CuentaPorCobrar.obtener_anotaciones_sql()),
+                to_attr='_prefetched_cuentas_inscripcion'
+            )
         ).filter(esta_eliminado=False)
 
         q = self.request.GET.get('q', '').strip()
@@ -84,9 +94,14 @@ class EstudianteListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         context['estado_filtro'] = estado_filtro
         context['papeleria_filtro'] = self.request.GET.get('papeleria', '')
         context['estados_list'] = EstadoEstudianteChoices.choices
-        context['total_estudiantes'] = Estudiante.objects.filter(esta_eliminado=False).count()
-        context['activos_count'] = Estudiante.objects.filter(esta_eliminado=False, estado_estudiante=EstadoEstudianteChoices.ACTIVO).count()
-        context['retirados_count'] = Estudiante.objects.filter(esta_eliminado=False, estado_estudiante=EstadoEstudianteChoices.RETIRADO).count()
+        counts = Estudiante.objects.filter(esta_eliminado=False).aggregate(
+            total=Count('pk'),
+            activos=Count(Case(When(estado_estudiante=EstadoEstudianteChoices.ACTIVO, then=1), output_field=IntegerField())),
+            retirados=Count(Case(When(estado_estudiante=EstadoEstudianteChoices.RETIRADO, then=1), output_field=IntegerField())),
+        )
+        context['total_estudiantes'] = counts['total'] or 0
+        context['activos_count'] = counts['activos'] or 0
+        context['retirados_count'] = counts['retirados'] or 0
         
         nuevo_enc_pk = self.request.session.pop('nuevo_encargado_pk', None)
         if nuevo_enc_pk:

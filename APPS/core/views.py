@@ -5,7 +5,7 @@ Vistas principales del sistema ERP Escolar — Instituto "El Progreso".
 Provee un Dashboard adaptativo según el Rol y Grupo de Permisos del usuario autenticado.
 """
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q
+from django.db.models import Q, Count, Case, When, IntegerField
 from django.shortcuts import redirect
 from django.contrib import messages
 from django.http import JsonResponse
@@ -205,27 +205,29 @@ class HomeView(LoginRequiredMixin, TemplateView):
             })
             return context
 
-        # contexto para personal administrativo
-        total_usuarios = Usuario.objects.count()
-        usuarios_activos = Usuario.objects.filter(is_active=True).count()
-        admin_count = Usuario.objects.filter(rol='ADMINISTRADOR', is_active=True).count()
-        director_count = Usuario.objects.filter(rol='DIRECTOR', is_active=True).count()
-        secretaria_count = Usuario.objects.filter(rol='SECRETARIA', is_active=True).count()
-        contador_count = Usuario.objects.filter(rol='CONTADOR', is_active=True).count()
-        docente_count = Usuario.objects.filter(rol='DOCENTE', is_active=True).count()
-        estudiante_count = Usuario.objects.filter(rol='ESTUDIANTE', is_active=True).count()
-        encargado_count = Usuario.objects.filter(rol='ENCARGADO', is_active=True).count()
+        # contexto para personal administrativo (optimizado en 1 sola consulta SQL)
+        user_stats = Usuario.objects.aggregate(
+            total=Count('id'),
+            activos=Count(Case(When(is_active=True, then=1), output_field=IntegerField())),
+            admin=Count(Case(When(rol='ADMINISTRADOR', is_active=True, then=1), output_field=IntegerField())),
+            director=Count(Case(When(rol='DIRECTOR', is_active=True, then=1), output_field=IntegerField())),
+            secretaria=Count(Case(When(rol='SECRETARIA', is_active=True, then=1), output_field=IntegerField())),
+            contador=Count(Case(When(rol='CONTADOR', is_active=True, then=1), output_field=IntegerField())),
+            docente=Count(Case(When(rol='DOCENTE', is_active=True, then=1), output_field=IntegerField())),
+            estudiante=Count(Case(When(rol='ESTUDIANTE', is_active=True, then=1), output_field=IntegerField())),
+            encargado=Count(Case(When(rol='ENCARGADO', is_active=True, then=1), output_field=IntegerField())),
+        )
 
         context.update({
-            'total_usuarios': total_usuarios,
-            'usuarios_activos': usuarios_activos,
-            'admin_count': admin_count,
-            'director_count': director_count,
-            'secretaria_count': secretaria_count,
-            'contador_count': contador_count,
-            'docente_count': docente_count,
-            'estudiante_count': estudiante_count,
-            'encargado_count': encargado_count,
+            'total_usuarios': user_stats['total'] or 0,
+            'usuarios_activos': user_stats['activos'] or 0,
+            'admin_count': user_stats['admin'] or 0,
+            'director_count': user_stats['director'] or 0,
+            'secretaria_count': user_stats['secretaria'] or 0,
+            'contador_count': user_stats['contador'] or 0,
+            'docente_count': user_stats['docente'] or 0,
+            'estudiante_count': user_stats['estudiante'] or 0,
+            'encargado_count': user_stats['encargado'] or 0,
             'titulo_pagina': 'Dashboard Principal',
         })
         return context

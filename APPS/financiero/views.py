@@ -15,6 +15,8 @@ from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy, reverse
 from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator
+from simple_history.utils import bulk_create_with_history
 from datetime import datetime
 from django.utils import timezone
 from django.views import View
@@ -293,44 +295,58 @@ class GenerarCobroMasivoView(LoginRequiredMixin, PermissionRequiredMixin, FormVi
             )
             return self.form_invalid(form)
 
-        creados_count = 0
-        omitidos_count = 0
+        # Optimizacion masiva en lote (evita N+1 y timeouts de red)
+        estudiantes_lista = list(estudiantes_qs)
+        estudiantes_ids = [e.id for e in estudiantes_lista]
 
-        with transaction.atomic():
-            for estudiante in estudiantes_qs:
-                    # evitar duplicar el mismo cobro en el ciclo para el estudiante
-                existe = CuentaPorCobrar.objects.filter(
+        cuentas_existentes = set(
+            CuentaPorCobrar.objects.filter(
+                estudiante_id__in=estudiantes_ids,
+                concepto=concepto,
+                ciclo_escolar=ciclo,
+                esta_eliminado=False
+            ).values_list('estudiante_id', flat=True)
+        )
+
+        becas_qs = BecaDescuento.objects.filter(
+            estudiante_id__in=estudiantes_ids,
+            esta_activo=True,
+            esta_eliminado=False
+        ).filter(Q(concepto=concepto) | Q(concepto__isnull=True))
+
+        becas_map = {}
+        for b in becas_qs:
+            if b.estudiante_id not in becas_map or b.concepto_id == concepto.id:
+                becas_map[b.estudiante_id] = b
+
+        cuentas_a_crear = []
+        omitidos_count = 0
+        for estudiante in estudiantes_lista:
+            if estudiante.id in cuentas_existentes:
+                omitidos_count += 1
+                continue
+
+            monto_final = monto_aplicar
+            beca = becas_map.get(estudiante.id)
+            if beca:
+                monto_final = beca.calcular_monto_con_descuento(monto_aplicar)
+
+            cuentas_a_crear.append(
+                CuentaPorCobrar(
                     estudiante=estudiante,
                     concepto=concepto,
                     ciclo_escolar=ciclo,
-                    esta_eliminado=False
-                ).exists()
+                    monto_total=monto_final,
+                    saldo_pendiente=monto_final,
+                    fecha_limite_pago=fecha_limite,
+                    estado_pago=EstadoPagoChoices.PENDIENTE
+                )
+            )
 
-                if not existe:
-                    # verificar si el estudiante cuenta con beca activa
-                    from APPS.financiero.models import BecaDescuento
-                    monto_final = monto_aplicar
-                    beca = BecaDescuento.objects.filter(
-                        estudiante=estudiante,
-                        esta_activo=True,
-                        esta_eliminado=False
-                    ).filter(Q(concepto=concepto) | Q(concepto__isnull=True)).first()
-
-                    if beca:
-                        monto_final = beca.calcular_monto_con_descuento(monto_aplicar)
-
-                    CuentaPorCobrar.objects.create(
-                        estudiante=estudiante,
-                        concepto=concepto,
-                        ciclo_escolar=ciclo,
-                        monto_total=monto_final,
-                        saldo_pendiente=monto_final,
-                        fecha_limite_pago=fecha_limite,
-                        estado_pago=EstadoPagoChoices.PENDIENTE
-                    )
-                    creados_count += 1
-                else:
-                    omitidos_count += 1
+        if cuentas_a_crear:
+            with transaction.atomic():
+                bulk_create_with_history(cuentas_a_crear, CuentaPorCobrar, batch_size=500)
+        creados_count = len(cuentas_a_crear)
 
         msg = f'✓ Se emitieron exitosamente {creados_count} cuentas por cobrar para "{concepto.nombre}".'
         if omitidos_count > 0:
@@ -691,36 +707,46 @@ class GenerarCalendarioAnualView(LoginRequiredMixin, PermissionRequiredMixin, Te
         total_emitidos = 0
         from datetime import date
 
-        with transaction.atomic():
-            for est in estudiantes:
-                # verificar asignacion de beca vigente
-                beca = BecaDescuento.objects.filter(
-                    estudiante=est,
-                    esta_activo=True,
-                    esta_eliminado=False
-                ).filter(Q(concepto=concepto) | Q(concepto__isnull=True)).first()
+        # Optimizacion masiva en lote (evita N+1 y miles de consultas sncronas)
+        estudiantes_lista = list(estudiantes)
+        est_ids = [e.id for e in estudiantes_lista]
 
-                monto_mensual = concepto.monto_estandar
-                if beca:
-                    monto_mensual = beca.calcular_monto_con_descuento(monto_mensual)
+        cuentas_existentes = set(
+            CuentaPorCobrar.objects.filter(
+                estudiante_id__in=est_ids,
+                concepto=concepto,
+                ciclo_escolar=ciclo,
+                esta_eliminado=False
+            ).values_list('estudiante_id', 'mes_aplicacion')
+        )
 
-                for num_mes, nombre_mes in nombres_meses:
+        becas_qs = BecaDescuento.objects.filter(
+            estudiante_id__in=est_ids,
+            esta_activo=True,
+            esta_eliminado=False
+        ).filter(Q(concepto=concepto) | Q(concepto__isnull=True))
+
+        becas_map = {}
+        for b in becas_qs:
+            if b.estudiante_id not in becas_map or b.concepto_id == concepto.id:
+                becas_map[b.estudiante_id] = b
+
+        cuentas_a_crear = []
+        for est in estudiantes_lista:
+            monto_mensual = concepto.monto_estandar
+            beca = becas_map.get(est.id)
+            if beca:
+                monto_mensual = beca.calcular_monto_con_descuento(monto_mensual)
+
+            for num_mes, nombre_mes in nombres_meses:
+                if (est.id, num_mes) not in cuentas_existentes:
                     try:
                         f_limite = date(ciclo.anio, num_mes, min(dia_vencimiento, 28))
                     except ValueError:
                         f_limite = date(ciclo.anio, num_mes, 28)
 
-                    # registrar cuota mensual si no existe previamente
-                    existe = CuentaPorCobrar.objects.filter(
-                        estudiante=est,
-                        concepto=concepto,
-                        ciclo_escolar=ciclo,
-                        mes_aplicacion=num_mes,
-                        esta_eliminado=False
-                    ).exists()
-
-                    if not existe:
-                        CuentaPorCobrar.objects.create(
+                    cuentas_a_crear.append(
+                        CuentaPorCobrar(
                             estudiante=est,
                             concepto=concepto,
                             ciclo_escolar=ciclo,
@@ -730,7 +756,12 @@ class GenerarCalendarioAnualView(LoginRequiredMixin, PermissionRequiredMixin, Te
                             mes_aplicacion=num_mes,
                             estado_pago=EstadoPagoChoices.PENDIENTE
                         )
-                        total_emitidos += 1
+                    )
+
+        if cuentas_a_crear:
+            with transaction.atomic():
+                bulk_create_with_history(cuentas_a_crear, CuentaPorCobrar, batch_size=500)
+            total_emitidos = len(cuentas_a_crear)
 
         messages.success(
             request,
@@ -753,10 +784,11 @@ class AntiguedadSaldosView(LoginRequiredMixin, PermissionRequiredMixin, Template
         from datetime import date
         hoy = date.today()
 
-        cuentas_pendientes = CuentaPorCobrar.objects.filter(
-            esta_eliminado=False,
-            saldo_pendiente__gt=Decimal('0.00')
-        ).select_related('estudiante__persona', 'concepto', 'ciclo_escolar')
+        cuentas_pendientes = (
+            CuentaPorCobrar.objects.annotate(**CuentaPorCobrar.obtener_anotaciones_sql())
+            .filter(esta_eliminado=False, saldo_pendiente__gt=Decimal('0.00'))
+            .select_related('estudiante__persona', 'concepto', 'ciclo_escolar')
+        )
 
         total_al_dia = Decimal('0.00')
         total_1_30 = Decimal('0.00')
@@ -808,7 +840,14 @@ class AntiguedadSaldosView(LoginRequiredMixin, PermissionRequiredMixin, Template
         context['total_31_60'] = total_31_60
         context['total_61_90'] = total_61_90
         context['total_mas_90'] = total_mas_90
-        context['alumnos_antiguedad'] = sorted(detalles_alumnos.values(), key=lambda x: x['total_saldo'], reverse=True)
+        lista_alumnos = sorted(detalles_alumnos.values(), key=lambda x: x['total_saldo'], reverse=True)
+        paginator = Paginator(lista_alumnos, 35)
+        page_number = self.request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+        context['page_obj'] = page_obj
+        context['alumnos_antiguedad'] = page_obj.object_list
+        context['total_alumnos_con_deuda'] = len(lista_alumnos)
         return context
 
 
