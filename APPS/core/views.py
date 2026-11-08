@@ -4,8 +4,10 @@ APPS/core/views.py
 Vistas principales del sistema ERP Escolar — Instituto "El Progreso".
 Provee un Dashboard adaptativo según el Rol y Grupo de Permisos del usuario autenticado.
 """
+from decimal import Decimal
+import json
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q, Count, Case, When, IntegerField
+from django.db.models import Q, Count, Sum, Case, When, IntegerField
 from django.shortcuts import redirect
 from django.contrib import messages
 from django.http import JsonResponse
@@ -94,6 +96,11 @@ class HomeView(LoginRequiredMixin, TemplateView):
                 asistencias_presentes = asist_qs.filter(presente=True).count()
                 asistencias_justificadas = asist_qs.filter(presente=False, justificado=True).count()
                 asistencias_ausentes = asist_qs.filter(presente=False, justificado=False).count()
+                asist_total_est = asistencias_presentes + asistencias_justificadas + asistencias_ausentes
+                asistencia_pct = round((asistencias_presentes / asist_total_est * 100), 1) if asist_total_est > 0 else 100.0
+
+            chart_estudiante_cursos = [fila['curso'] for fila in mis_notas_tabla]
+            chart_estudiante_notas = [float(fila['promedio'] or 0) for fila in mis_notas_tabla]
 
             context.update({
                 'titulo_pagina': 'Mi Portal Estudiantil',
@@ -103,6 +110,9 @@ class HomeView(LoginRequiredMixin, TemplateView):
                 'asistencias_presentes': asistencias_presentes,
                 'asistencias_justificadas': asistencias_justificadas,
                 'asistencias_ausentes': asistencias_ausentes,
+                'asistencia_pct': asistencia_pct,
+                'chart_estudiante_cursos_json': json.dumps(chart_estudiante_cursos),
+                'chart_estudiante_notas_json': json.dumps(chart_estudiante_notas),
             })
             return context
 
@@ -176,6 +186,19 @@ class HomeView(LoginRequiredMixin, TemplateView):
                 esta_eliminado=False,
             ).order_by('-ciclo_escolar__anio', '-mes_pagado')[:6]
 
+            docente_secciones_labels = []
+            docente_secciones_data = []
+            for asig_doc in mis_asignaciones_doc:
+                lbl = f"{asig_doc.seccion.grado.nombre} '{asig_doc.seccion.letra}' - {asig_doc.curso.nombre_curso}"
+                if lbl not in docente_secciones_labels:
+                    cnt = AsignacionEstudiante.objects.filter(
+                        seccion=asig_doc.seccion,
+                        ciclo_escolar=ciclo_activo,
+                        esta_eliminado=False
+                    ).count()
+                    docente_secciones_labels.append(lbl)
+                    docente_secciones_data.append(cnt)
+
             context.update({
                 'titulo_pagina': 'Panel Docente y Académico',
                 'mi_personal': mi_personal,
@@ -184,6 +207,8 @@ class HomeView(LoginRequiredMixin, TemplateView):
                 'secciones_count': len(secciones_ids),
                 'estudiantes_a_cargo': estudiantes_a_cargo,
                 'mis_planillas': mis_planillas,
+                'chart_docente_labels_json': json.dumps(docente_secciones_labels),
+                'chart_docente_data_json': json.dumps(docente_secciones_data),
             })
             return context
 
@@ -218,6 +243,88 @@ class HomeView(LoginRequiredMixin, TemplateView):
             encargado=Count(Case(When(rol='ENCARGADO', is_active=True, then=1), output_field=IntegerField())),
         )
 
+        from APPS.academico.models import Grado, Seccion, Curso
+        from APPS.financiero.models import CuentaPorCobrar, Abono
+
+        # Estadísticas académicas por grado
+        grados_qs = Grado.objects.filter(esta_eliminado=False).annotate(
+            total_estudiantes=Count(
+                'secciones__asignaciones',
+                filter=Q(
+                    secciones__asignaciones__ciclo_escolar=ciclo_activo,
+                    secciones__asignaciones__esta_eliminado=False,
+                    secciones__esta_eliminado=False
+                )
+            )
+        ).order_by('orden')
+
+        chart_grados_labels = [g.nombre for g in grados_qs]
+        chart_grados_data = [g.total_estudiantes for g in grados_qs]
+        total_estudiantes_matriculados = sum(chart_grados_data)
+        total_secciones_activas = Seccion.objects.filter(esta_eliminado=False).count()
+        total_cursos_activos = Curso.objects.filter(esta_eliminado=False).count()
+
+        # Finanzas institucionales
+        cxc_agg = CuentaPorCobrar.objects.filter(
+            ciclo_escolar=ciclo_activo, esta_eliminado=False
+        ).aggregate(total=Sum('monto_total')) if ciclo_activo else {'total': Decimal('0.00')}
+        total_cxc = float(cxc_agg['total'] or 0)
+
+        abonos_agg = Abono.objects.filter(
+            cuenta_por_cobrar__ciclo_escolar=ciclo_activo, esta_eliminado=False
+        ).aggregate(total=Sum('monto_pagado')) if ciclo_activo else {'total': Decimal('0.00')}
+        total_recaudado = float(abonos_agg['total'] or 0)
+        saldo_pendiente = max(0.0, total_cxc - total_recaudado)
+        pct_recaudado = round((total_recaudado / total_cxc * 100), 1) if total_cxc > 0 else 0.0
+
+        ultimos_abonos = Abono.objects.select_related(
+            'cuenta_por_cobrar__estudiante__persona',
+            'cuenta_por_cobrar__concepto'
+        ).filter(esta_eliminado=False).order_by('-fecha_pago', '-id')[:6]
+
+        # Asistencia institucional
+        asist_stats = AsistenciaEstudiantil.objects.filter(
+            asignacion_estudiante__ciclo_escolar=ciclo_activo,
+            esta_eliminado=False
+        ).aggregate(
+            total=Count('id'),
+            presentes=Count(Case(When(presente=True, then=1), output_field=IntegerField())),
+            justificadas=Count(Case(When(presente=False, justificado=True, then=1), output_field=IntegerField())),
+            ausencias=Count(Case(When(presente=False, justificado=False, then=1), output_field=IntegerField())),
+        ) if ciclo_activo else {'total': 0, 'presentes': 0, 'justificadas': 0, 'ausencias': 0}
+
+        asist_total = asist_stats['total'] or 0
+        asist_presentes = asist_stats['presentes'] or 0
+        asist_justificadas = asist_stats['justificadas'] or 0
+        asist_ausencias = asist_stats['ausencias'] or 0
+        pct_asistencia = round((asist_presentes / asist_total * 100), 1) if asist_total > 0 else 100.0
+
+        # Disciplina
+        disciplina_stats = IncidenteDisciplinario.objects.filter(
+            ciclo_escolar=ciclo_activo,
+            esta_eliminado=False
+        ).aggregate(
+            total=Count('id'),
+            leves=Count(Case(When(tipo_falta='LEVE', then=1), output_field=IntegerField())),
+            graves=Count(Case(When(tipo_falta='GRAVE', then=1), output_field=IntegerField())),
+            muy_graves=Count(Case(When(tipo_falta='MUY_GRAVE', then=1), output_field=IntegerField())),
+        ) if ciclo_activo else {'total': 0, 'leves': 0, 'graves': 0, 'muy_graves': 0}
+
+        # Comunidad de usuarios para gráfico
+        comunidad_labels = ['Estudiantes', 'Encargados', 'Docentes', 'Administración']
+        admin_y_servicios = (
+            (user_stats['admin'] or 0) +
+            (user_stats['director'] or 0) +
+            (user_stats['secretaria'] or 0) +
+            (user_stats['contador'] or 0)
+        )
+        comunidad_data = [
+            user_stats['estudiante'] or 0,
+            user_stats['encargado'] or 0,
+            user_stats['docente'] or 0,
+            admin_y_servicios
+        ]
+
         context.update({
             'total_usuarios': user_stats['total'] or 0,
             'usuarios_activos': user_stats['activos'] or 0,
@@ -229,6 +336,30 @@ class HomeView(LoginRequiredMixin, TemplateView):
             'estudiante_count': user_stats['estudiante'] or 0,
             'encargado_count': user_stats['encargado'] or 0,
             'titulo_pagina': 'Dashboard Principal',
+
+            # Nuevas métricas y datos para gráficos
+            'total_estudiantes_matriculados': total_estudiantes_matriculados,
+            'total_secciones_activas': total_secciones_activas,
+            'total_cursos_activos': total_cursos_activos,
+            'total_cxc': total_cxc,
+            'total_recaudado': total_recaudado,
+            'saldo_pendiente': saldo_pendiente,
+            'pct_recaudado': pct_recaudado,
+            'ultimos_abonos': ultimos_abonos,
+            'asist_total': asist_total,
+            'asist_presentes': asist_presentes,
+            'asist_justificadas': asist_justificadas,
+            'asist_ausencias': asist_ausencias,
+            'pct_asistencia': pct_asistencia,
+            'disciplina_stats': disciplina_stats,
+
+            # JSON para Chart.js
+            'chart_grados_labels_json': json.dumps(chart_grados_labels),
+            'chart_grados_data_json': json.dumps(chart_grados_data),
+            'chart_finanzas_data_json': json.dumps([total_recaudado, saldo_pendiente]),
+            'chart_asistencia_data_json': json.dumps([asist_presentes, asist_justificadas, asist_ausencias]),
+            'chart_comunidad_labels_json': json.dumps(comunidad_labels),
+            'chart_comunidad_data_json': json.dumps(comunidad_data),
         })
         return context
 
