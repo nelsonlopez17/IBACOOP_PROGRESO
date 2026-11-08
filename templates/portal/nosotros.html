@@ -1,4 +1,5 @@
 {% extends 'portal/base_portal.html' %}
+{% load static %}
 
 {% block title %}Sobre Nosotros - Identidad, Misión y Trayectoria{% endblock %}
 
@@ -53,10 +54,15 @@
 
             <div class="lg:col-span-5">
                 <div class="bg-gradient-to-br from-emerald-50 to-slate-100 p-8 rounded-3xl border border-emerald-200 shadow-sm space-y-6">
-                    <div class="w-12 h-12 rounded-2xl bg-[#1E6532] text-white flex items-center justify-center shadow-md">
-                        <i data-lucide="compass" class="w-6 h-6"></i>
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-2xl bg-white p-1.5 flex items-center justify-center shadow-md border border-emerald-100">
+                            <img src="{% static 'img/logo_ibacoop_transparent.png' %}" alt="Logo IBACOOP" class="w-11 h-11 object-contain">
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-900">Pilares Institucionales</h3>
+                            <span class="text-xs text-[#1E6532] font-semibold">Identidad y Vocación</span>
+                        </div>
                     </div>
-                    <h3 class="text-xl font-bold text-slate-900">Pilares Institucionales</h3>
                     <p class="text-xs text-slate-600 leading-relaxed">
                         IBACOOP fundamenta su labor educativa en la excelencia pedagógica, el desarrollo personal y el espíritu comunitario que acompaña a cada estudiante.
                     </p>
