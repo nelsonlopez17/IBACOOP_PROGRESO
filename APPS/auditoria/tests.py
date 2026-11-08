@@ -262,3 +262,23 @@ class AuditoriaDiffAndExportTestCase(TestCase):
         self.assertContains(response, 'Carlos Roberto Gómez Morales')
         self.assertContains(response, 'cgomez_auditoria')
 
+    def test_formato_hora_guatemala_en_diff_last_login(self):
+        """
+        Verifica que los valores de fecha/hora como last_login (Último inicio de sesión)
+        se formateen en la zona horaria oficial de Guatemala (UTC-6) y formato legible dd/mm/aaaa hh:mm:ss.
+        """
+        from datetime import datetime, timezone as dt_tz, date
+        # Hora en UTC: 14:30:00 del 8 de Noviembre de 2026 -> En Guatemala (UTC-6) debe ser 08:30:00
+        fecha_utc = datetime(2026, 11, 8, 14, 30, 0, tzinfo=dt_tz.utc)
+        valor_formateado = AuditoriaService._format_diff_val(fecha_utc)
+        self.assertEqual(valor_formateado, '08/11/2026 08:30:00')
+
+        # Cadena ISO con UTC
+        cadena_iso_utc = '2026-11-08T14:30:00Z'
+        valor_iso = AuditoriaService._format_diff_val(cadena_iso_utc)
+        self.assertEqual(valor_iso, '08/11/2026 08:30:00')
+
+        # Objeto solo fecha
+        fecha_solo = date(2026, 11, 8)
+        self.assertEqual(AuditoriaService._format_diff_val(fecha_solo), '08/11/2026')
+

@@ -8,19 +8,24 @@ FROM python:3.12-slim
 # Prevenir generación de archivos .pyc y forzar buffer de salida limpio
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    DEBIAN_FRONTEND=noninteractive
+    DEBIAN_FRONTEND=noninteractive \
+    TZ=America/Guatemala
 
 # Directorio de trabajo principal
 WORKDIR /app
 
-# Instalación de dependencias del sistema operativo (incluye Node.js/npm para Tailwind)
+# Instalación de dependencias del sistema operativo (incluye Node.js/npm para Tailwind y tzdata para zona horaria de Guatemala)
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    tzdata \
     netcat-openbsd \
     libpq-dev \
     gcc \
     curl \
     nodejs \
     npm \
+    && ln -fs /usr/share/zoneinfo/America/Guatemala /etc/localtime \
+    && echo "America/Guatemala" > /etc/timezone \
+    && dpkg-reconfigure -f noninteractive tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar e instalar dependencias Python

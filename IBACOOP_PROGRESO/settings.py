@@ -1,10 +1,19 @@
 import os
 import sys
+import time
 import urllib.parse
 from datetime import timedelta
 from pathlib import Path
 
 import environ
+
+# Sincronización de la zona horaria del servidor (Guatemala - UTC-6)
+os.environ['TZ'] = os.environ.get('TZ', 'America/Guatemala')
+if hasattr(time, 'tzset'):
+    try:
+        time.tzset()
+    except Exception:
+        pass
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -110,11 +119,14 @@ if database_url:
             'PORT': parsed_db.port or 5432,
             'OPTIONS': {
                 'sslmode': os.environ.get('DB_SSLMODE', 'require'),
+                'options': '-c timezone=America/Guatemala',
             },
         }
     }
 else:
-    db_options = {}
+    db_options = {
+        'options': '-c timezone=America/Guatemala',
+    }
     sslmode_val = os.environ.get('DB_SSLMODE')
     if sslmode_val:
         db_options['sslmode'] = sslmode_val

@@ -4,8 +4,9 @@ auditoria/servicios.py
 Servicio unificado para la consulta, agregación y cálculo de diferencias (diffs)
 de la pista de auditoría empresarial basada en django-simple-history.
 """
-from datetime import datetime, time
+from datetime import datetime, date, time
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime, parse_date
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Case, When, IntegerField
 
@@ -370,6 +371,27 @@ class AuditoriaService:
             return '(Vacío)'
         if isinstance(val, bool):
             return 'Sí' if val else 'No'
+        if isinstance(val, datetime):
+            if timezone.is_aware(val):
+                val_local = timezone.localtime(val)
+            else:
+                tz_gt = timezone.get_current_timezone()
+                val_local = timezone.make_aware(val, tz_gt)
+            return val_local.strftime('%d/%m/%Y %H:%M:%S')
+        if isinstance(val, date):
+            return val.strftime('%d/%m/%Y')
+        if isinstance(val, str):
+            dt = parse_datetime(val)
+            if dt is not None:
+                if timezone.is_aware(dt):
+                    dt_local = timezone.localtime(dt)
+                else:
+                    tz_gt = timezone.get_current_timezone()
+                    dt_local = timezone.make_aware(dt, tz_gt)
+                return dt_local.strftime('%d/%m/%Y %H:%M:%S')
+            d = parse_date(val)
+            if d is not None:
+                return d.strftime('%d/%m/%Y')
         return str(val)
 
     @classmethod

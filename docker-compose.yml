@@ -12,6 +12,8 @@ services:
     container_name: ibacoop_db
     restart: always
     environment:
+      TZ: America/Guatemala
+      PGTZ: America/Guatemala
       POSTGRES_DB: ${DB_NAME:-ibacoop_db}
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres_password_2026}
@@ -38,6 +40,7 @@ services:
     ports:
       - "8000:8000"
     environment:
+      - TZ=America/Guatemala
       - DEBUG=${DEBUG:-True}
       - SECRET_KEY=${SECRET_KEY:-django-insecure-ibacoop-progreso-erp-key-desarrollo-2026}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-*}
